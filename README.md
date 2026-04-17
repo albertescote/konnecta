@@ -1,4 +1,4 @@
-# KONNECTA (Weekend Tracker)
+# KONNECTA
 
 KONNECTA is a modern Progressive Web App (PWA) designed for groups of friends to coordinate weekend visits to their hometown. It simplifies the "Who's coming home this weekend?" question with a clean, fast, and mobile-first interface.
 
