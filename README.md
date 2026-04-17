@@ -2,6 +2,12 @@
 
 KONNECTA is a modern Progressive Web App (PWA) designed for groups of friends to coordinate weekend visits to their hometown. It simplifies the "Who's coming home this weekend?" question with a clean, fast, and mobile-first interface.
 
+## 🌐 Live Demo & Status
+
+**Live Application:** [https://weekend-tracker-five.vercel.app/](https://weekend-tracker-five.vercel.app/)
+
+> **Note:** Access is currently **invite-only** and restricted to a specific group of friends. However, active development is underway to evolve the architecture into a **multi-tenant** system, allowing anyone to register and manage their own independent groups in the future!
+
 ## 🚀 Tech Stack
 
 - **Framework:** [Next.js 16 (App Router)](https://nextjs.org/)
