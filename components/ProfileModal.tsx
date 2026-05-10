@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { updateProfile } from "@/app/actions/profile";
 import { signOut } from "@/app/actions/auth";
@@ -24,6 +24,15 @@ export default function ProfileModal({ user, profile, groups, activeGroupId, onC
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || "");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -73,8 +82,14 @@ export default function ProfileModal({ user, profile, groups, activeGroupId, onC
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md overflow-y-auto overflow-x-hidden">
-        <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-[2.5rem] shadow-2xl overflow-hidden border border-zinc-100 dark:border-zinc-800 animate-in zoom-in-95 duration-200 my-auto max-h-[90vh] flex flex-col">
+      <div 
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md overflow-hidden touch-none"
+        onClick={onClose}
+      >
+        <div 
+          className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-[2.5rem] shadow-2xl overflow-hidden border border-zinc-100 dark:border-zinc-800 animate-in zoom-in-95 duration-200 my-auto max-h-[90vh] flex flex-col touch-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* Fixed Header */}
           <div className="p-6 flex items-center justify-between border-b border-zinc-50 dark:border-zinc-800 flex-shrink-0">
             <h3 className="font-black text-xl tracking-tight text-zinc-950 dark:text-white uppercase">
