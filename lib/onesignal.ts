@@ -35,10 +35,15 @@ export async function sendPushNotification({
       .not("id", "eq", excludedUserId || "");
 
     if (groupId) {
-      const { data: memberIds } = await supabase
-        .from("group_memberships")
-        .select("user_id")
-        .eq("group_id", groupId);
+      // Fetch group name and member IDs
+      const [{ data: groupData }, { data: memberIds }] = await Promise.all([
+        supabase.from("groups").select("name").eq("id", groupId).single(),
+        supabase.from("group_memberships").select("user_id").eq("group_id", groupId)
+      ]);
+
+      if (groupData) {
+        headings = `[${groupData.name}] ${headings}`;
+      }
 
       if (memberIds) {
         const ids = memberIds.map((m) => m.user_id);
@@ -56,6 +61,10 @@ export async function sendPushNotification({
   if (!playerIds || playerIds.length === 0) return;
 
   try {
+    const url = new URL("https://weekend-tracker-five.vercel.app");
+    url.searchParams.set("date", date);
+    if (groupId) url.searchParams.set("group_id", groupId);
+
     const response = await fetch("https://onesignal.com/api/v1/notifications", {
       method: "POST",
       headers: {
@@ -67,7 +76,7 @@ export async function sendPushNotification({
         include_player_ids: playerIds,
         headings: { en: headings, ca: headings },
         contents: { en: contents, ca: contents },
-        url: `https://weekend-tracker-five.vercel.app?date=${date}`,
+        url: url.toString(),
       }),
     });
     return await response.json();

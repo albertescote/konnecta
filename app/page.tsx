@@ -18,6 +18,7 @@ import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { Group } from "@/types";
 import { Users } from "lucide-react";
+import { setActiveGroup } from "@/app/actions/groups";
 
 export default async function Home({
   searchParams,
@@ -33,6 +34,17 @@ export default async function Home({
   let groupId = cookieStore.get("konnecta_group_id")?.value;
 
   const params = await searchParams;
+
+  // Si rebem un group_id per URL (des d'una notificació), el prioritzem i el guardem
+  const urlGroupId = params.group_id as string;
+  if (urlGroupId && urlGroupId !== groupId) {
+    groupId = urlGroupId;
+    // Persistim el canvi de grup a la cookie (només ho podem fer així en Server Components de Next.js si fem el canvi abans del primer 'await cookieStore')
+    // Però com que Next.js 15+ permet configurar cookies en Server Actions o Middleware millor,
+    // fem servir el mètode que tenim d'acció de servidor.
+    await setActiveGroup(urlGroupId);
+  }
+
   const selectedDateStr =
     (params.date as string) || formatDbDate(getUpcomingFriday());
 
