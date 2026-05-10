@@ -10,6 +10,8 @@ import ActivityBoard from "@/components/ActivityBoard";
 import ProfileButton from "@/components/ProfileButton";
 import PullToRefresh from "@/components/PullToRefresh";
 import GroupSwitcher from "@/components/GroupSwitcher";
+import ViewToggle from "@/components/ViewToggle";
+import PlansHub from "@/components/PlansHub";
 import { format, parseISO, addDays } from "date-fns";
 import { Suspense } from "react";
 import { cookies } from "next/headers";
@@ -81,6 +83,8 @@ export default async function Home({
     (userPlan?.status as "going" | "not_going" | "pending" | null) || null;
   const userComment = userPlan?.comment || null;
 
+  const currentView = (params.view as string) || "weekend";
+
   return (
     <main className="min-h-screen bg-background text-foreground flex flex-col items-center transition-colors duration-300 overflow-x-hidden">
       <PullToRefresh />
@@ -109,6 +113,13 @@ export default async function Home({
             )}
           </div>
         </header>
+        {user && (
+          <div className="w-full max-w-md mx-auto mt-6 space-y-4">
+            {/* El GroupSwitcher només es mostra si hi ha grups, però ViewToggle sempre que estiguis loguejat */}
+            <GroupSwitcher groups={userGroups} activeGroupId={groupId || ""} userId={user.id} />
+            {groupId && <ViewToggle />}
+          </div>
+        )}
       </div>
 
       <div className="w-full max-w-md px-4 flex flex-col gap-6 pb-12 mt-10">
@@ -136,10 +147,21 @@ export default async function Home({
               Crea un grup nou o demana que t&apos;hi convidin des del teu perfil.
             </p>
           </div>
+        ) : currentView === "all" ? (
+          <Suspense
+            fallback={
+              <div className="space-y-4 py-12">
+                <div className="h-24 w-full bg-background border border-zinc-100 dark:border-zinc-800 animate-pulse rounded-3xl" />
+                <div className="h-24 w-full bg-background border border-zinc-100 dark:border-zinc-800 animate-pulse rounded-3xl opacity-50" />
+              </div>
+            }
+          >
+            <PlansHub currentUserId={user.id} groupId={groupId} />
+          </Suspense>
         ) : (
-
           <>
             {/* 2. DATE SELECTOR - Només es mostra si hi ha usuari */}
+
             <section>
               <WeekendSelector />
             </section>
