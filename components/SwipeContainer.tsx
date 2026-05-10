@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 interface Props {
@@ -11,8 +11,9 @@ interface Props {
 export default function SwipeContainer({ children, activeView }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
   
-  // Local state to provide instant feedback while Next.js loads the server components
+  // Local state to provide instant feedback
   const [internalView, setInternalView] = useState(activeView);
   const [offset, setOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -29,16 +30,15 @@ export default function SwipeContainer({ children, activeView }: Props) {
   }, [internalView]);
 
   // Sync internal state if props change (e.g. from the toggle button)
-  if (activeView !== internalView) {
+  if (activeView !== internalView && !isDragging) {
     setInternalView(activeView);
     setIsTransitioning(true);
   }
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    // Prevent swipe if touch starts in an element marked as no-swipe
     const target = e.target as HTMLElement;
     if (target.closest('[data-no-swipe]')) {
-      directionLocked.current = "vertical"; // Effectively disable horizontal swipe
+      directionLocked.current = "vertical";
       return;
     }
 
@@ -87,7 +87,9 @@ export default function SwipeContainer({ children, activeView }: Props) {
         const nextView = diffX < 0 ? "all" : "weekend";
         if (nextView !== internalView) {
           setInternalView(nextView);
-          updateView(nextView);
+          startTransition(() => {
+            updateView(nextView);
+          });
         }
       }
     }
@@ -114,6 +116,9 @@ export default function SwipeContainer({ children, activeView }: Props) {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
+      {/* Loading bar for server updates */}
+      <div className={`absolute top-0 left-0 h-0.5 bg-blue-500 z-50 transition-all duration-500 ${isPending ? 'w-full opacity-100' : 'w-0 opacity-0'}`} />
+
       <div 
         className={`flex w-[200%] items-start ${!isDragging ? 'transition-transform duration-300 cubic-bezier(0.25, 0.1, 0.25, 1)' : ''}`}
         style={{ 
@@ -124,18 +129,24 @@ export default function SwipeContainer({ children, activeView }: Props) {
       >
         {/* Weekend View */}
         <div 
-          className={`w-1/2 flex-shrink-0 ${internalView === "weekend" || isTransitioning ? 'h-auto opacity-100' : 'h-0 opacity-0 overflow-hidden'}`}
-          style={{ transition: 'opacity 0.2s' }}
+          className={`w-1/2 flex-shrink-0 transition-opacity duration-300 ${internalView === "weekend" ? 'opacity-100' : 'opacity-0'}`}
+          style={{ 
+            height: internalView === "weekend" || isTransitioning ? 'auto' : 0,
+            overflow: internalView === "weekend" || isTransitioning ? 'visible' : 'hidden'
+          }}
         >
           {children[0]}
         </div>
 
         {/* Plans Hub View */}
         <div 
-          className={`w-1/2 flex-shrink-0 ${internalView === "all" || isTransitioning ? 'h-auto opacity-100' : 'h-0 opacity-0 overflow-hidden'}`}
-          style={{ transition: 'opacity 0.2s' }}
+          className={`w-1/2 flex-shrink-0 transition-opacity duration-300 ${internalView === "all" ? 'opacity-100' : 'opacity-0'}`}
+          style={{ 
+            height: internalView === "all" || isTransitioning ? 'auto' : 0,
+            overflow: internalView === "all" || isTransitioning ? 'visible' : 'hidden'
+          }}
         >
-          {internalView === "all" || isTransitioning ? children[1] : null}
+          {children[1]}
         </div>
       </div>
     </div>
