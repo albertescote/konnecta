@@ -106,9 +106,9 @@ export default function NewActivityForm({
       <input type="hidden" name="start_date" value={startDate} />
       <input type="hidden" name="end_date" value={isMultiDay ? endDate : ""} />
 
-      <div className="space-y-5">
+      <div className="space-y-5 w-full">
         {/* Selector de Dia Ràpid */}
-        <div className="flex gap-2 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-2xl mx-1">
+        <div className="flex gap-2 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-2xl">
           {daysData.map((day) => (
             <button
               key={day.id}
@@ -137,38 +137,38 @@ export default function NewActivityForm({
                 : "text-zinc-400"
             }`}
           >
-            <span className="text-[10px] font-black uppercase tracking-wider leading-none">Altres</span>
+            <span className="text-[10px] font-black uppercase tracking-wider leading-none text-center">Altres</span>
             <span className="text-sm font-bold mt-0.5">...</span>
           </button>
         </div>
 
         {/* Grup d'Inici */}
-        <div className="space-y-3 px-1">
-          <div className="flex items-center gap-2 text-[10px] font-black text-zinc-400 uppercase tracking-widest">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-[10px] font-black text-zinc-400 uppercase tracking-widest px-1">
             <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
             Inici del pla
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="flex flex-col gap-3">
             {isFlexible && (
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
+              <div className="relative w-full px-1">
+                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full pl-9 pr-3 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white text-sm"
+                  className="w-full min-w-0 pl-10 pr-3 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white text-sm box-border"
                 />
               </div>
             )}
             
-            <div className="flex gap-2">
-              <div className="relative flex-1">
+            <div className="flex gap-2 w-full px-1">
+              <div className="relative flex-1 min-w-0">
                 <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
                 <select
                   name="start_hour"
                   defaultValue="19"
-                  className="w-full pl-9 pr-2 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white appearance-none text-center text-sm"
+                  className="w-full min-w-0 pl-9 pr-2 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white appearance-none text-center text-sm box-border"
                 >
                   {Array.from({ length: 24 }).map((_, i) => (
                     <option key={i} value={i.toString().padStart(2, "0")}>
@@ -181,7 +181,7 @@ export default function NewActivityForm({
               <select
                 name="start_minute"
                 defaultValue="00"
-                className="flex-1 px-2 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white appearance-none text-center text-sm"
+                className="flex-1 min-w-0 px-2 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white appearance-none text-center text-sm box-border"
               >
                 {["00", "15", "30", "45"].map((m) => (
                   <option key={m} value={m}>
@@ -206,31 +206,31 @@ export default function NewActivityForm({
 
         {/* Grup de Finalització (Condicional) */}
         {isMultiDay && (
-          <div className="space-y-3 px-1 animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="flex items-center gap-2 text-[10px] font-black text-zinc-400 uppercase tracking-widest">
+          <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center gap-2 text-[10px] font-black text-zinc-400 uppercase tracking-widest px-1">
               <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
               Final del pla
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
+            <div className="flex flex-col gap-3">
+              <div className="relative w-full px-1">
+                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
                 <input
                   type="date"
                   value={endDate}
                   min={startDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full pl-9 pr-3 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white text-sm"
+                  className="w-full min-w-0 pl-10 pr-3 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white text-sm box-border"
                 />
               </div>
               
-              <div className="flex gap-2">
-                <div className="relative flex-1">
+              <div className="flex gap-2 w-full px-1">
+                <div className="relative flex-1 min-w-0">
                   <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
                   <select
                     name="end_hour"
                     defaultValue="22"
-                    className="w-full pl-9 pr-2 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white appearance-none text-center text-sm"
+                    className="w-full min-w-0 pl-9 pr-2 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white appearance-none text-center text-sm box-border"
                   >
                     {Array.from({ length: 24 }).map((_, i) => (
                       <option key={i} value={i.toString().padStart(2, "0")}>
@@ -243,7 +243,7 @@ export default function NewActivityForm({
                 <select
                   name="end_minute"
                   defaultValue="00"
-                  className="flex-1 px-2 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white appearance-none text-center text-sm"
+                  className="flex-1 min-w-0 px-2 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white appearance-none text-center text-sm box-border"
                 >
                   {["00", "15", "30", "45"].map((m) => (
                     <option key={m} value={m}>
@@ -266,9 +266,9 @@ export default function NewActivityForm({
               placeholder="Títol del pla"
               required
               maxLength={50}
-              className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-bold text-zinc-950 dark:text-white"
+              className="w-full min-w-0 px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-bold text-zinc-950 dark:text-white box-border"
             />
-            <div className="flex justify-end px-1">
+            <div className="flex justify-end">
               <span className={`text-[8px] font-black ${title.length >= 45 ? 'text-red-500' : 'text-zinc-400'}`}>
                 {title.length}/50
               </span>
@@ -283,9 +283,9 @@ export default function NewActivityForm({
               placeholder="Detalls (opcional)"
               rows={2}
               maxLength={200}
-              className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-medium text-zinc-950 dark:text-white"
+              className="w-full min-w-0 px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-medium text-zinc-950 dark:text-white box-border"
             />
-            <div className="flex justify-end px-1">
+            <div className="flex justify-end">
               <span className={`text-[8px] font-black ${description.length >= 180 ? 'text-red-500' : 'text-zinc-400'}`}>
                 {description.length}/200
               </span>
