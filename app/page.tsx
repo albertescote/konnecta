@@ -51,7 +51,12 @@ export default async function Home({
       role: m.role,
     })) || []) as Group[];
 
-    // Auto-select first group if none active
+    // Validate if the cookie groupId is still valid for this user
+    if (groupId && !userGroups.some(g => g.id === groupId)) {
+      groupId = undefined;
+    }
+
+    // Auto-select first group if none active or cookie was invalid
     if (!groupId && userGroups.length > 0) {
       groupId = userGroups[0].id;
     }

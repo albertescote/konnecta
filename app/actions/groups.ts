@@ -174,6 +174,35 @@ export async function deleteGroup(groupId: string): Promise<ActionResponse> {
   }
 }
 
+export async function leaveGroup(groupId: string): Promise<ActionResponse> {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Sessió no iniciada" };
+
+    const { error } = await supabase
+      .from("group_memberships")
+      .delete()
+      .eq("group_id", groupId)
+      .eq("user_id", user.id);
+
+    if (error) throw error;
+
+    // Clear active group cookie if it was the one we just left
+    const cookieStore = await cookies();
+    const activeGroupId = cookieStore.get("konnecta_group_id")?.value;
+    if (activeGroupId === groupId) {
+      cookieStore.delete("konnecta_group_id");
+    }
+
+    revalidatePath("/");
+    return { success: true };
+  } catch (e) {
+    console.error("Error leaving group:", e);
+    return { success: false, error: "No s'ha pogut sortir del grup" };
+  }
+}
+
 export async function joinGroupBySlug(slug: string): Promise<ActionResponse> {
   try {
     const supabase = await createClient();

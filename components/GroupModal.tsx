@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
-import { createGroup, getGroupMembers, updateMemberRole, removeMember, deleteGroup } from "@/app/actions/groups";
-import { X, Plus, Copy, Check, Users, Shield, UserMinus, Trash2, Loader2 } from "lucide-react";
+import { createGroup, getGroupMembers, updateMemberRole, removeMember, deleteGroup, leaveGroup } from "@/app/actions/groups";
+import { X, Plus, Copy, Check, Users, Shield, UserMinus, Trash2, Loader2, LogOut } from "lucide-react";
 import Portal from "./Portal";
 import { Group, GroupMembershipWithProfile } from "@/types";
 
@@ -99,6 +99,22 @@ export default function GroupModal({ onClose, activeGroup, initialMode = "invite
       }
     });
   };
+
+  const handleLeaveGroup = async () => {
+    if (!activeGroup) return;
+    if (!confirm(`Segur que vols sortir del grup "${activeGroup.name}"?`)) return;
+
+    startTransition(async () => {
+      const res = await leaveGroup(activeGroup.id);
+      if (res.success) {
+        onClose();
+      } else {
+        alert(res.error);
+      }
+    });
+  };
+
+  const isAdmin = activeGroup?.role === "admin";
 
   return (
     <Portal>
@@ -216,15 +232,26 @@ export default function GroupModal({ onClose, activeGroup, initialMode = "invite
                   )}
                 </div>
 
-                <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800">
-                  <button
-                    onClick={handleDeleteGroup}
-                    disabled={isPending}
-                    className="flex items-center justify-center gap-2 w-full py-4 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl font-black transition-colors"
-                  >
-                    <Trash2 size={20} />
-                    ELIMINAR GRUP
-                  </button>
+                <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 flex flex-col gap-3">
+                  {!isAdmin ? (
+                    <button
+                      onClick={handleLeaveGroup}
+                      disabled={isPending}
+                      className="flex items-center justify-center gap-2 w-full py-4 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-2xl font-black transition-colors border border-zinc-100 dark:border-zinc-800"
+                    >
+                      <LogOut size={20} />
+                      SORTIR DEL GRUP
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleDeleteGroup}
+                      disabled={isPending}
+                      className="flex items-center justify-center gap-2 w-full py-4 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl font-black transition-colors"
+                    >
+                      <Trash2 size={20} />
+                      ELIMINAR GRUP
+                    </button>
+                  )}
                 </div>
               </div>
             ) : (
