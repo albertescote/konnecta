@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import { getNextWeekends, formatDbDate, ca } from "@/lib/utils";
 import { format, addDays, parseISO } from "date-fns";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -12,6 +12,7 @@ export default function WeekendSelector() {
   const searchParams = useSearchParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const selectedDateStr =
     searchParams.get("date") || formatDbDate(getNextWeekends()[0]);
@@ -34,6 +35,11 @@ export default function WeekendSelector() {
       router.push(`?date=${dateStr}`);
     });
     setIsModalOpen(false);
+
+    // Tornem a l'inici de la llista per veure la nova data seleccionada
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ left: 0, behavior: "smooth" });
+    }
   };
 
   const navigateToDate = (dateStr: string) => {
@@ -57,7 +63,10 @@ export default function WeekendSelector() {
         </div>
       )}
 
-      <div className="w-full flex gap-3 overflow-x-auto pt-2 pb-4 px-4 no-scrollbar scroll-smooth justify-start">
+      <div 
+        ref={scrollRef}
+        className="w-full flex gap-3 overflow-x-auto pt-2 pb-4 px-4 no-scrollbar scroll-smooth justify-start"
+      >
         {weekends.map((friday) => {
           const dateStr = formatDbDate(friday);
           const isSelected = selectedDateStr === dateStr;
