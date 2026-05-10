@@ -6,6 +6,7 @@ import { format, addDays, parseISO } from "date-fns";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Calendar, Loader2 } from "lucide-react";
 import CalendarModal from "./CalendarModal";
+import Portal from "./Portal";
 
 export default function WeekendSelector() {
   const router = useRouter();
@@ -52,15 +53,17 @@ export default function WeekendSelector() {
   return (
     <>
       {isPending && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
-          <div className="bg-white/40 dark:bg-black/40 absolute inset-0" />
-          <div className="bg-white dark:bg-zinc-900 px-6 py-4 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-zinc-100 dark:border-zinc-800 flex items-center gap-3 animate-in fade-in zoom-in duration-200 relative">
-            <Loader2 size={20} className="animate-spin text-blue-500" />
-            <span className="text-xs font-black uppercase tracking-[0.1em] text-zinc-950 dark:text-white">
-              Carregant...
-            </span>
+        <Portal>
+          <div className="fixed inset-0 z-[10000] flex items-center justify-center pointer-events-none">
+            <div className="bg-white/40 dark:bg-black/40 absolute inset-0" />
+            <div className="bg-white dark:bg-zinc-900 px-6 py-4 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-zinc-100 dark:border-zinc-800 flex items-center gap-3 animate-in fade-in zoom-in duration-200 relative">
+              <Loader2 size={20} className="animate-spin text-blue-500" />
+              <span className="text-xs font-black uppercase tracking-[0.1em] text-zinc-950 dark:text-white">
+                Carregant...
+              </span>
+            </div>
           </div>
-        </div>
+        </Portal>
       )}
 
       <div 
