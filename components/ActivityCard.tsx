@@ -2,11 +2,12 @@
 
 import { useOptimistic, useState, useTransition } from "react";
 import { updateActivityParticipation } from "@/app/actions/activities";
-import { Clock, UserPlus, Users } from "lucide-react";
+import { Clock, UserPlus, Users, MessageCircle } from "lucide-react";
 import { Activity } from "@/types";
 import ActivityDetailsModal from "./ActivityDetailsModal";
 import AddToCalendarButton from "./AddToCalendarButton";
 import { addDays, format, parseISO } from "date-fns";
+import { getWhatsAppShareUrl } from "@/lib/utils";
 
 export default function ActivityCard({
   activity,
@@ -121,8 +122,18 @@ export default function ActivityCard({
                 {activity.description}
               </p>
             )}
-            <div className="pt-2">
+            <div className="pt-2 flex items-center gap-2">
               <AddToCalendarButton activity={activity} />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(getWhatsAppShareUrl(activity), "_blank");
+                }}
+                className="inline-flex items-center gap-1.5 text-[10px] font-black text-green-600 dark:text-green-500 uppercase tracking-widest bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-xl hover:bg-green-100 transition-colors"
+              >
+                <MessageCircle size={14} />
+                WhatsApp
+              </button>
             </div>
           </div>
         </div>

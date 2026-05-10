@@ -3,6 +3,22 @@ export type ActionResponse = {
   error?: string;
 };
 
+export type Group = {
+  id: string;
+  created_at: string;
+  name: string;
+  slug: string;
+  created_by: string;
+  description: string | null;
+};
+
+export type GroupMembership = {
+  group_id: string;
+  user_id: string;
+  role: "admin" | "member";
+  joined_at: string;
+};
+
 export type Profile = {
   id: string;
   full_name: string | null;
@@ -16,11 +32,15 @@ export type Activity = {
   created_at: string;
   title: string;
   description: string | null;
-  weekend_date: string;
-  day_of_week: "divendres" | "dissabte" | "diumenge";
+  group_id: string;
+  start_date: string;
+  end_date: string | null;
   start_time: string | null;
   creator_id: string;
   activity_participants?: ActivityParticipant[];
+  // Legacy fields (optional during migration)
+  weekend_date?: string;
+  day_of_week?: "divendres" | "dissabte" | "diumenge";
 };
 
 export type ActivityParticipant = {
@@ -28,4 +48,14 @@ export type ActivityParticipant = {
   user_id: string;
   additional_participants: number;
   profiles: Profile;
+};
+
+export type WeekendPlan = {
+  id: string;
+  user_id: string;
+  group_id: string;
+  weekend_date: string;
+  status: "going" | "not_going" | "pending";
+  comment: string | null;
+  updated_at: string;
 };

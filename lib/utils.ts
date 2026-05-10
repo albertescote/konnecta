@@ -7,6 +7,9 @@ import {
   addDays,
   parseISO,
   isSameDay,
+  isSaturday,
+  isSunday,
+  subDays,
 } from "date-fns";
 import { ca } from "date-fns/locale";
 
@@ -15,6 +18,8 @@ export const HOMETOWN_COORDINATES = { lat: 41.2856, lng: 1.2504 };
 export function getUpcomingFriday() {
   const now = new Date();
   if (isFriday(now)) return startOfDay(now);
+  if (isSaturday(now)) return startOfDay(subDays(now, 1));
+  if (isSunday(now)) return startOfDay(subDays(now, 2));
   return nextFriday(now);
 }
 
@@ -115,6 +120,13 @@ export function getWeatherDescription(code: number) {
   if (code >= 80 && code <= 82) return "Possibles ruixats";
   if (code >= 95) return "Risc de tempesta";
   return "Temps variable";
+}
+
+export function getWhatsAppShareUrl(activity: any) {
+  const dayText = getFormattedDayText(activity.weekend_date, activity.day_of_week);
+  const timeText = activity.start_time ? ` a les ${activity.start_time}` : "";
+  const text = `Ei! Estem organitzant això per KONNECTA:%0A%0A*${activity.title.toUpperCase()}*%0A📅 ${dayText}${timeText}%0A%0AAnima't i apunta't aquí: ${window.location.origin}?date=${activity.weekend_date}`;
+  return `https://wa.me/?text=${text}`;
 }
 
 export { ca };

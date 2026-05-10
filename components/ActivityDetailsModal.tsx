@@ -1,12 +1,13 @@
 "use client";
 
-import { Check, Clock, Edit2, Trash2, UserPlus, Users, X } from "lucide-react";
+import { Check, Clock, Edit2, MessageCircle, Trash2, UserPlus, Users, X } from "lucide-react";
 import Portal from "./Portal";
 import AddToCalendarButton from "./AddToCalendarButton";
 import { Activity, ActivityParticipant } from "@/types";
 import { useState, useTransition } from "react";
 import { deleteActivity, updateActivity } from "@/app/actions/activities";
 import { addDays, format, parseISO } from "date-fns";
+import { getWhatsAppShareUrl } from "@/lib/utils";
 
 interface Props {
   activity: Activity;
@@ -282,8 +283,15 @@ export default function ActivityDetailsModal({
                   </div>
 
                   {!isEditing && (
-                    <div className="flex justify-center pt-2">
+                    <div className="flex justify-center gap-3 pt-2">
                       <AddToCalendarButton activity={activity} />
+                      <button
+                        onClick={() => window.open(getWhatsAppShareUrl(activity), "_blank")}
+                        className="inline-flex items-center gap-2 text-xs font-black text-green-600 dark:text-green-500 uppercase tracking-widest bg-green-50 dark:bg-green-900/20 px-4 py-2 rounded-2xl hover:bg-green-100 transition-colors border border-green-100 dark:border-green-900/40"
+                      >
+                        <MessageCircle size={18} />
+                        Compartir
+                      </button>
                     </div>
                   )}
                 </>
