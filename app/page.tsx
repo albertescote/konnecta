@@ -13,6 +13,7 @@ import ViewToggle from "@/components/ViewToggle";
 import PlansHub from "@/components/PlansHub";
 import SwipeContainer from "@/components/SwipeContainer";
 import GroupQuickSelect from "@/components/GroupQuickSelect";
+import NoGroupView from "@/components/NoGroupView";
 import { format, parseISO, addDays } from "date-fns";
 import { Suspense } from "react";
 import { cookies } from "next/headers";
@@ -152,17 +153,7 @@ export default async function Home({
             </a>
           </div>
         ) : !groupId ? (
-          <div className="flex flex-col items-center gap-4 text-center py-24 px-6">
-            <div className="w-20 h-20 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center text-zinc-400 mb-2">
-              <Users size={40} />
-            </div>
-            <p className="text-lg font-black tracking-tight">
-              Encara no formes part de cap grup.
-            </p>
-            <p className="text-sm text-zinc-500">
-              Crea un grup nou o demana que t&apos;hi convidin des del teu perfil.
-            </p>
-          </div>
+          <NoGroupView userId={user.id} />
         ) : (
           <SwipeContainer activeView={currentView}>
             {/* WEEKEND VIEW */}
