@@ -95,7 +95,7 @@ export default async function Home({
             {user && <ProfileButton user={user} profile={profile} />}
           </div>
         </header>
-        {user && userGroups.length > 0 && (
+        {user && (
           <div className="w-full max-w-md mx-auto mt-6">
             <GroupSwitcher groups={userGroups} activeGroupId={groupId || ""} />
           </div>
@@ -120,9 +120,10 @@ export default async function Home({
             <p className="text-lg font-medium opacity-60">
               Encara no formes part de cap grup.
             </p>
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-zinc-500 mb-4">
               Crea un grup nou o demana que t&apos;hi convidin!
             </p>
+            <GroupSwitcher groups={userGroups} activeGroupId="" />
           </div>
         ) : (
           <>
