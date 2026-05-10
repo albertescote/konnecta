@@ -7,8 +7,12 @@ import { getFormattedDayText, isUpcomingWeekend } from "@/lib/utils";
 import { z } from "zod";
 import { ActionResponse } from "@/types";
 
+import { addDays, parseISO } from "date-fns";
+
 const CreateActivitySchema = z.object({
   title: z.string().min(1, "El títol és obligatori"),
+  groupId: z.string().uuid(),
+  start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   start_time: z.string().optional(),
   day_of_week: z.enum(["divendres", "dissabte", "diumenge"]),
   weekend_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -27,6 +31,8 @@ export async function createActivity(
 
     const rawData = {
       title: formData.get("title"),
+      groupId: formData.get("groupId"),
+      start_date: formData.get("start_date") || undefined,
       start_time: formData.get("start_time"),
       day_of_week: formData.get("day_of_week"),
       weekend_date: formData.get("weekend_date"),
@@ -38,8 +44,17 @@ export async function createActivity(
       return { success: false, error: validatedData.error.issues[0].message };
     }
 
-    const { title, start_time, day_of_week, weekend_date, description } =
+    let { title, groupId, start_date, start_time, day_of_week, weekend_date, description } =
       validatedData.data;
+
+    // Derived start_date if not provided (legacy support)
+    if (!start_date) {
+      const anchorDate = parseISO(weekend_date);
+      let date = anchorDate;
+      if (day_of_week === "dissabte") date = addDays(anchorDate, 1);
+      if (day_of_week === "diumenge") date = addDays(anchorDate, 2);
+      start_date = date.toISOString().split("T")[0];
+    }
 
     const { data: profile } = await supabase
       .from("profiles")
@@ -49,6 +64,8 @@ export async function createActivity(
 
     const { error } = await supabase.from("activities").insert({
       title,
+      group_id: groupId,
+      start_date,
       weekend_date,
       creator_id: user.id,
       start_time,
@@ -67,6 +84,7 @@ export async function createActivity(
       contents: `${name} ha proposat: ${title} ${isUpcoming ? "" : "pel"} ${dayText}. T'apuntes?`,
       date: weekend_date,
       excludedUserId: user.id,
+      groupId,
     });
 
     revalidatePath("/");
@@ -80,6 +98,7 @@ export async function createActivity(
 const UpdateActivitySchema = z.object({
   id: z.string().uuid(),
   title: z.string().min(1, "El títol és obligatori"),
+  start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   start_time: z.string().optional().nullable(),
   day_of_week: z.enum(["divendres", "dissabte", "diumenge"]),
   description: z.string().optional().nullable(),
@@ -98,6 +117,7 @@ export async function updateActivity(
     const rawData = {
       id: formData.get("id"),
       title: formData.get("title"),
+      start_date: formData.get("start_date") || undefined,
       start_time: formData.get("start_time"),
       day_of_week: formData.get("day_of_week"),
       description: formData.get("description"),
@@ -108,13 +128,14 @@ export async function updateActivity(
       return { success: false, error: validatedData.error.issues[0].message };
     }
 
-    const { id, title, start_time, day_of_week, description } =
+    const { id, title, start_date, start_time, day_of_week, description } =
       validatedData.data;
 
     const { error } = await supabase
       .from("activities")
       .update({
         title,
+        start_date,
         start_time,
         day_of_week,
         description,
@@ -184,7 +205,7 @@ export async function updateActivityParticipation(
       const [activityRes, profileRes] = await Promise.all([
         supabase
           .from("activities")
-          .select("title, day_of_week, weekend_date")
+          .select("title, day_of_week, weekend_date, group_id")
           .eq("id", activityId)
           .single(),
         supabase
@@ -199,7 +220,7 @@ export async function updateActivityParticipation(
           profileRes.data.full_name ||
           profileRes.data.email.split("@")[0] ||
           "Algú";
-        const { title, day_of_week, weekend_date } = activityRes.data;
+        const { title, day_of_week, weekend_date, group_id } = activityRes.data;
         const dayText = getFormattedDayText(weekend_date, day_of_week);
         const isUpcoming = isUpcomingWeekend(weekend_date);
 
@@ -211,6 +232,7 @@ export async function updateActivityParticipation(
           contents: `${name}${guestText} s'ha apuntat al pla "${title}" ${isUpcoming ? "per" : "pel"} ${dayText}.`,
           date: weekend_date,
           excludedUserId: user.id,
+          groupId: group_id,
         });
       }
     } else {

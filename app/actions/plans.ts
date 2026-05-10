@@ -10,6 +10,7 @@ import { ActionResponse } from "@/types";
 
 const UpdateStatusSchema = z.object({
   userId: z.string().uuid(),
+  groupId: z.string().uuid(),
   weekendDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   status: z.enum(["going", "not_going", "pending"]),
   comment: z.string().max(280).optional().nullable(),
@@ -17,18 +18,21 @@ const UpdateStatusSchema = z.object({
 
 const UpdateCommentSchema = z.object({
   userId: z.string().uuid(),
+  groupId: z.string().uuid(),
   weekendDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   comment: z.string().max(280).optional().nullable(),
 });
 
 export async function updateComment(
   userId: string,
+  groupId: string,
   weekendDate: string,
   comment: string | null,
 ): Promise<ActionResponse> {
   try {
     const validatedData = UpdateCommentSchema.safeParse({
       userId,
+      groupId,
       weekendDate,
       comment,
     });
@@ -42,6 +46,7 @@ export async function updateComment(
       .from("weekend_plans")
       .update({ comment, updated_at: new Date().toISOString() })
       .eq("user_id", userId)
+      .eq("group_id", groupId)
       .eq("weekend_date", weekendDate);
 
     if (error) throw error;
@@ -56,6 +61,7 @@ export async function updateComment(
 
 export async function updateStatus(
   userId: string,
+  groupId: string,
   weekendDate: string,
   status: "going" | "not_going" | "pending",
   comment?: string | null,
@@ -63,6 +69,7 @@ export async function updateStatus(
   try {
     const validatedData = UpdateStatusSchema.safeParse({
       userId,
+      groupId,
       weekendDate,
       status,
       comment,
@@ -82,12 +89,13 @@ export async function updateStatus(
     const { error } = await supabase.from("weekend_plans").upsert(
       {
         user_id: userId,
+        group_id: groupId,
         weekend_date: weekendDate,
         status,
         comment,
         updated_at: new Date().toISOString(),
       },
-      { onConflict: "user_id, weekend_date" },
+      { onConflict: "user_id, group_id, weekend_date" },
     );
 
     if (error) throw error;
@@ -125,6 +133,7 @@ export async function updateStatus(
       contents: `${name} ha dit que ${statusAction} ${dateText}!`,
       date: weekendDate,
       excludedUserId: userId,
+      groupId,
     });
 
     revalidatePath("/");

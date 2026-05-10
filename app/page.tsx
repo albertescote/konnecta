@@ -9,8 +9,11 @@ import ThemeToggle from "@/components/ThemeToggle";
 import ActivityBoard from "@/components/ActivityBoard";
 import ProfileButton from "@/components/ProfileButton";
 import PullToRefresh from "@/components/PullToRefresh";
+import GroupSwitcher from "@/components/GroupSwitcher";
 import { format, parseISO, addDays } from "date-fns";
 import { Suspense } from "react";
+import { cookies } from "next/headers";
+import { Group } from "@/types";
 
 export default async function Home({
   searchParams,
@@ -22,6 +25,9 @@ export default async function Home({
     data: { user },
   } = await supabase.auth.getUser();
 
+  const cookieStore = await cookies();
+  let groupId = cookieStore.get("konnecta_group_id")?.value;
+
   const params = await searchParams;
   const selectedDateStr =
     (params.date as string) || formatDbDate(getUpcomingFriday());
@@ -31,6 +37,24 @@ export default async function Home({
   const sun = addDays(anchorDate, 2);
   const displayDate = `${format(sat, "d 'de' MMM", { locale: ca })} - ${format(sun, "d 'de' MMM", { locale: ca })}`;
 
+  // Fetch groups if user is logged in
+  let userGroups: Group[] = [];
+  if (user) {
+    const { data: memberships } = await supabase
+      .from("group_memberships")
+      .select("groups (*)")
+      .eq("user_id", user.id);
+
+    userGroups = (memberships?.map((m: any) => m.groups) || []) as Group[];
+
+    // Auto-select first group if none active
+    if (!groupId && userGroups.length > 0) {
+      groupId = userGroups[0].id;
+      // Note: We can't set cookie here in a server component during render easily, 
+      // but we use this ID for the current request.
+    }
+  }
+
   const [profileResponse, userPlanResponse] = user
     ? await Promise.all([
         supabase.from("profiles").select("*").eq("id", user.id).single(),
@@ -39,6 +63,7 @@ export default async function Home({
           .select("status, comment")
           .eq("user_id", user.id)
           .eq("weekend_date", selectedDateStr)
+          .eq("group_id", groupId || "")
           .single(),
       ])
     : [{ data: null }, { data: null }];
@@ -70,6 +95,11 @@ export default async function Home({
             {user && <ProfileButton user={user} profile={profile} />}
           </div>
         </header>
+        {user && userGroups.length > 0 && (
+          <div className="w-full max-w-md mx-auto mt-6">
+            <GroupSwitcher groups={userGroups} activeGroupId={groupId || ""} />
+          </div>
+        )}
       </div>
 
       <div className="w-full max-w-md px-4 flex flex-col gap-6 pb-12 mt-10">
@@ -84,6 +114,15 @@ export default async function Home({
             >
               INICIA SESSIÓ
             </a>
+          </div>
+        ) : !groupId ? (
+          <div className="flex flex-col items-center gap-4 text-center py-24">
+            <p className="text-lg font-medium opacity-60">
+              Encara no formes part de cap grup.
+            </p>
+            <p className="text-sm text-zinc-500">
+              Crea un grup nou o demana que t&apos;hi convidin!
+            </p>
           </div>
         ) : (
           <>
@@ -103,8 +142,9 @@ export default async function Home({
               </Suspense>
 
               <VotingSection
-                key={selectedDateStr}
+                key={`${selectedDateStr}-${groupId}`}
                 userId={user.id}
+                groupId={groupId}
                 weekendDate={selectedDateStr}
                 initialStatus={userStatus}
                 initialComment={userComment}
@@ -125,7 +165,7 @@ export default async function Home({
                   </div>
                 }
               >
-                <AttendanceList weekendDate={selectedDateStr} />
+                <AttendanceList weekendDate={selectedDateStr} groupId={groupId} />
               </Suspense>
             </div>
 
@@ -144,6 +184,7 @@ export default async function Home({
                 <ActivityBoard
                   weekendDate={selectedDateStr}
                   currentUserId={user.id}
+                  groupId={groupId}
                 />
               </Suspense>
             </div>
@@ -157,7 +198,7 @@ export default async function Home({
                   <div className="h-40 w-full bg-background border border-zinc-100 dark:border-zinc-800 animate-pulse rounded-3xl" />
                 }
               >
-                <HallOfFame />
+                <HallOfFame groupId={groupId} />
               </Suspense>
             </div>
           </>

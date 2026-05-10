@@ -123,9 +123,21 @@ export function getWeatherDescription(code: number) {
 }
 
 export function getWhatsAppShareUrl(activity: any) {
-  const dayText = getFormattedDayText(activity.weekend_date, activity.day_of_week);
+  const eventDate = activity.start_date 
+    ? parseISO(activity.start_date) 
+    : (() => {
+        const anchorDate = parseISO(activity.weekend_date);
+        let date = anchorDate;
+        if (activity.day_of_week === "dissabte") date = addDays(anchorDate, 1);
+        if (activity.day_of_week === "diumenge") date = addDays(anchorDate, 2);
+        return date;
+      })();
+
+  const dayNameLong = format(eventDate, "EEEE", { locale: ca });
+  const dayOfMonth = format(eventDate, "d 'de' MMMM", { locale: ca });
   const timeText = activity.start_time ? ` a les ${activity.start_time}` : "";
-  const text = `Ei! Estem organitzant això per KONNECTA:%0A%0A*${activity.title.toUpperCase()}*%0A📅 ${dayText}${timeText}%0A%0AAnima't i apunta't aquí: ${window.location.origin}?date=${activity.weekend_date}`;
+  
+  const text = `Ei! Estem organitzant això per KONNECTA:%0A%0A*${activity.title.toUpperCase()}*%0A📅 ${dayNameLong}, ${dayOfMonth}${timeText}%0A%0AAnima't i apunta't aquí: ${window.location.origin}?date=${activity.weekend_date}`;
   return `https://wa.me/?text=${text}`;
 }
 

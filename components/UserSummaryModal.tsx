@@ -10,10 +10,11 @@ import { format, parseISO } from "date-fns";
 
 interface Props {
   profile: Profile;
+  groupId: string;
   onClose: () => void;
 }
 
-export default function UserSummaryModal({ profile, onClose }: Props) {
+export default function UserSummaryModal({ profile, groupId, onClose }: Props) {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<{
     totalVisits: number;
@@ -23,14 +24,14 @@ export default function UserSummaryModal({ profile, onClose }: Props) {
 
   useEffect(() => {
     async function loadStats() {
-      const res = await getUserStats(profile.id);
+      const res = await getUserStats(profile.id, groupId);
       if (res.success && res.data) {
         setStats(res.data);
       }
       setLoading(false);
     }
     loadStats();
-  }, [profile.id]);
+  }, [profile.id, groupId]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

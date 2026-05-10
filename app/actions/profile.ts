@@ -50,7 +50,7 @@ export async function updateProfile(
   }
 }
 
-export async function getUserStats(userId: string) {
+export async function getUserStats(userId: string, groupId: string) {
   try {
     const supabase = await createClient();
     const today = new Date().toISOString().split("T")[0];
@@ -60,6 +60,7 @@ export async function getUserStats(userId: string) {
       .from("weekend_plans")
       .select("*", { count: "exact", head: true })
       .eq("user_id", userId)
+      .eq("group_id", groupId)
       .eq("status", "going")
       .lt("weekend_date", today);
 
@@ -70,6 +71,7 @@ export async function getUserStats(userId: string) {
       .from("weekend_plans")
       .select("weekend_date, status")
       .eq("user_id", userId)
+      .eq("group_id", groupId)
       .gte("weekend_date", new Date().toISOString().split("T")[0])
       .order("weekend_date", { ascending: true })
       .limit(5);

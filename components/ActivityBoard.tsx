@@ -6,9 +6,11 @@ import { Activity } from "@/types";
 export default async function ActivityBoard({
   weekendDate,
   currentUserId,
+  groupId,
 }: {
   weekendDate: string;
   currentUserId: string;
+  groupId: string;
 }) {
   const supabase = await createClient();
 
@@ -29,7 +31,8 @@ export default async function ActivityBoard({
       )
     `,
     )
-    .eq("weekend_date", weekendDate);
+    .eq("weekend_date", weekendDate)
+    .eq("group_id", groupId);
 
   // Ordenació manual per dies de la setmana i hora
   const dayOrder: { [key: string]: number } = {
@@ -58,7 +61,7 @@ export default async function ActivityBoard({
         ))}
       </div>
 
-      <NewActivityForm weekendDate={weekendDate} />
+      <NewActivityForm weekendDate={weekendDate} groupId={groupId} />
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { Activity } from "@/types";
 import ActivityDetailsModal from "./ActivityDetailsModal";
 import AddToCalendarButton from "./AddToCalendarButton";
 import { addDays, format, parseISO } from "date-fns";
-import { getWhatsAppShareUrl } from "@/lib/utils";
+import { getWhatsAppShareUrl, ca } from "@/lib/utils";
 
 export default function ActivityCard({
   activity,
@@ -94,12 +94,20 @@ export default function ActivityCard({
     diumenge: "Diu",
   };
 
-  // Calculate day of the month
-  const anchorDate = parseISO(activity.weekend_date);
-  let eventDate = anchorDate;
-  if (activity.day_of_week === "dissabte") eventDate = addDays(anchorDate, 1);
-  if (activity.day_of_week === "diumenge") eventDate = addDays(anchorDate, 2);
+  // Use start_date if available, fallback to legacy calculation
+  const eventDate = activity.start_date 
+    ? parseISO(activity.start_date) 
+    : (() => {
+        const anchorDate = parseISO(activity.weekend_date);
+        let date = anchorDate;
+        if (activity.day_of_week === "dissabte") date = addDays(anchorDate, 1);
+        if (activity.day_of_week === "diumenge") date = addDays(anchorDate, 2);
+        return date;
+      })();
+
   const dayOfMonth = format(eventDate, "d");
+  const monthName = format(eventDate, "MMM", { locale: ca });
+  const dayNameShort = format(eventDate, "EEE", { locale: ca });
 
   return (
     <>
@@ -111,7 +119,7 @@ export default function ActivityCard({
           <div className="space-y-1.5 flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-wider">
-                {dayLabels[activity.day_of_week]} {dayOfMonth}
+                {dayNameShort} {dayOfMonth} {monthName}
               </span>
               <h4 className="font-bold text-lg leading-tight text-zinc-950 dark:text-white">
                 {activity.title}

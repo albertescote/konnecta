@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Trophy } from "lucide-react";
 import { formatDbDate } from "@/lib/utils";
 
-export default async function HallOfFame() {
+export default async function HallOfFame({ groupId }: { groupId: string }) {
   const supabase = await createClient();
   const today = formatDbDate(new Date());
 
@@ -11,6 +11,7 @@ export default async function HallOfFame() {
     .from("weekend_plans")
     .select("user_id, profiles!inner(full_name, avatar_url, email)")
     .eq("status", "going")
+    .eq("group_id", groupId)
     .lt("weekend_date", today);
 
   if (!plans || plans.length === 0) return null;
