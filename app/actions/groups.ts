@@ -53,7 +53,7 @@ export async function createGroup(formData: FormData): Promise<ActionResponse & 
     }
 
     const { name } = validatedData.data;
-    let slug = slugify(name);
+    const slug = slugify(name);
 
     // Set initial expiration to 48 hours
     const expiresAt = new Date();

@@ -88,12 +88,6 @@ export default function ActivityCard({
     0,
   );
 
-  const dayLabels: { [key: string]: string } = {
-    divendres: "Div",
-    dissabte: "Dis",
-    diumenge: "Diu",
-  };
-
   // Use start_date if available, fallback to legacy calculation
   const eventDate = activity.start_date 
     ? parseISO(activity.start_date) 

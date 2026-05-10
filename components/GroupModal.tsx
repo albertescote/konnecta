@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useCallback } from "react";
 import { createGroup, getGroupMembers, updateMemberRole, removeMember, deleteGroup, leaveGroup, refreshInviteToken } from "@/app/actions/groups";
-import { X, Plus, Copy, Check, Users, Shield, UserMinus, Trash2, Loader2, LogOut, RefreshCcw } from "lucide-react";
+import { X, Copy, Check, Users, Shield, UserMinus, Trash2, Loader2, LogOut, RefreshCcw } from "lucide-react";
 import Portal from "./Portal";
 import { Group, GroupMembershipWithProfile } from "@/types";
 
@@ -14,7 +14,7 @@ interface Props {
 }
 
 export default function GroupModal({ onClose, activeGroup, initialMode = "invite", userId }: Props) {
-  const [mode, setMode] = useState(initialMode);
+  const [mode] = useState(initialMode);
   const [loading, setLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -28,26 +28,7 @@ export default function GroupModal({ onClose, activeGroup, initialMode = "invite
 
   const isAdmin = activeGroup?.role === "admin";
 
-  useEffect(() => {
-    if (mode === "manage" && activeGroup) {
-      loadMembers();
-    }
-    if (mode === "invite" && activeGroup && isAdmin) {
-      checkAndRefreshInvite();
-    }
-  }, [mode, activeGroup]);
-
-  const checkAndRefreshInvite = async () => {
-    if (!activeGroup) return;
-    
-    const isExpired = !inviteData.expiresAt || new Date(inviteData.expiresAt) < new Date();
-    
-    if (isExpired) {
-      handleRefreshInvite();
-    }
-  };
-
-  const handleRefreshInvite = async () => {
+  const handleRefreshInvite = useCallback(async () => {
     if (!activeGroup) return;
     setLoading(true);
     const res = await refreshInviteToken(activeGroup.id);
@@ -58,9 +39,9 @@ export default function GroupModal({ onClose, activeGroup, initialMode = "invite
       });
     }
     setLoading(false);
-  };
+  }, [activeGroup]);
 
-  const loadMembers = async () => {
+  const loadMembers = useCallback(async () => {
     if (!activeGroup) return;
     setFetchingMembers(true);
     const res = await getGroupMembers(activeGroup.id);
@@ -68,7 +49,21 @@ export default function GroupModal({ onClose, activeGroup, initialMode = "invite
       setMembers(res.data);
     }
     setFetchingMembers(false);
-  };
+  }, [activeGroup]);
+
+  useEffect(() => {
+    if (mode === "manage" && activeGroup) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      loadMembers();
+    }
+    if (mode === "invite" && activeGroup && isAdmin) {
+      const isExpired = !inviteData.expiresAt || new Date(inviteData.expiresAt) < new Date();
+      if (isExpired) {
+         
+        handleRefreshInvite();
+      }
+    }
+  }, [mode, activeGroup, isAdmin, handleRefreshInvite, inviteData.expiresAt, loadMembers]);
 
   const inviteUrl = inviteData.token
     ? `${window.location.origin}/join/${inviteData.token}` 

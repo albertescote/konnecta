@@ -29,12 +29,10 @@ export default function SwipeContainer({ children, activeView }: Props) {
   }, [internalView]);
 
   // Sync internal state if props change (e.g. from the toggle button)
-  useEffect(() => {
-    if (activeView !== internalView) {
-      setInternalView(activeView);
-      setIsTransitioning(true);
-    }
-  }, [activeView]);
+  if (activeView !== internalView) {
+    setInternalView(activeView);
+    setIsTransitioning(true);
+  }
 
   const handleTouchStart = (e: React.TouchEvent) => {
     // Prevent swipe if touch starts in an element marked as no-swipe

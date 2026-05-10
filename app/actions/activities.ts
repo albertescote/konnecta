@@ -48,8 +48,9 @@ export async function createActivity(
       return { success: false, error: validatedData.error.issues[0].message };
     }
 
-    let { title, groupId, start_date, end_date, start_time, end_time, day_of_week, weekend_date, description } =
+    const { title, groupId, end_date, start_time, end_time, day_of_week, weekend_date, description } =
       validatedData.data;
+    let { start_date } = validatedData.data;
 
     // Derived start_date if not provided (legacy support)
     if (!start_date) {

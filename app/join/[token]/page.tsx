@@ -2,6 +2,7 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { joinGroupByToken } from "@/app/actions/groups";
 import { redirect } from "next/navigation";
 import { Users } from "lucide-react";
+import Link from "next/link";
 
 export default async function JoinPage({
   params,
@@ -26,7 +27,7 @@ export default async function JoinPage({
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
         <h1 className="text-2xl font-black text-zinc-950 dark:text-white mb-2">Invitació no vàlida</h1>
         <p className="text-zinc-500">Aquest enllaç d&apos;invitació no existeix o ha caducat.</p>
-        <a href="/" className="mt-8 px-8 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-2xl font-black">TORNA A L&apos;INICI</a>
+        <Link href="/" className="mt-8 px-8 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-2xl font-black">TORNA A L&apos;INICI</Link>
       </div>
     );
   }

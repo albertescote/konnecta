@@ -36,7 +36,7 @@ export default async function AttendanceList({ weekendDate, groupId }: Props) {
   ]);
 
   const plans = plansResponse.data || [];
-  const allProfiles = (profilesResponse.data?.map((m: any) => m.profiles) || []) as Profile[];
+  const allProfiles = (profilesResponse.data?.map((m) => m.profiles) || []) as unknown as Profile[];
 
   const going = plans.filter((p) => p.status === "going") as unknown as {
     profiles: Profile;

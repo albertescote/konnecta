@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Clock, Edit2, MessageCircle, Trash2, UserPlus, Users, X, Calendar } from "lucide-react";
+import { Check, Clock, Edit2, MessageCircle, Trash2, UserPlus, Users, X } from "lucide-react";
 import Portal from "./Portal";
 import AddToCalendarButton from "./AddToCalendarButton";
 import { Activity, ActivityParticipant } from "@/types";

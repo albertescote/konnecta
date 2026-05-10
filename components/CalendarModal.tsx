@@ -13,8 +13,6 @@ import {
   isSameMonth,
   isSameDay,
   isFriday,
-  isBefore,
-  startOfToday,
 } from "date-fns";
 import { ca } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
@@ -32,7 +30,6 @@ export default function CalendarModal({
   selectedDate,
 }: Props) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const today = startOfToday();
 
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));

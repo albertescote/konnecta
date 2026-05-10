@@ -122,7 +122,7 @@ export function getWeatherDescription(code: number) {
   return "Temps variable";
 }
 
-export function getWhatsAppShareUrl(activity: any) {
+export function getWhatsAppShareUrl(activity: { title: string, start_date?: string | null, weekend_date: string, day_of_week: string, start_time?: string | null }) {
   const eventDate = activity.start_date 
     ? parseISO(activity.start_date) 
     : (() => {

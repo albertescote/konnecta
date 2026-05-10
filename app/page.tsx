@@ -19,8 +19,6 @@ import { format, parseISO, addDays } from "date-fns";
 import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { Group } from "@/types";
-import { Users } from "lucide-react";
-import { setActiveGroup } from "@/app/actions/groups";
 
 export default async function Home({
   searchParams,
@@ -61,8 +59,8 @@ export default async function Home({
       .eq("user_id", user.id);
 
     userGroups = (memberships?.map((m: any) => ({
-      ...m.groups,
-      role: m.role,
+      ...(m.groups || {}),
+      role: m.role as "admin" | "member",
     })) || []) as Group[];
 
     // Validate if the cookie groupId is still valid for this user
