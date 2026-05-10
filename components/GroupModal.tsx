@@ -176,9 +176,22 @@ export default function GroupModal({ onClose, activeGroup, initialMode = "invite
               <div className="space-y-8">
                 <div className="space-y-4">
                   <h4 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] px-1">Membres del grup</h4>
+                  
+                  {error && mode === "manage" && (
+                    <p className="text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-xl mx-1">
+                      {error}
+                    </p>
+                  )}
+
                   {fetchingMembers ? (
                     <div className="flex justify-center py-4">
                       <Loader2 className="animate-spin text-zinc-300" />
+                    </div>
+                  ) : members.length === 0 ? (
+                    <div className="text-center py-8 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-700">
+                      <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest px-4">
+                        No s&apos;han trobat membres o no tens permisos per veure&apos;ls.
+                      </p>
                     </div>
                   ) : (
                     <div className="space-y-3">

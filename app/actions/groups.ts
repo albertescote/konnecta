@@ -101,19 +101,24 @@ export async function createGroup(formData: FormData): Promise<ActionResponse & 
 export async function getGroupMembers(groupId: string): Promise<{ success: boolean; data?: GroupMembershipWithProfile[]; error?: string }> {
   try {
     const supabase = await createClient();
+    
+    // Fem la consulta de membres incloent el perfil
     const { data, error } = await supabase
       .from("group_memberships")
-      .select(`
-        *,
-        profiles (*)
-      `)
+      .select("*, profiles(*)")
       .eq("group_id", groupId);
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase error fetching members:", error);
+      return { success: false, error: error.message };
+    }
+
+    if (!data) return { success: true, data: [] };
+
     return { success: true, data: data as unknown as GroupMembershipWithProfile[] };
   } catch (e) {
-    console.error("Error fetching members:", e);
-    return { success: false, error: "Error al carregar els membres" };
+    console.error("Unexpected error fetching members:", e);
+    return { success: false, error: "Error inesperat al carregar els membres" };
   }
 }
 
