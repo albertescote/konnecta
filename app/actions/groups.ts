@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { z } from "zod";
 import { ActionResponse, GroupMembershipWithProfile } from "@/types";
 
@@ -251,11 +251,12 @@ export async function leaveGroup(groupId: string): Promise<ActionResponse> {
 export async function joinGroupByToken(token: string): Promise<ActionResponse> {
   try {
     const supabase = await createClient();
+    const adminSupabase = await createAdminClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Sessió no iniciada" };
 
-    // 1. Find the group and check expiration
-    const { data: group, error: groupError } = await supabase
+    // 1. Find the group and check expiration using admin client (user is not yet a member)
+    const { data: group, error: groupError } = await adminSupabase
       .from("groups")
       .select("id, invite_token_expires_at")
       .eq("invite_token", token)

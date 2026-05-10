@@ -1,7 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { joinGroupByToken } from "@/app/actions/groups";
 import { redirect } from "next/navigation";
-import { Users, LogIn } from "lucide-react";
+import { Users } from "lucide-react";
 
 export default async function JoinPage({
   params,
@@ -12,8 +12,10 @@ export default async function JoinPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Fetch group details by token
-  const { data: group } = await supabase
+  // Fem servir createAdminClient per comprovar si el token és vàlid fins i tot si no estem loguejats
+  // o si encara no som membres del grup (RLS).
+  const adminSupabase = await createAdminClient();
+  const { data: group } = await adminSupabase
     .from("groups")
     .select("name, description")
     .eq("invite_token", token)
@@ -29,49 +31,29 @@ export default async function JoinPage({
     );
   }
 
+  // Si el token és vàlid però no estem loguejats, redirigim a login
+  if (!user) {
+    redirect(`/login?returnTo=/join/${token}`);
+  }
+
   const handleJoin = async () => {
     "use server";
     await joinGroupByToken(token);
     redirect("/");
   };
-
-  return (
-    <main className="min-h-screen bg-background flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
-      <div className="w-full max-w-sm bg-white dark:bg-zinc-900 rounded-[3rem] p-10 shadow-2xl border border-zinc-100 dark:border-zinc-800 text-center space-y-8">
-        <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-500 mx-auto">
-          <Users size={40} />
+...
         </div>
 
-        <div className="space-y-2">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500">T&apos;han convidat a</p>
-          <h1 className="text-3xl font-black text-zinc-950 dark:text-white tracking-tight leading-tight">{group.name}</h1>
-          {group.description && (
-            <p className="text-sm text-zinc-500 leading-relaxed italic">&quot;{group.description}&quot;</p>
-          )}
-        </div>
-
-        {!user ? (
-          <div className="space-y-4">
-            <p className="text-sm text-zinc-400">Inicia sessió per acceptar la invitació i veure els plans del grup.</p>
-            <a 
-              href={`/login?returnTo=/join/${token}`}
-              className="flex items-center justify-center gap-3 w-full py-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-2xl font-black shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
-            >
-              <LogIn size={20} />
-              INICIA SESSIÓ
-            </a>
-          </div>
-        ) : (
-          <form action={handleJoin}>
-            <button
-              type="submit"
-              className="w-full py-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-2xl font-black shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
-            >
-              UNIR-ME AL GRUP
-            </button>
-          </form>
-        )}
+        <form action={handleJoin}>
+          <button
+            type="submit"
+            className="w-full py-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-2xl font-black shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
+          >
+            UNIR-ME AL GRUP
+          </button>
+        </form>
       </div>
+...
       
       <footer className="mt-12 text-[10px] font-bold uppercase tracking-widest text-zinc-400">
         KONNECTA - L&apos;app dels teus findes
