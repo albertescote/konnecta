@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
-import { createGroup, getGroupMembers, updateMemberRole, removeMember, deleteGroup, leaveGroup } from "@/app/actions/groups";
-import { X, Plus, Copy, Check, Users, Shield, UserMinus, Trash2, Loader2, LogOut } from "lucide-react";
+import { createGroup, getGroupMembers, updateMemberRole, removeMember, deleteGroup, leaveGroup, refreshInviteToken } from "@/app/actions/groups";
+import { X, Plus, Copy, Check, Users, Shield, UserMinus, Trash2, Loader2, LogOut, RefreshCcw } from "lucide-react";
 import Portal from "./Portal";
 import { Group, GroupMembershipWithProfile } from "@/types";
 
@@ -21,12 +21,44 @@ export default function GroupModal({ onClose, activeGroup, initialMode = "invite
   const [copied, setCopied] = useState(false);
   const [members, setMembers] = useState<GroupMembershipWithProfile[]>([]);
   const [fetchingMembers, setFetchingMembers] = useState(false);
+  const [inviteData, setInviteData] = useState({
+    token: activeGroup?.invite_token || "",
+    expiresAt: activeGroup?.invite_token_expires_at || ""
+  });
+
+  const isAdmin = activeGroup?.role === "admin";
 
   useEffect(() => {
     if (mode === "manage" && activeGroup) {
       loadMembers();
     }
+    if (mode === "invite" && activeGroup && isAdmin) {
+      checkAndRefreshInvite();
+    }
   }, [mode, activeGroup]);
+
+  const checkAndRefreshInvite = async () => {
+    if (!activeGroup) return;
+    
+    const isExpired = !inviteData.expiresAt || new Date(inviteData.expiresAt) < new Date();
+    
+    if (isExpired) {
+      handleRefreshInvite();
+    }
+  };
+
+  const handleRefreshInvite = async () => {
+    if (!activeGroup) return;
+    setLoading(true);
+    const res = await refreshInviteToken(activeGroup.id);
+    if (res.success && res.token) {
+      setInviteData({
+        token: res.token,
+        expiresAt: res.expiresAt || ""
+      });
+    }
+    setLoading(false);
+  };
 
   const loadMembers = async () => {
     if (!activeGroup) return;
@@ -38,11 +70,12 @@ export default function GroupModal({ onClose, activeGroup, initialMode = "invite
     setFetchingMembers(false);
   };
 
-  const inviteUrl = activeGroup?.invite_token
-    ? `${window.location.origin}/join/${activeGroup.invite_token}` 
+  const inviteUrl = inviteData.token
+    ? `${window.location.origin}/join/${inviteData.token}` 
     : "";
 
   const handleCopy = () => {
+    if (!inviteUrl) return;
     navigator.clipboard.writeText(inviteUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -114,11 +147,9 @@ export default function GroupModal({ onClose, activeGroup, initialMode = "invite
     });
   };
 
-  const isAdmin = activeGroup?.role === "admin";
-
   return (
     <Portal>
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+      <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
         <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-[2.5rem] shadow-2xl overflow-hidden border border-zinc-100 dark:border-zinc-800 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
           <div className="p-6 flex items-center justify-between border-b border-zinc-50 dark:border-zinc-800 flex-shrink-0">
             <h3 className="font-black text-xl tracking-tight text-zinc-950 dark:text-white uppercase">
@@ -160,7 +191,6 @@ export default function GroupModal({ onClose, activeGroup, initialMode = "invite
                       required
                       className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-bold text-zinc-950 dark:text-white"
                     />
-                    <p className="text-[9px] text-zinc-400 mt-1.5 px-1 uppercase tracking-widest">Només usuaris autoritzats</p>
                   </div>
                 </div>
 
@@ -177,21 +207,9 @@ export default function GroupModal({ onClose, activeGroup, initialMode = "invite
                 <div className="space-y-4">
                   <h4 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] px-1">Membres del grup</h4>
                   
-                  {error && mode === "manage" && (
-                    <p className="text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-xl mx-1">
-                      {error}
-                    </p>
-                  )}
-
                   {fetchingMembers ? (
                     <div className="flex justify-center py-4">
                       <Loader2 className="animate-spin text-zinc-300" />
-                    </div>
-                  ) : members.length === 0 ? (
-                    <div className="text-center py-8 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-700">
-                      <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest px-4">
-                        No s&apos;han trobat membres o no tens permisos per veure&apos;ls.
-                      </p>
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -224,7 +242,6 @@ export default function GroupModal({ onClose, activeGroup, initialMode = "invite
                                   onClick={() => handleUpdateRole(member.user_id, "admin")}
                                   disabled={isPending}
                                   className="p-2 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
-                                  title="Fer Admin"
                                 >
                                   <Shield size={16} />
                                 </button>
@@ -233,7 +250,6 @@ export default function GroupModal({ onClose, activeGroup, initialMode = "invite
                                 onClick={() => handleRemoveMember(member.user_id)}
                                 disabled={isPending}
                                 className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                title="Eliminar"
                               >
                                 <UserMinus size={16} />
                               </button>
@@ -277,18 +293,37 @@ export default function GroupModal({ onClose, activeGroup, initialMode = "invite
                   <p className="text-sm text-zinc-500">Comparteix aquest enllaç amb els amics perquè s&apos;uneixin al grup.</p>
                 </div>
 
-                <div className="flex gap-2 items-center p-2 bg-zinc-50 dark:bg-zinc-800 rounded-2xl border border-zinc-100 dark:border-zinc-700">
-                  <input
-                    readOnly
-                    value={inviteUrl}
-                    className="flex-1 bg-transparent border-none outline-none text-xs font-medium text-zinc-400 px-2 truncate"
-                  />
-                  <button
-                    onClick={handleCopy}
-                    className={`p-3 rounded-xl transition-all ${copied ? 'bg-green-500 text-white' : 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900'}`}
-                  >
-                    {copied ? <Check size={18} /> : <Copy size={18} />}
-                  </button>
+                <div className="space-y-4">
+                  <div className="flex gap-2 items-center p-2 bg-zinc-50 dark:bg-zinc-800 rounded-2xl border border-zinc-100 dark:border-zinc-700">
+                    <input
+                      readOnly
+                      value={loading ? "Generant enllaç..." : inviteUrl}
+                      className="flex-1 bg-transparent border-none outline-none text-xs font-medium text-zinc-400 px-2 truncate"
+                    />
+                    <button
+                      onClick={handleCopy}
+                      disabled={loading || !inviteUrl}
+                      className={`p-3 rounded-xl transition-all ${copied ? 'bg-green-500 text-white' : 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 disabled:opacity-50'}`}
+                    >
+                      {copied ? <Check size={18} /> : <Copy size={18} />}
+                    </button>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-2">
+                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">
+                      ⚠️ AQUEST ENLLAÇ CADUCA EN 48 HORES
+                    </p>
+                    {isAdmin && (
+                      <button 
+                        onClick={handleRefreshInvite}
+                        disabled={loading}
+                        className="flex items-center gap-1.5 text-[9px] font-bold text-zinc-400 hover:text-zinc-600 uppercase tracking-wider transition-colors"
+                      >
+                        <RefreshCcw size={10} className={loading ? "animate-spin" : ""} />
+                        Regenerar ara
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

@@ -9,6 +9,7 @@ export type Group = {
   name: string;
   slug: string;
   invite_token?: string;
+  invite_token_expires_at?: string | null;
   created_by: string;
   description: string | null;
   // Convenience for UI

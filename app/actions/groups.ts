@@ -55,10 +55,19 @@ export async function createGroup(formData: FormData): Promise<ActionResponse & 
     const { name } = validatedData.data;
     let slug = slugify(name);
 
+    // Set initial expiration to 48 hours
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 48);
+
     // 1. Create the group
     const { data: group, error: groupError } = await supabase
       .from("groups")
-      .insert({ name, slug, created_by: user.id })
+      .insert({ 
+        name, 
+        slug, 
+        created_by: user.id,
+        invite_token_expires_at: expiresAt.toISOString()
+      })
       .select()
       .single();
 
@@ -68,12 +77,22 @@ export async function createGroup(formData: FormData): Promise<ActionResponse & 
         const randomSuffix = Math.random().toString(36).substring(2, 6);
         const { data: retryGroup, error: retryError } = await supabase
           .from("groups")
-          .insert({ name, slug: `${slug}-${randomSuffix}`, created_by: user.id })
+          .insert({ 
+            name, 
+            slug: `${slug}-${randomSuffix}`, 
+            created_by: user.id,
+            invite_token_expires_at: expiresAt.toISOString()
+          })
           .select()
           .single();
         
         if (retryError) throw retryError;
         if (retryGroup) {
+          // 2. Add the creator as an admin member
+          await supabase
+            .from("group_memberships")
+            .insert({ group_id: retryGroup.id, user_id: user.id, role: "admin" });
+
           await setActiveGroup(retryGroup.id);
           return { success: true, groupId: retryGroup.id };
         }
@@ -101,8 +120,6 @@ export async function createGroup(formData: FormData): Promise<ActionResponse & 
 export async function getGroupMembers(groupId: string): Promise<{ success: boolean; data?: GroupMembershipWithProfile[]; error?: string }> {
   try {
     const supabase = await createClient();
-    
-    // Fem la consulta de membres incloent el perfil
     const { data, error } = await supabase
       .from("group_memberships")
       .select("*, profiles(*)")
@@ -113,12 +130,36 @@ export async function getGroupMembers(groupId: string): Promise<{ success: boole
       return { success: false, error: error.message };
     }
 
-    if (!data) return { success: true, data: [] };
-
     return { success: true, data: data as unknown as GroupMembershipWithProfile[] };
   } catch (e) {
     console.error("Unexpected error fetching members:", e);
     return { success: false, error: "Error inesperat al carregar els membres" };
+  }
+}
+
+export async function refreshInviteToken(groupId: string): Promise<{ success: boolean; token?: string; expiresAt?: string; error?: string }> {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Sessió no iniciada" };
+
+    const newToken = crypto.randomUUID();
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 48);
+
+    const { error } = await supabase
+      .from("groups")
+      .update({ 
+        invite_token: newToken,
+        invite_token_expires_at: expiresAt.toISOString()
+      })
+      .eq("id", groupId);
+
+    if (error) throw error;
+    return { success: true, token: newToken, expiresAt: expiresAt.toISOString() };
+  } catch (e) {
+    console.error("Error refreshing token:", e);
+    return { success: false, error: "Error al regenerar l'enllaç" };
   }
 }
 
@@ -193,7 +234,6 @@ export async function leaveGroup(groupId: string): Promise<ActionResponse> {
 
     if (error) throw error;
 
-    // Clear active group cookie if it was the one we just left
     const cookieStore = await cookies();
     const activeGroupId = cookieStore.get("konnecta_group_id")?.value;
     if (activeGroupId === groupId) {
@@ -214,14 +254,18 @@ export async function joinGroupByToken(token: string): Promise<ActionResponse> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Sessió no iniciada" };
 
-    // 1. Find the group by token
+    // 1. Find the group and check expiration
     const { data: group, error: groupError } = await supabase
       .from("groups")
-      .select("id")
+      .select("id, invite_token_expires_at")
       .eq("invite_token", token)
       .single();
 
-    if (groupError || !group) return { success: false, error: "Invitació no vàlida o caducada" };
+    if (groupError || !group) return { success: false, error: "Invitació no vàlida" };
+
+    if (group.invite_token_expires_at && new Date(group.invite_token_expires_at) < new Date()) {
+      return { success: false, error: "Aquesta invitació ha caducat" };
+    }
 
     // 2. Add member
     const { error: joinError } = await supabase
@@ -236,9 +280,7 @@ export async function joinGroupByToken(token: string): Promise<ActionResponse> {
       throw joinError;
     }
 
-    // 3. Set as active group
     await setActiveGroup(group.id);
-
     return { success: true };
   } catch (e) {
     console.error("Error joining group:", e);
