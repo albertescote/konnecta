@@ -4,11 +4,11 @@ import { useState, useRef, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { updateProfile } from "@/app/actions/profile";
 import { signOut } from "@/app/actions/auth";
-import { X, Camera, Loader2, User, LogOut, Settings } from "lucide-react";
+import { X, Camera, Loader2, User, LogOut, Settings, UserPlus, Plus } from "lucide-react";
 import Portal from "./Portal";
 import { Profile, Group } from "@/types";
 import { User as SupabaseUser } from "@supabase/supabase-js";
-import GroupSwitcher from "./GroupSwitcher";
+import GroupModal from "./GroupModal";
 
 interface Props {
   user: SupabaseUser;
@@ -22,23 +22,23 @@ export default function ProfileModal({ user, profile, groups, activeGroupId, onC
   const [loading, setLoading] = useState(false);
   const [fullName, setFullName] = useState(profile?.full_name || "");
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || "");
+  const [groupModal, setGroupModal] = useState<{ open: boolean; mode: "invite" | "create" | "manage" }>({
+    open: false,
+    mode: "invite",
+  });
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
+
+  const activeGroup = groups.find(g => g.id === activeGroupId);
+  const isAdmin = activeGroup?.role === "admin";
 
   // Lock body scroll when modal is open
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
-    const originalPosition = document.body.style.position;
-    const originalWidth = document.body.style.width;
-
-    // We use a combination of overflow and fixed position to ensure
-    // that even stubborn mobile browsers don't trigger the pull-to-refresh
     document.body.style.overflow = "hidden";
-    
     return () => {
       document.body.style.overflow = originalOverflow;
-      document.body.style.position = originalPosition;
-      document.body.style.width = originalWidth;
     };
   }, []);
 
@@ -93,12 +93,12 @@ export default function ProfileModal({ user, profile, groups, activeGroupId, onC
       <div 
         className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md overflow-hidden"
         onClick={onClose}
-        style={{ touchAction: 'none' }} // Strictly disable background gestures
+        style={{ touchAction: 'none' }}
       >
         <div 
           className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-[2.5rem] shadow-2xl overflow-hidden border border-zinc-100 dark:border-zinc-800 animate-in zoom-in-95 duration-200 my-auto max-h-[90vh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
-          style={{ touchAction: 'auto' }} // Re-enable for the modal itself
+          style={{ touchAction: 'auto' }}
         >
           {/* Fixed Header */}
           <div className="p-6 flex items-center justify-between border-b border-zinc-50 dark:border-zinc-800 flex-shrink-0">
@@ -151,7 +151,6 @@ export default function ProfileModal({ user, profile, groups, activeGroupId, onC
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Email (Read Only) */}
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] px-1">
                     Correu electrònic
@@ -163,7 +162,6 @@ export default function ProfileModal({ user, profile, groups, activeGroupId, onC
                   />
                 </div>
 
-                {/* Full Name */}
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] px-1">
                     Nom d&apos;usuari
@@ -188,18 +186,57 @@ export default function ProfileModal({ user, profile, groups, activeGroupId, onC
               </form>
 
               {/* Group Management Section */}
+              {activeGroup && (
+                <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 space-y-4">
+                  <div className="flex items-center gap-2 px-1">
+                    <Settings size={14} className="text-zinc-400" />
+                    <h4 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">
+                      Gestió de grup: <span className="text-zinc-950 dark:text-white">{activeGroup.name}</span>
+                    </h4>
+                  </div>
+                  
+                  {isAdmin ? (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setGroupModal({ open: true, mode: "invite" })}
+                        className="flex-1 flex items-center justify-center gap-2 py-4 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors shadow-sm"
+                      >
+                        <UserPlus size={16} />
+                        Convidar
+                      </button>
+                      <button
+                        onClick={() => setGroupModal({ open: true, mode: "manage" })}
+                        className="flex-1 flex items-center justify-center gap-2 py-4 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors shadow-sm"
+                      >
+                        <Settings size={16} />
+                        Gestionar
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="px-1">
+                      <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-relaxed">
+                        Ets membre d&apos;aquest grup. Només els administradors poden convidar o gestionar membres.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Create Group Section */}
               <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 space-y-4">
                 <div className="flex items-center gap-2 px-1">
-                  <Settings size={14} className="text-zinc-400" />
+                  <Plus size={14} className="text-zinc-400" />
                   <h4 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">
-                    Gestió de Grups
+                    Vols crear un grup?
                   </h4>
                 </div>
-                <GroupSwitcher 
-                  groups={groups} 
-                  activeGroupId={activeGroupId} 
-                  userId={user.id}
-                />
+                <button
+                  onClick={() => setGroupModal({ open: true, mode: "create" })}
+                  className="w-full flex items-center justify-center gap-2 py-4 bg-zinc-50 dark:bg-zinc-800 rounded-2xl text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                >
+                  <Plus size={16} />
+                  CREAR NOU GRUP
+                </button>
               </div>
 
               <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex flex-col gap-4">
@@ -220,6 +257,15 @@ export default function ProfileModal({ user, profile, groups, activeGroupId, onC
           </div>
         </div>
       </div>
+
+      {groupModal.open && (
+        <GroupModal
+          onClose={() => setGroupModal({ ...groupModal, open: false })}
+          activeGroup={activeGroup}
+          initialMode={groupModal.mode}
+          userId={user.id}
+        />
+      )}
     </Portal>
   );
 }
