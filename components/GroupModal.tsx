@@ -72,6 +72,19 @@ export default function GroupModal({ onClose, activeGroup }: Props) {
                       className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-bold"
                     />
                   </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] px-1">
+                      Clau de creació (Secret)
+                    </label>
+                    <input
+                      name="secret"
+                      type="password"
+                      placeholder="Introduir clau..."
+                      required
+                      className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-bold"
+                    />
+                    <p className="text-[9px] text-zinc-400 mt-1.5 px-1 uppercase tracking-widest">Només usuaris autoritzats</p>
+                  </div>
                 </div>
 
                 <button

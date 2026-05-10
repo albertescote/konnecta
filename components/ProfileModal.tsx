@@ -4,18 +4,21 @@ import { useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { updateProfile } from "@/app/actions/profile";
 import { signOut } from "@/app/actions/auth";
-import { X, Camera, Loader2, User, LogOut } from "lucide-react";
+import { X, Camera, Loader2, User, LogOut, Settings } from "lucide-react";
 import Portal from "./Portal";
-import { Profile } from "@/types";
+import { Profile, Group } from "@/types";
 import { User as SupabaseUser } from "@supabase/supabase-js";
+import GroupSwitcher from "./GroupSwitcher";
 
 interface Props {
   user: SupabaseUser;
   profile: Profile | null;
+  groups: Group[];
+  activeGroupId: string;
   onClose: () => void;
 }
 
-export default function ProfileModal({ user, profile, onClose }: Props) {
+export default function ProfileModal({ user, profile, groups, activeGroupId, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [fullName, setFullName] = useState(profile?.full_name || "");
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || "");
@@ -74,7 +77,7 @@ export default function ProfileModal({ user, profile, onClose }: Props) {
         <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-[2.5rem] shadow-2xl overflow-hidden border border-zinc-100 dark:border-zinc-800 animate-in zoom-in-95 duration-200 my-auto max-h-[90vh] flex flex-col">
           {/* Fixed Header */}
           <div className="p-6 flex items-center justify-between border-b border-zinc-50 dark:border-zinc-800 flex-shrink-0">
-            <h3 className="font-black text-xl tracking-tight text-zinc-950 dark:text-white">
+            <h3 className="font-black text-xl tracking-tight text-zinc-950 dark:text-white uppercase">
               El teu perfil
             </h3>
             <button
@@ -87,7 +90,7 @@ export default function ProfileModal({ user, profile, onClose }: Props) {
 
           {/* Scrollable Content */}
           <div className="overflow-y-auto flex-1 no-scrollbar">
-            <form onSubmit={handleSubmit} className="p-8 space-y-8">
+            <div className="p-8 space-y-8">
               {/* Avatar Upload */}
               <div className="flex flex-col items-center gap-4">
                 <div className="relative group">
@@ -122,7 +125,7 @@ export default function ProfileModal({ user, profile, onClose }: Props) {
                 </p>
               </div>
 
-              <div className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Email (Read Only) */}
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] px-1">
@@ -148,9 +151,7 @@ export default function ProfileModal({ user, profile, onClose }: Props) {
                     className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-bold"
                   />
                 </div>
-              </div>
 
-              <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex flex-col gap-4">
                 <button
                   type="submit"
                   disabled={loading || !isDirty}
@@ -159,7 +160,20 @@ export default function ProfileModal({ user, profile, onClose }: Props) {
                   {loading && <Loader2 size={20} className="animate-spin" />}
                   GUARDAR CANVIS
                 </button>
+              </form>
 
+              {/* Group Management Section */}
+              <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 space-y-4">
+                <div className="flex items-center gap-2 px-1">
+                  <Settings size={14} className="text-zinc-400" />
+                  <h4 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">
+                    Gestió de Grups
+                  </h4>
+                </div>
+                <GroupSwitcher groups={groups} activeGroupId={activeGroupId} />
+              </div>
+
+              <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex flex-col gap-4">
                 <button
                   type="button"
                   onClick={async () => {
@@ -173,7 +187,7 @@ export default function ProfileModal({ user, profile, onClose }: Props) {
                   TANCAR SESSIÓ
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       </div>

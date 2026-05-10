@@ -2,15 +2,19 @@
 
 import { useState } from "react";
 import ProfileModal from "./ProfileModal";
-import { Profile } from "@/types";
+import { Profile, Group } from "@/types";
 import { User } from "@supabase/supabase-js";
 
 export default function ProfileButton({
   user,
   profile,
+  groups,
+  activeGroupId,
 }: {
   user: User;
   profile: Profile | null;
+  groups: Group[];
+  activeGroupId: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -37,6 +41,8 @@ export default function ProfileButton({
         <ProfileModal
           user={user}
           profile={profile}
+          groups={groups}
+          activeGroupId={activeGroupId}
           onClose={() => setIsOpen(false)}
         />
       )}

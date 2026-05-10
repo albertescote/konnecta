@@ -18,6 +18,8 @@ export default function NewActivityForm({
   const anchorDate = parseISO(weekendDate);
   const initialStartDate = format(addDays(anchorDate, 1), "yyyy-MM-dd");
   const [startDate, setStartDate] = useState(initialStartDate);
+  const [endDate, setEndDate] = useState<string>("");
+  const [isMultiDay, setIsMultiDay] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
   const [title, setTitle] = useState("");
@@ -33,6 +35,7 @@ export default function NewActivityForm({
     setSelectedDay(dayId);
     setStartDate(format(date, "yyyy-MM-dd"));
     setIsFlexible(false);
+    setIsMultiDay(false);
   };
 
   if (!isOpen) {
@@ -61,6 +64,9 @@ export default function NewActivityForm({
         setIsPending(false);
         if (res.success) {
           setIsOpen(false);
+          setTitle("");
+          setDescription("");
+          setIsMultiDay(false);
         } else {
           setError(res.error || "Alguna cosa ha anat malament");
         }
@@ -78,7 +84,7 @@ export default function NewActivityForm({
         <X size={20} />
       </button>
 
-      <h3 className="text-lg font-bold tracking-tight text-zinc-950 dark:text-white">
+      <h3 className="text-lg font-bold tracking-tight text-zinc-950 dark:text-white uppercase">
         Nou Pla
       </h3>
 
@@ -92,10 +98,11 @@ export default function NewActivityForm({
       <input type="hidden" name="day_of_week" value={selectedDay} />
       <input type="hidden" name="groupId" value={groupId} />
       <input type="hidden" name="start_date" value={startDate} />
+      <input type="hidden" name="end_date" value={isMultiDay ? endDate : ""} />
 
       <div className="space-y-4">
         {/* Selector de Dia */}
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="flex gap-2 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-2xl">
             {daysData.map((day) => (
               <button
@@ -131,16 +138,42 @@ export default function NewActivityForm({
           </div>
 
           {isFlexible && (
-            <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-2 border-blue-500/30 outline-none focus:border-blue-500 font-bold text-zinc-950 dark:text-white"
-              />
-              <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mt-1.5 px-1">
-                Tria qualsevol data fora del cap de setmana
-              </p>
+            <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="grid grid-cols-1 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest px-1">Data d&apos;inici</label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-2 border-blue-500/30 outline-none focus:border-blue-500 font-bold text-zinc-950 dark:text-white text-sm"
+                  />
+                </div>
+                
+                <div className="flex items-center gap-2 px-1">
+                  <input 
+                    type="checkbox" 
+                    id="multi-day" 
+                    checked={isMultiDay} 
+                    onChange={(e) => setIsMultiDay(e.target.checked)}
+                    className="w-4 h-4 rounded border-zinc-300 text-blue-500 focus:ring-blue-500"
+                  />
+                  <label htmlFor="multi-day" className="text-[10px] font-black text-zinc-500 uppercase tracking-widest cursor-pointer">Pla de diversos dies</label>
+                </div>
+
+                {isMultiDay && (
+                  <div className="space-y-1.5 animate-in fade-in slide-in-from-left-1 duration-200">
+                    <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest px-1">Data de finalització</label>
+                    <input
+                      type="date"
+                      value={endDate}
+                      min={startDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-2 border-blue-500/30 outline-none focus:border-blue-500 font-bold text-zinc-950 dark:text-white text-sm"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -150,7 +183,7 @@ export default function NewActivityForm({
             name="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Títol"
+            placeholder="Títol del pla"
             required
             maxLength={50}
             className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-bold"
@@ -217,7 +250,7 @@ export default function NewActivityForm({
       <button
         type="submit"
         disabled={isPending}
-        className="w-full py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl font-black transition-transform active:scale-95 shadow-lg disabled:opacity-50"
+        className="w-full py-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-2xl font-black transition-transform active:scale-95 shadow-lg disabled:opacity-50"
       >
         {isPending ? "CREANT..." : "AFEGIR PLA"}
       </button>

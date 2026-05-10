@@ -14,6 +14,7 @@ import { format, parseISO, addDays } from "date-fns";
 import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { Group } from "@/types";
+import { Users } from "lucide-react";
 
 export default async function Home({
   searchParams,
@@ -92,14 +93,16 @@ export default async function Home({
 
           <div className="flex items-center gap-2 mt-1 text-zinc-950 dark:text-white">
             <ThemeToggle />
-            {user && <ProfileButton user={user} profile={profile} />}
+            {user && (
+              <ProfileButton 
+                user={user} 
+                profile={profile} 
+                groups={userGroups} 
+                activeGroupId={groupId || ""} 
+              />
+            )}
           </div>
         </header>
-        {user && (
-          <div className="w-full max-w-md mx-auto mt-6">
-            <GroupSwitcher groups={userGroups} activeGroupId={groupId || ""} />
-          </div>
-        )}
       </div>
 
       <div className="w-full max-w-md px-4 flex flex-col gap-6 pb-12 mt-10">
@@ -116,16 +119,19 @@ export default async function Home({
             </a>
           </div>
         ) : !groupId ? (
-          <div className="flex flex-col items-center gap-4 text-center py-24">
-            <p className="text-lg font-medium opacity-60">
+          <div className="flex flex-col items-center gap-4 text-center py-24 px-6">
+            <div className="w-20 h-20 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center text-zinc-400 mb-2">
+              <Users size={40} />
+            </div>
+            <p className="text-lg font-black tracking-tight">
               Encara no formes part de cap grup.
             </p>
-            <p className="text-sm text-zinc-500 mb-4">
-              Crea un grup nou o demana que t&apos;hi convidin!
+            <p className="text-sm text-zinc-500">
+              Crea un grup nou o demana que t&apos;hi convidin des del teu perfil.
             </p>
-            <GroupSwitcher groups={userGroups} activeGroupId="" />
           </div>
         ) : (
+
           <>
             {/* 2. DATE SELECTOR - Només es mostra si hi ha usuari */}
             <section>

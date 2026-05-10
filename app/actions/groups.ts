@@ -37,6 +37,13 @@ export async function createGroup(formData: FormData): Promise<ActionResponse & 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Sessió no iniciada" };
 
+    const secret = formData.get("secret");
+    const validSecret = process.env.GROUP_CREATION_SECRET;
+
+    if (!validSecret || secret !== validSecret) {
+      return { success: false, error: "Clau de creació incorrecta" };
+    }
+
     const validatedData = CreateGroupSchema.safeParse({
       name: formData.get("name"),
     });

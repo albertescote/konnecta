@@ -13,6 +13,7 @@ const CreateActivitySchema = z.object({
   title: z.string().min(1, "El títol és obligatori"),
   groupId: z.string().uuid(),
   start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
   start_time: z.string().optional(),
   day_of_week: z.enum(["divendres", "dissabte", "diumenge"]),
   weekend_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -33,6 +34,7 @@ export async function createActivity(
       title: formData.get("title"),
       groupId: formData.get("groupId"),
       start_date: formData.get("start_date") || undefined,
+      end_date: formData.get("end_date") || null,
       start_time: formData.get("start_time"),
       day_of_week: formData.get("day_of_week"),
       weekend_date: formData.get("weekend_date"),
@@ -44,7 +46,7 @@ export async function createActivity(
       return { success: false, error: validatedData.error.issues[0].message };
     }
 
-    let { title, groupId, start_date, start_time, day_of_week, weekend_date, description } =
+    let { title, groupId, start_date, end_date, start_time, day_of_week, weekend_date, description } =
       validatedData.data;
 
     // Derived start_date if not provided (legacy support)
@@ -66,6 +68,7 @@ export async function createActivity(
       title,
       group_id: groupId,
       start_date,
+      end_date,
       weekend_date,
       creator_id: user.id,
       start_time,

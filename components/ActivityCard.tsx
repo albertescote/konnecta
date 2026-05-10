@@ -105,9 +105,16 @@ export default function ActivityCard({
         return date;
       })();
 
+  const endDate = activity.end_date ? parseISO(activity.end_date) : null;
+  const isMultiDay = !!endDate && format(eventDate, "yyyy-MM-dd") !== format(endDate, "yyyy-MM-dd");
+
   const dayOfMonth = format(eventDate, "d");
   const monthName = format(eventDate, "MMM", { locale: ca });
   const dayNameShort = format(eventDate, "EEE", { locale: ca });
+
+  const dateDisplay = isMultiDay 
+    ? `${format(eventDate, "d/M")} al ${format(endDate, "d/M")}`
+    : `${dayNameShort} ${dayOfMonth} ${monthName}`;
 
   return (
     <>
@@ -119,7 +126,7 @@ export default function ActivityCard({
           <div className="space-y-1.5 flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-wider">
-                {dayNameShort} {dayOfMonth} {monthName}
+                {dateDisplay}
               </span>
               <h4 className="font-bold text-lg leading-tight text-zinc-950 dark:text-white">
                 {activity.title}
