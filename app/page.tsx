@@ -14,6 +14,7 @@ import PlansHub from "@/components/PlansHub";
 import SwipeContainer from "@/components/SwipeContainer";
 import GroupQuickSelect from "@/components/GroupQuickSelect";
 import NoGroupView from "@/components/NoGroupView";
+import GroupSync from "@/components/GroupSync";
 import { format, parseISO, addDays } from "date-fns";
 import { Suspense } from "react";
 import { cookies } from "next/headers";
@@ -32,18 +33,15 @@ export default async function Home({
   } = await supabase.auth.getUser();
 
   const cookieStore = await cookies();
-  let groupId = cookieStore.get("konnecta_group_id")?.value;
+  const cookieGroupId = cookieStore.get("konnecta_group_id")?.value;
+  let groupId = cookieGroupId;
 
   const params = await searchParams;
 
-  // Si rebem un group_id per URL (des d'una notificació), el prioritzem i el guardem
+  // Si rebem un group_id per URL (des d'una notificació), el prioritzem
   const urlGroupId = params.group_id as string;
   if (urlGroupId && urlGroupId !== groupId) {
     groupId = urlGroupId;
-    // Persistim el canvi de grup a la cookie (només ho podem fer així en Server Components de Next.js si fem el canvi abans del primer 'await cookieStore')
-    // Però com que Next.js 15+ permet configurar cookies en Server Actions o Middleware millor,
-    // fem servir el mètode que tenim d'acció de servidor.
-    await setActiveGroup(urlGroupId);
   }
 
   const selectedDateStr =
@@ -103,6 +101,7 @@ export default async function Home({
   return (
     <main className="min-h-screen bg-background text-foreground flex flex-col items-center transition-colors duration-300 overflow-x-hidden">
       <PullToRefresh />
+      <GroupSync urlGroupId={urlGroupId} cookieGroupId={cookieGroupId} />
 
       {/* 1. TOP BAR (Sticky) */}
       <div className="w-full bg-background sticky top-0 z-40 px-6 pt-8 pb-4 border-b border-zinc-100 dark:border-zinc-800 text-zinc-950 dark:text-white">
