@@ -38,8 +38,8 @@ export default function GroupModal({ onClose, activeGroup, initialMode = "invite
     setFetchingMembers(false);
   };
 
-  const inviteUrl = activeGroup 
-    ? `${window.location.origin}/join/${activeGroup.slug}` 
+  const inviteUrl = activeGroup?.invite_token
+    ? `${window.location.origin}/join/${activeGroup.invite_token}` 
     : "";
 
   const handleCopy = () => {

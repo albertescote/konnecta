@@ -208,20 +208,20 @@ export async function leaveGroup(groupId: string): Promise<ActionResponse> {
   }
 }
 
-export async function joinGroupBySlug(slug: string): Promise<ActionResponse> {
+export async function joinGroupByToken(token: string): Promise<ActionResponse> {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Sessió no iniciada" };
 
-    // 1. Find the group
+    // 1. Find the group by token
     const { data: group, error: groupError } = await supabase
       .from("groups")
       .select("id")
-      .eq("slug", slug)
+      .eq("invite_token", token)
       .single();
 
-    if (groupError || !group) return { success: false, error: "Grup no trobat" };
+    if (groupError || !group) return { success: false, error: "Invitació no vàlida o caducada" };
 
     // 2. Add member
     const { error: joinError } = await supabase

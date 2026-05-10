@@ -8,6 +8,7 @@ export type Group = {
   created_at: string;
   name: string;
   slug: string;
+  invite_token?: string;
   created_by: string;
   description: string | null;
   // Convenience for UI

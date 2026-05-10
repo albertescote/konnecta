@@ -1,29 +1,29 @@
 import { createClient } from "@/lib/supabase/server";
-import { joinGroupBySlug } from "@/app/actions/groups";
+import { joinGroupByToken } from "@/app/actions/groups";
 import { redirect } from "next/navigation";
 import { Users, LogIn } from "lucide-react";
 
 export default async function JoinPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ token: string }>;
 }) {
-  const { slug } = await params;
+  const { token } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Fetch group details
+  // Fetch group details by token
   const { data: group } = await supabase
     .from("groups")
     .select("name, description")
-    .eq("slug", slug)
+    .eq("invite_token", token)
     .single();
 
   if (!group) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
-        <h1 className="text-2xl font-black text-zinc-950 dark:text-white mb-2">Grup no trobat</h1>
-        <p className="text-zinc-500">Aquest enllaç d&apos;invitació no és vàlid o ha caducat.</p>
+        <h1 className="text-2xl font-black text-zinc-950 dark:text-white mb-2">Invitació no vàlida</h1>
+        <p className="text-zinc-500">Aquest enllaç d&apos;invitació no existeix o ha caducat.</p>
         <a href="/" className="mt-8 px-8 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-2xl font-black">TORNA A L&apos;INICI</a>
       </div>
     );
@@ -31,7 +31,7 @@ export default async function JoinPage({
 
   const handleJoin = async () => {
     "use server";
-    await joinGroupBySlug(slug);
+    await joinGroupByToken(token);
     redirect("/");
   };
 
@@ -54,7 +54,7 @@ export default async function JoinPage({
           <div className="space-y-4">
             <p className="text-sm text-zinc-400">Inicia sessió per acceptar la invitació i veure els plans del grup.</p>
             <a 
-              href={`/login?returnTo=/join/${slug}`}
+              href={`/login?returnTo=/join/${token}`}
               className="flex items-center justify-center gap-3 w-full py-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-2xl font-black shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
             >
               <LogIn size={20} />
