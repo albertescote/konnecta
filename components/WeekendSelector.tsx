@@ -15,12 +15,18 @@ export default function WeekendSelector() {
 
   const selectedDateStr =
     searchParams.get("date") || formatDbDate(getNextWeekends()[0]);
-  const weekends = getNextWeekends(10);
 
-  // Comprovem si la data actual està a la llista ràpida
+  // Només mostrem 5 caps de setmana per defecte
+  let weekends = getNextWeekends(5);
+
+  // Si la data seleccionada no està als 5 primers, l'afegim al principi temporalment
   const isDateInQuickList = weekends.some(
     (d) => formatDbDate(d) === selectedDateStr,
   );
+
+  if (!isDateInQuickList) {
+    weekends = [parseISO(selectedDateStr), ...weekends];
+  }
 
   const handleSelectDate = (date: Date) => {
     const dateStr = formatDbDate(date);
@@ -83,19 +89,15 @@ export default function WeekendSelector() {
           );
         })}
 
-        {/* BOTÓ CALENDARI AMB ESTAT SELECCIONAT */}
+        {/* BOTÓ CALENDARI */}
         <button
           onClick={() => setIsModalOpen(true)}
           disabled={isPending}
-          className={`flex-shrink-0 flex flex-col items-center justify-center min-w-[100px] p-4 rounded-3xl border-2 transition-all ${
-            !isDateInQuickList
-              ? "bg-zinc-900 border-zinc-900 text-white shadow-lg scale-105"
-              : "border-dashed border-zinc-200 dark:border-zinc-800 text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
-          } disabled:opacity-50`}
+          className="flex-shrink-0 flex flex-col items-center justify-center min-w-[100px] p-4 rounded-3xl border-2 border-dashed border-zinc-200 dark:border-zinc-800 text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-all disabled:opacity-50"
         >
           <Calendar size={24} />
           <span className="text-[10px] font-bold uppercase tracking-widest mt-2">
-            {!isDateInQuickList ? "Altra data" : "Més"}
+            Més
           </span>
         </button>
       </div>
