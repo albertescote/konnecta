@@ -77,7 +77,7 @@ export default function NewActivityForm({
           setError(res.error || "Alguna cosa ha anat malament");
         }
       }}
-      className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-6 rounded-[2.5rem] shadow-xl space-y-6 relative animate-in zoom-in-95 duration-200 w-full max-w-full overflow-hidden box-border"
+      className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-6 rounded-[2.5rem] shadow-xl space-y-6 relative animate-in zoom-in-95 duration-200 w-full max-w-full overflow-hidden box-border flex flex-col"
     >
       <button
         type="button"
@@ -106,9 +106,9 @@ export default function NewActivityForm({
       <input type="hidden" name="start_date" value={startDate} />
       <input type="hidden" name="end_date" value={isMultiDay ? endDate : ""} />
 
-      <div className="space-y-6 w-full">
+      <div className="space-y-6 w-full flex-1">
         {/* Selector de Dia Ràpid */}
-        <div className="flex gap-2 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-2xl">
+        <div className="flex gap-2 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-2xl w-full">
           {daysData.map((day) => (
             <button
               key={day.id}
@@ -143,32 +143,33 @@ export default function NewActivityForm({
         </div>
 
         {/* Grup d'Inici */}
-        <div className="space-y-4">
+        <div className="space-y-4 w-full">
           <div className="flex items-center gap-2 text-[10px] font-black text-zinc-400 uppercase tracking-widest px-1">
             <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
             Inici del pla
           </div>
           
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 w-full">
             {isFlexible && (
-              <div className="relative w-full">
-                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+              <div className="w-full relative flex items-center">
+                <Calendar className="absolute left-4 z-10 text-zinc-400 pointer-events-none" size={16} />
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full max-w-full m-0 pl-11 pr-4 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white text-base box-border block"
+                  style={{ width: '100%', minWidth: '0', flex: '1 1 0%' }}
+                  className="appearance-none m-0 pl-11 pr-4 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white text-base box-border"
                 />
               </div>
             )}
             
             <div className="flex gap-2 w-full">
               <div className="relative flex-1 min-w-0">
-                <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" size={16} />
                 <select
                   name="start_hour"
                   defaultValue="19"
-                  className="w-full pl-11 pr-2 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white appearance-none text-center text-base box-border block"
+                  className="w-full appearance-none m-0 pl-11 pr-2 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white text-center text-base box-border"
                 >
                   {Array.from({ length: 24 }).map((_, i) => (
                     <option key={i} value={i.toString().padStart(2, "0")}>
@@ -181,7 +182,7 @@ export default function NewActivityForm({
               <select
                 name="start_minute"
                 defaultValue="00"
-                className="flex-1 min-w-0 px-2 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white appearance-none text-center text-base box-border block"
+                className="flex-1 min-w-0 appearance-none m-0 px-2 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white text-center text-base box-border"
               >
                 {["00", "15", "30", "45"].map((m) => (
                   <option key={m} value={m}>
@@ -206,31 +207,32 @@ export default function NewActivityForm({
 
         {/* Grup de Finalització (Condicional) */}
         {isMultiDay && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200 pt-2 border-t border-zinc-50 dark:border-zinc-800/50">
+          <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200 pt-2 border-t border-zinc-50 dark:border-zinc-800/50 w-full">
             <div className="flex items-center gap-2 text-[10px] font-black text-zinc-400 uppercase tracking-widest px-1">
               <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
               Final del pla
             </div>
             
-            <div className="flex flex-col gap-4">
-              <div className="relative w-full">
-                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+            <div className="flex flex-col gap-4 w-full">
+              <div className="w-full relative flex items-center">
+                <Calendar className="absolute left-4 z-10 text-zinc-400 pointer-events-none" size={16} />
                 <input
                   type="date"
                   value={endDate}
                   min={startDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full max-w-full m-0 pl-11 pr-4 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white text-base box-border block"
+                  style={{ width: '100%', minWidth: '0', flex: '1 1 0%' }}
+                  className="appearance-none m-0 pl-11 pr-4 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white text-base box-border"
                 />
               </div>
               
               <div className="flex gap-2 w-full">
                 <div className="relative flex-1 min-w-0">
-                  <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                  <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" size={16} />
                   <select
                     name="end_hour"
                     defaultValue="22"
-                    className="w-full pl-11 pr-2 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white appearance-none text-center text-base box-border block"
+                    className="w-full appearance-none m-0 pl-11 pr-2 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white text-center text-base box-border"
                   >
                     {Array.from({ length: 24 }).map((_, i) => (
                       <option key={i} value={i.toString().padStart(2, "0")}>
@@ -243,7 +245,7 @@ export default function NewActivityForm({
                 <select
                   name="end_minute"
                   defaultValue="00"
-                  className="flex-1 min-w-0 px-2 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white appearance-none text-center text-base box-border block"
+                  className="flex-1 min-w-0 appearance-none m-0 px-2 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-zinc-950 dark:text-white text-center text-base box-border"
                 >
                   {["00", "15", "30", "45"].map((m) => (
                     <option key={m} value={m}>
@@ -257,8 +259,8 @@ export default function NewActivityForm({
         )}
 
         {/* Títol i Detalls */}
-        <div className="space-y-5 pt-4 border-t border-zinc-50 dark:border-zinc-800/50">
-          <div className="space-y-2">
+        <div className="space-y-5 pt-4 border-t border-zinc-50 dark:border-zinc-800/50 w-full">
+          <div className="space-y-2 w-full">
             <input
               name="title"
               value={title}
@@ -266,7 +268,8 @@ export default function NewActivityForm({
               placeholder="Títol del pla"
               required
               maxLength={50}
-              className="w-full max-w-full m-0 px-5 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-bold text-zinc-950 dark:text-white text-base box-border block"
+              style={{ width: '100%', minWidth: '0' }}
+              className="appearance-none m-0 px-5 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-bold text-zinc-950 dark:text-white text-base box-border"
             />
             <div className="flex justify-end pr-2">
               <span className={`text-[9px] font-black ${title.length >= 45 ? 'text-red-500' : 'text-zinc-400'}`}>
@@ -275,7 +278,7 @@ export default function NewActivityForm({
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 w-full">
             <textarea
               name="description"
               value={description}
@@ -283,7 +286,8 @@ export default function NewActivityForm({
               placeholder="Detalls (opcional)"
               rows={3}
               maxLength={200}
-              className="w-full max-w-full m-0 px-5 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-medium text-zinc-950 dark:text-white text-base box-border block resize-none"
+              style={{ width: '100%', minWidth: '0' }}
+              className="appearance-none m-0 px-5 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-medium text-zinc-950 dark:text-white text-base box-border resize-none"
             />
             <div className="flex justify-end pr-2">
               <span className={`text-[9px] font-black ${description.length >= 180 ? 'text-red-500' : 'text-zinc-400'}`}>
