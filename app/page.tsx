@@ -84,6 +84,7 @@ export default async function Home({
   const userComment = userPlan?.comment || null;
 
   const currentView = (params.view as "weekend" | "all") || "weekend";
+  const activeGroup = userGroups.find((g) => g.id === groupId);
 
   return (
     <main className="min-h-screen bg-background text-foreground flex flex-col items-center transition-colors duration-300 overflow-x-hidden">
@@ -92,12 +93,12 @@ export default async function Home({
       {/* 1. TOP BAR (Sticky) */}
       <div className="w-full bg-background sticky top-0 z-40 px-6 pt-8 pb-4 border-b border-zinc-100 dark:border-zinc-800 text-zinc-950 dark:text-white">
         <header className="flex items-start justify-between w-full max-w-md mx-auto text-zinc-950 dark:text-white">
-          <div className="flex flex-col">
+          <div className="flex flex-col min-w-0">
             <h1 className="text-3xl font-black tracking-tighter leading-[0.85] text-zinc-950 dark:text-white flex flex-col">
               <span>KONNECTA</span>
             </h1>
-            <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] mt-3">
-              {displayDate}
+            <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] mt-3 truncate">
+              {activeGroup?.name || "Benvingut"}
             </p>
           </div>
 
