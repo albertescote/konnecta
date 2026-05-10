@@ -9,9 +9,9 @@ import ThemeToggle from "@/components/ThemeToggle";
 import ActivityBoard from "@/components/ActivityBoard";
 import ProfileButton from "@/components/ProfileButton";
 import PullToRefresh from "@/components/PullToRefresh";
-import GroupSwitcher from "@/components/GroupSwitcher";
 import ViewToggle from "@/components/ViewToggle";
 import PlansHub from "@/components/PlansHub";
+import SwipeContainer from "@/components/SwipeContainer";
 import { format, parseISO, addDays } from "date-fns";
 import { Suspense } from "react";
 import { cookies } from "next/headers";
@@ -83,14 +83,14 @@ export default async function Home({
     (userPlan?.status as "going" | "not_going" | "pending" | null) || null;
   const userComment = userPlan?.comment || null;
 
-  const currentView = (params.view as string) || "weekend";
+  const currentView = (params.view as "weekend" | "all") || "weekend";
 
   return (
     <main className="min-h-screen bg-background text-foreground flex flex-col items-center transition-colors duration-300 overflow-x-hidden">
       <PullToRefresh />
 
       {/* 1. TOP BAR (Sticky) */}
-      <div className="w-full bg-background sticky top-0 z-40 px-6 pt-8 pb-6 border-b border-zinc-100 dark:border-zinc-800 text-zinc-950 dark:text-white">
+      <div className="w-full bg-background sticky top-0 z-40 px-6 pt-8 pb-4 border-b border-zinc-100 dark:border-zinc-800 text-zinc-950 dark:text-white">
         <header className="flex items-start justify-between w-full max-w-md mx-auto text-zinc-950 dark:text-white">
           <div className="flex flex-col">
             <h1 className="text-3xl font-black tracking-tighter leading-[0.85] text-zinc-950 dark:text-white flex flex-col">
@@ -113,16 +113,14 @@ export default async function Home({
             )}
           </div>
         </header>
-        {user && (
-          <div className="w-full max-w-md mx-auto mt-6 space-y-4">
-            {/* El GroupSwitcher només es mostra si hi ha grups, però ViewToggle sempre que estiguis loguejat */}
-            <GroupSwitcher groups={userGroups} activeGroupId={groupId || ""} userId={user.id} />
-            {groupId && <ViewToggle />}
+        {user && groupId && (
+          <div className="w-full max-w-md mx-auto mt-4">
+            <ViewToggle />
           </div>
         )}
       </div>
 
-      <div className="w-full max-w-md px-4 flex flex-col gap-6 pb-12 mt-10">
+      <div className="w-full max-w-md px-4 flex flex-col gap-6 pb-12 mt-6">
         {!user ? (
           <div className="flex flex-col items-center gap-4 text-center py-24">
             <p className="text-lg font-medium opacity-60">
@@ -147,96 +145,96 @@ export default async function Home({
               Crea un grup nou o demana que t&apos;hi convidin des del teu perfil.
             </p>
           </div>
-        ) : currentView === "all" ? (
-          <Suspense
-            fallback={
-              <div className="space-y-4 py-12">
-                <div className="h-24 w-full bg-background border border-zinc-100 dark:border-zinc-800 animate-pulse rounded-3xl" />
-                <div className="h-24 w-full bg-background border border-zinc-100 dark:border-zinc-800 animate-pulse rounded-3xl opacity-50" />
-              </div>
-            }
-          >
-            <PlansHub currentUserId={user.id} groupId={groupId} />
-          </Suspense>
         ) : (
-          <>
-            {/* 2. DATE SELECTOR - Només es mostra si hi ha usuari */}
+          <SwipeContainer activeView={currentView}>
+            {/* WEEKEND VIEW */}
+            <div className="space-y-6">
+              <section>
+                <WeekendSelector />
+              </section>
 
-            <section>
-              <WeekendSelector />
-            </section>
+              <div className="flex flex-col gap-6">
+                <Suspense
+                  fallback={
+                    <div className="h-24 w-full bg-background border border-zinc-100 dark:border-zinc-800 animate-pulse rounded-[2rem]" />
+                  }
+                >
+                  <WeatherCard date={selectedDateStr} />
+                </Suspense>
 
-            {/* 3. CONTEXTUAL WEATHER & VOTE */}
-            <div className="flex flex-col gap-6">
-              <Suspense
-                fallback={
-                  <div className="h-24 w-full bg-background border border-zinc-100 dark:border-zinc-800 animate-pulse rounded-[2rem]" />
-                }
-              >
-                <WeatherCard date={selectedDateStr} />
-              </Suspense>
+                <VotingSection
+                  key={`${selectedDateStr}-${groupId}`}
+                  userId={user.id}
+                  groupId={groupId}
+                  weekendDate={selectedDateStr}
+                  initialStatus={userStatus}
+                  initialComment={userComment}
+                  displayDate={displayDate}
+                />
+              </div>
 
-              <VotingSection
-                key={`${selectedDateStr}-${groupId}`}
-                userId={user.id}
-                groupId={groupId}
-                weekendDate={selectedDateStr}
-                initialStatus={userStatus}
-                initialComment={userComment}
-                displayDate={displayDate}
-              />
+              <div className="space-y-4">
+                <h3 className="text-sm font-black uppercase tracking-[0.2em] text-zinc-400 px-2">
+                  Qui ve?
+                </h3>
+                <Suspense
+                  fallback={
+                    <div className="space-y-3">
+                      <div className="h-16 w-full bg-background border border-zinc-100 dark:border-zinc-800 animate-pulse rounded-2xl" />
+                      <div className="h-16 w-full bg-background border border-zinc-100 dark:border-zinc-800 animate-pulse rounded-2xl opacity-50" />
+                    </div>
+                  }
+                >
+                  <AttendanceList weekendDate={selectedDateStr} groupId={groupId} />
+                </Suspense>
+              </div>
+
+              <hr className="border-zinc-200 dark:border-zinc-800 mx-4" />
+
+              <div className="space-y-4">
+                <h3 className="text-sm font-black uppercase tracking-[0.2em] text-zinc-400 px-2">
+                  Plans
+                </h3>
+                <Suspense
+                  fallback={
+                    <div className="h-24 w-full bg-background border border-zinc-100 dark:border-zinc-800 animate-pulse rounded-3xl" />
+                  }
+                >
+                  <ActivityBoard
+                    weekendDate={selectedDateStr}
+                    currentUserId={user.id}
+                    groupId={groupId}
+                  />
+                </Suspense>
+              </div>
+
+              <hr className="border-zinc-200 dark:border-zinc-800 mx-4" />
+
+              <div className="pb-8">
+                <Suspense
+                  fallback={
+                    <div className="h-40 w-full bg-background border border-zinc-100 dark:border-zinc-800 animate-pulse rounded-3xl" />
+                  }
+                >
+                  <HallOfFame groupId={groupId} />
+                </Suspense>
+              </div>
             </div>
 
-            {/* 4. ATTENDANCE */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-zinc-400 px-2">
-                Qui ve?
-              </h3>
+            {/* PLANS HUB VIEW */}
+            <div>
               <Suspense
                 fallback={
-                  <div className="space-y-3">
-                    <div className="h-16 w-full bg-background border border-zinc-100 dark:border-zinc-800 animate-pulse rounded-2xl" />
-                    <div className="h-16 w-full bg-background border border-zinc-100 dark:border-zinc-800 animate-pulse rounded-2xl opacity-50" />
+                  <div className="space-y-4 py-12">
+                    <div className="h-24 w-full bg-background border border-zinc-100 dark:border-zinc-800 animate-pulse rounded-3xl" />
+                    <div className="h-24 w-full bg-background border border-zinc-100 dark:border-zinc-800 animate-pulse rounded-3xl opacity-50" />
                   </div>
                 }
               >
-                <AttendanceList weekendDate={selectedDateStr} groupId={groupId} />
+                <PlansHub currentUserId={user.id} groupId={groupId} />
               </Suspense>
             </div>
-
-            <hr className="border-zinc-200 dark:border-zinc-800 mx-4" />
-
-            {/* 5. ACTIVITIES */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-zinc-400 px-2">
-                Plans
-              </h3>
-              <Suspense
-                fallback={
-                  <div className="h-24 w-full bg-background border border-zinc-100 dark:border-zinc-800 animate-pulse rounded-3xl" />
-                }
-              >
-                <ActivityBoard
-                  weekendDate={selectedDateStr}
-                  currentUserId={user.id}
-                  groupId={groupId}
-                />
-              </Suspense>
-            </div>
-
-            <hr className="border-zinc-200 dark:border-zinc-800 mx-4" />
-
-            {/* 6. GAMIFICATION */}
-            <div className="pb-8">
-              <Suspense
-                fallback={
-                  <div className="h-40 w-full bg-background border border-zinc-100 dark:border-zinc-800 animate-pulse rounded-3xl" />
-                }
-              >
-                <HallOfFame groupId={groupId} />
-              </Suspense>
-            </div>
-          </>
+          </SwipeContainer>
         )}
       </div>
 
