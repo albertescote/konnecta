@@ -32,15 +32,15 @@ export type Activity = {
   created_at: string;
   title: string;
   description: string | null;
-  group_id: string;
-  start_date: string;
-  end_date: string | null;
+  group_id?: string;
+  start_date?: string;
+  end_date?: string | null;
   start_time: string | null;
   creator_id: string;
   activity_participants?: ActivityParticipant[];
-  // Legacy fields (optional during migration)
-  weekend_date?: string;
-  day_of_week?: "divendres" | "dissabte" | "diumenge";
+  // Legacy fields (required until refactor is complete)
+  weekend_date: string;
+  day_of_week: "divendres" | "dissabte" | "diumenge";
 };
 
 export type ActivityParticipant = {
