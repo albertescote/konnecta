@@ -32,6 +32,13 @@ export default function SwipeContainer({ children, activeView }: Props) {
   }, [activeView]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    // Prevent swipe if touch starts in an element marked as no-swipe
+    const target = e.target as HTMLElement;
+    if (target.closest('[data-no-swipe]')) {
+      directionLocked.current = "vertical"; // Effectively disable horizontal swipe
+      return;
+    }
+
     startX.current = e.touches[0].clientX;
     startY.current = e.touches[0].clientY;
     currentX.current = e.touches[0].clientX;

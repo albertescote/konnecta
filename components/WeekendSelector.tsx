@@ -65,6 +65,7 @@ export default function WeekendSelector() {
 
       <div 
         ref={scrollRef}
+        data-no-swipe
         className="w-full flex gap-3 overflow-x-auto pt-2 pb-4 px-4 no-scrollbar scroll-smooth justify-start"
       >
         {weekends.map((friday) => {
