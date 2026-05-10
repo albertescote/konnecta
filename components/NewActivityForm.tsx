@@ -56,9 +56,15 @@ export default function NewActivityForm({
         setIsPending(true);
         setError(null);
 
-        const hour = formData.get("hour");
-        const minute = formData.get("minute");
-        formData.set("start_time", `${hour}:${minute}`);
+        const startHour = formData.get("start_hour");
+        const startMinute = formData.get("start_minute");
+        formData.set("start_time", `${startHour}:${startMinute}`);
+
+        if (isMultiDay) {
+          const endHour = formData.get("end_hour");
+          const endMinute = formData.get("end_minute");
+          formData.set("end_time", `${endHour}:${endMinute}`);
+        }
 
         const res = await createActivity(formData);
         setIsPending(false);
@@ -146,7 +152,7 @@ export default function NewActivityForm({
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-2 border-blue-500/30 outline-none focus:border-blue-500 font-bold text-zinc-950 dark:text-white text-sm"
+                    className="w-full box-border px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-2 border-blue-500/30 outline-none focus:border-blue-500 font-bold text-zinc-950 dark:text-white text-sm"
                   />
                 </div>
                 
@@ -169,7 +175,7 @@ export default function NewActivityForm({
                       value={endDate}
                       min={startDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-2 border-blue-500/30 outline-none focus:border-blue-500 font-bold text-zinc-950 dark:text-white text-sm"
+                      className="w-full box-border px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-2 border-blue-500/30 outline-none focus:border-blue-500 font-bold text-zinc-950 dark:text-white text-sm"
                     />
                   </div>
                 )}
@@ -195,38 +201,71 @@ export default function NewActivityForm({
           </div>
         </div>
 
-        {/* Selector d'hora personalitzat de 15 minuts */}
-        <div className="space-y-1.5">
-          <label className="flex items-center gap-2 text-[10px] font-black text-zinc-400 uppercase tracking-widest px-1">
-            <Clock size={12} />A quina hora?
-          </label>
-          <div className="flex gap-2">
-            <select
-              name="hour"
-              defaultValue="19"
-              className="flex-1 px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-bold text-zinc-950 dark:text-white appearance-none text-center"
-            >
-              {Array.from({ length: 24 }).map((_, i) => (
-                <option key={i} value={i.toString().padStart(2, "0")}>
-                  {i.toString().padStart(2, "0")}h
-                </option>
-              ))}
-            </select>
-            <div className="flex items-center font-bold text-zinc-400">:</div>
-            <select
-              name="minute"
-              defaultValue="00"
-              className="flex-1 px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-bold text-zinc-950 dark:text-white appearance-none text-center"
-            >
-              {["00", "15", "30", "45"].map((m) => (
-                <option key={m} value={m}>
-                  {m}m
-                </option>
-              ))}
-            </select>
+        {/* Selector d'hora personalitzat */}
+        <div className="grid grid-cols-1 gap-4">
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-2 text-[10px] font-black text-zinc-400 uppercase tracking-widest px-1">
+              <Clock size={12} /> {isMultiDay ? "Hora d'inici" : "A quina hora?"}
+            </label>
+            <div className="flex gap-2">
+              <select
+                name="start_hour"
+                defaultValue="19"
+                className="flex-1 px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-bold text-zinc-950 dark:text-white appearance-none text-center"
+              >
+                {Array.from({ length: 24 }).map((_, i) => (
+                  <option key={i} value={i.toString().padStart(2, "0")}>
+                    {i.toString().padStart(2, "0")}h
+                  </option>
+                ))}
+              </select>
+              <div className="flex items-center font-bold text-zinc-400">:</div>
+              <select
+                name="start_minute"
+                defaultValue="00"
+                className="flex-1 px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-bold text-zinc-950 dark:text-white appearance-none text-center"
+              >
+                {["00", "15", "30", "45"].map((m) => (
+                  <option key={m} value={m}>
+                    {m}m
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-          {/* Combinem els valors en un input hidden per l'acció */}
-          <input type="hidden" name="start_time" value="" />
+
+          {isMultiDay && (
+            <div className="space-y-1.5 animate-in fade-in slide-in-from-left-1 duration-200">
+              <label className="flex items-center gap-2 text-[10px] font-black text-zinc-400 uppercase tracking-widest px-1">
+                <Clock size={12} /> Hora de finalització
+              </label>
+              <div className="flex gap-2">
+                <select
+                  name="end_hour"
+                  defaultValue="22"
+                  className="flex-1 px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-bold text-zinc-950 dark:text-white appearance-none text-center"
+                >
+                  {Array.from({ length: 24 }).map((_, i) => (
+                    <option key={i} value={i.toString().padStart(2, "0")}>
+                      {i.toString().padStart(2, "0")}h
+                    </option>
+                  ))}
+                </select>
+                <div className="flex items-center font-bold text-zinc-400">:</div>
+                <select
+                  name="end_minute"
+                  defaultValue="00"
+                  className="flex-1 px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-bold text-zinc-950 dark:text-white appearance-none text-center"
+                >
+                  {["00", "15", "30", "45"].map((m) => (
+                    <option key={m} value={m}>
+                      {m}m
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="space-y-1">
@@ -237,7 +276,7 @@ export default function NewActivityForm({
             placeholder="Detalls (opcional)"
             rows={2}
             maxLength={200}
-            className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-medium"
+            className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-medium text-zinc-950 dark:text-white"
           />
           <div className="flex justify-end px-1">
             <span className={`text-[8px] font-black ${description.length >= 180 ? 'text-red-500' : 'text-zinc-400'}`}>

@@ -42,6 +42,7 @@ export type Activity = {
   start_date?: string;
   end_date?: string | null;
   start_time: string | null;
+  end_time?: string | null;
   creator_id: string;
   activity_participants?: ActivityParticipant[];
   // Legacy fields (required until refactor is complete)
