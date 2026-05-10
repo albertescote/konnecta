@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Users, ChevronDown, Plus, UserPlus } from "lucide-react";
+import { Users, ChevronDown, Plus, UserPlus, Settings } from "lucide-react";
 import { Group } from "@/types";
 import { setActiveGroup } from "@/app/actions/groups";
 import GroupModal from "./GroupModal";
@@ -9,16 +9,18 @@ import GroupModal from "./GroupModal";
 interface Props {
   groups: Group[];
   activeGroupId: string;
+  userId: string;
 }
 
-export default function GroupSwitcher({ groups, activeGroupId }: Props) {
+export default function GroupSwitcher({ groups, activeGroupId, userId }: Props) {
   const [isPending, startTransition] = useTransition();
-  const [modalState, setModalState] = useState<{ open: boolean; mode: "invite" | "create" }>({
+  const [modalState, setModalState] = useState<{ open: boolean; mode: "invite" | "create" | "manage" }>({
     open: false,
     mode: "invite",
   });
 
-  const activeGroup = groups.find((g) => g.id === activeGroupId) || groups[0];
+  const activeGroup = groups.find((g) => g.id === activeGroupId);
+  const isAdmin = activeGroup?.role === "admin";
 
   const handleSwitch = (groupId: string) => {
     if (groupId === activeGroupId) return;
@@ -72,6 +74,16 @@ export default function GroupSwitcher({ groups, activeGroupId }: Props) {
         >
           <Plus size={20} />
         </button>
+
+        {isAdmin && (
+          <button
+            onClick={() => setModalState({ open: true, mode: "manage" })}
+            className="p-3 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-sm text-zinc-500 dark:text-zinc-400 hover:scale-105 active:scale-95 transition-all"
+            title="Gestionar grup"
+          >
+            <Settings size={20} />
+          </button>
+        )}
       </div>
 
       {modalState.open && (
@@ -79,6 +91,7 @@ export default function GroupSwitcher({ groups, activeGroupId }: Props) {
           onClose={() => setModalState({ ...modalState, open: false })}
           activeGroup={activeGroup}
           initialMode={modalState.mode}
+          userId={userId}
         />
       )}
     </>

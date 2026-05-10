@@ -10,6 +10,8 @@ export type Group = {
   slug: string;
   created_by: string;
   description: string | null;
+  // Convenience for UI
+  role?: "admin" | "member";
 };
 
 export type GroupMembership = {
@@ -17,6 +19,10 @@ export type GroupMembership = {
   user_id: string;
   role: "admin" | "member";
   joined_at: string;
+};
+
+export type GroupMembershipWithProfile = GroupMembership & {
+  profiles: Profile;
 };
 
 export type Profile = {

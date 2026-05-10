@@ -43,16 +43,17 @@ export default async function Home({
   if (user) {
     const { data: memberships } = await supabase
       .from("group_memberships")
-      .select("groups (*)")
+      .select("role, groups (*)")
       .eq("user_id", user.id);
 
-    userGroups = (memberships?.map((m: any) => m.groups) || []) as Group[];
+    userGroups = (memberships?.map((m: any) => ({
+      ...m.groups,
+      role: m.role,
+    })) || []) as Group[];
 
     // Auto-select first group if none active
     if (!groupId && userGroups.length > 0) {
       groupId = userGroups[0].id;
-      // Note: We can't set cookie here in a server component during render easily, 
-      // but we use this ID for the current request.
     }
   }
 

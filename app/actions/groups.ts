@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
-import { ActionResponse } from "@/types";
+import { ActionResponse, GroupMembershipWithProfile } from "@/types";
 
 export async function setActiveGroup(groupId: string) {
   const cookieStore = await cookies();
@@ -55,10 +55,6 @@ export async function createGroup(formData: FormData): Promise<ActionResponse & 
     const { name } = validatedData.data;
     let slug = slugify(name);
 
-    // Ensure slug is unique by appending a short random string if needed
-    // In a real multi-tenant app, we might check and loop, 
-    // but for now, we'll try a direct insert and let the user know if name is too common.
-    
     // 1. Create the group
     const { data: group, error: groupError } = await supabase
       .from("groups")
@@ -102,6 +98,82 @@ export async function createGroup(formData: FormData): Promise<ActionResponse & 
   }
 }
 
+export async function getGroupMembers(groupId: string): Promise<{ success: boolean; data?: GroupMembershipWithProfile[]; error?: string }> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("group_memberships")
+      .select(`
+        *,
+        profiles (*)
+      `)
+      .eq("group_id", groupId);
+
+    if (error) throw error;
+    return { success: true, data: data as unknown as GroupMembershipWithProfile[] };
+  } catch (e) {
+    console.error("Error fetching members:", e);
+    return { success: false, error: "Error al carregar els membres" };
+  }
+}
+
+export async function updateMemberRole(groupId: string, userId: string, role: "admin" | "member"): Promise<ActionResponse> {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("group_memberships")
+      .update({ role })
+      .eq("group_id", groupId)
+      .eq("user_id", userId);
+
+    if (error) throw error;
+    revalidatePath("/");
+    return { success: true };
+  } catch (e) {
+    console.error("Error updating role:", e);
+    return { success: false, error: "No s'ha pogut actualitzar el rol" };
+  }
+}
+
+export async function removeMember(groupId: string, userId: string): Promise<ActionResponse> {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("group_memberships")
+      .delete()
+      .eq("group_id", groupId)
+      .eq("user_id", userId);
+
+    if (error) throw error;
+    revalidatePath("/");
+    return { success: true };
+  } catch (e) {
+    console.error("Error removing member:", e);
+    return { success: false, error: "No s'ha pogut eliminar el membre" };
+  }
+}
+
+export async function deleteGroup(groupId: string): Promise<ActionResponse> {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("groups")
+      .delete()
+      .eq("id", groupId);
+
+    if (error) throw error;
+
+    const cookieStore = await cookies();
+    cookieStore.delete("konnecta_group_id");
+
+    revalidatePath("/");
+    return { success: true };
+  } catch (e) {
+    console.error("Error deleting group:", e);
+    return { success: false, error: "No s'ha pogut esborrar el grup" };
+  }
+}
+
 export async function joinGroupBySlug(slug: string): Promise<ActionResponse> {
   try {
     const supabase = await createClient();
@@ -117,14 +189,13 @@ export async function joinGroupBySlug(slug: string): Promise<ActionResponse> {
 
     if (groupError || !group) return { success: false, error: "Grup no trobat" };
 
-    // 2. Add member (RLS or UNIQUE constraint will handle duplicates)
+    // 2. Add member
     const { error: joinError } = await supabase
       .from("group_memberships")
       .insert({ group_id: group.id, user_id: user.id, role: "member" });
 
     if (joinError) {
       if (joinError.code === "23505") {
-        // Already a member, just set active
         await setActiveGroup(group.id);
         return { success: true };
       }

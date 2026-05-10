@@ -170,7 +170,11 @@ export default function ProfileModal({ user, profile, groups, activeGroupId, onC
                     Gestió de Grups
                   </h4>
                 </div>
-                <GroupSwitcher groups={groups} activeGroupId={activeGroupId} />
+                <GroupSwitcher 
+                  groups={groups} 
+                  activeGroupId={activeGroupId} 
+                  userId={user.id}
+                />
               </div>
 
               <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex flex-col gap-4">
