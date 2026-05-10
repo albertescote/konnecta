@@ -17,8 +17,19 @@ export async function setActiveGroup(groupId: string) {
 
 const CreateGroupSchema = z.object({
   name: z.string().min(3, "El nom ha de tenir almenys 3 caràcters"),
-  slug: z.string().min(3, "L'identificador ha de tenir almenys 3 caràcters").regex(/^[a-z0-9-]+$/, "Només lletres minúscules, números i guions"),
 });
+
+function slugify(text: string) {
+  return text
+    .toString()
+    .toLowerCase()
+    .normalize("NFD") // Split accents from letters
+    .replace(/[\u0300-\u036f]/g, "") // Remove accents
+    .trim()
+    .replace(/\s+/g, "-") // Replace spaces with -
+    .replace(/[^\w-]+/g, "") // Remove all non-word chars
+    .replace(/--+/g, "-"); // Replace multiple - with single -
+}
 
 export async function createGroup(formData: FormData): Promise<ActionResponse & { groupId?: string }> {
   try {
@@ -28,15 +39,19 @@ export async function createGroup(formData: FormData): Promise<ActionResponse & 
 
     const validatedData = CreateGroupSchema.safeParse({
       name: formData.get("name"),
-      slug: formData.get("slug"),
     });
 
     if (!validatedData.success) {
       return { success: false, error: validatedData.error.issues[0].message };
     }
 
-    const { name, slug } = validatedData.data;
+    const { name } = validatedData.data;
+    let slug = slugify(name);
 
+    // Ensure slug is unique by appending a short random string if needed
+    // In a real multi-tenant app, we might check and loop, 
+    // but for now, we'll try a direct insert and let the user know if name is too common.
+    
     // 1. Create the group
     const { data: group, error: groupError } = await supabase
       .from("groups")
@@ -45,7 +60,21 @@ export async function createGroup(formData: FormData): Promise<ActionResponse & 
       .single();
 
     if (groupError) {
-      if (groupError.code === "23505") return { success: false, error: "Aquest identificador ja està en ús" };
+      if (groupError.code === "23505") {
+        // Retry with a short random suffix if slug exists
+        const randomSuffix = Math.random().toString(36).substring(2, 6);
+        const { data: retryGroup, error: retryError } = await supabase
+          .from("groups")
+          .insert({ name, slug: `${slug}-${randomSuffix}`, created_by: user.id })
+          .select()
+          .single();
+        
+        if (retryError) throw retryError;
+        if (retryGroup) {
+          await setActiveGroup(retryGroup.id);
+          return { success: true, groupId: retryGroup.id };
+        }
+      }
       throw groupError;
     }
 
