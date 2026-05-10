@@ -105,7 +105,9 @@ const UpdateActivitySchema = z.object({
   id: z.string().uuid(),
   title: z.string().min(1, "El títol és obligatori"),
   start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
   start_time: z.string().optional().nullable(),
+  end_time: z.string().optional().nullable(),
   day_of_week: z.enum(["divendres", "dissabte", "diumenge"]),
   description: z.string().optional().nullable(),
 });
@@ -124,7 +126,9 @@ export async function updateActivity(
       id: formData.get("id"),
       title: formData.get("title"),
       start_date: formData.get("start_date") || undefined,
+      end_date: formData.get("end_date") || null,
       start_time: formData.get("start_time"),
+      end_time: formData.get("end_time") || null,
       day_of_week: formData.get("day_of_week"),
       description: formData.get("description"),
     };
@@ -134,7 +138,7 @@ export async function updateActivity(
       return { success: false, error: validatedData.error.issues[0].message };
     }
 
-    const { id, title, start_date, start_time, day_of_week, description } =
+    const { id, title, start_date, end_date, start_time, end_time, day_of_week, description } =
       validatedData.data;
 
     const { error } = await supabase
@@ -142,7 +146,9 @@ export async function updateActivity(
       .update({
         title,
         start_date,
+        end_date,
         start_time,
+        end_time,
         day_of_week,
         description,
       })

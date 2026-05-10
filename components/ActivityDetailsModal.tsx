@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Clock, Edit2, MessageCircle, Trash2, UserPlus, Users, X } from "lucide-react";
+import { Check, Clock, Edit2, MessageCircle, Trash2, UserPlus, Users, X, Calendar } from "lucide-react";
 import Portal from "./Portal";
 import AddToCalendarButton from "./AddToCalendarButton";
 import { Activity, ActivityParticipant } from "@/types";
@@ -42,21 +42,17 @@ export default function ActivityDetailsModal({
     title: activity.title,
     description: activity.description || "",
     day_of_week: activity.day_of_week,
-    start_date: activity.start_date || activity.weekend_date, // Fallback to weekend_date for legacy
+    start_date: activity.start_date || activity.weekend_date,
+    end_date: activity.end_date || "",
     start_time: activity.start_time || "19:00",
+    end_time: activity.end_time || "22:00",
   });
 
-  // Split start_time for the select inputs
-  const [hour, minute] = (editForm.start_time || "19:00").split(":");
-
-  const dayLabels: { [key: string]: string } = {
-    divendres: "Divendres",
-    dissabte: "Dissabte",
-    diumenge: "Diumenge",
-  };
+  const [startHour, startMinute] = (editForm.start_time || "19:00").split(":");
+  const [endHour, endMinute] = (editForm.end_time || "22:00").split(":");
 
   // Use start_date if available, fallback to legacy calculation
-  const eventDate = activity.start_date 
+  const eventStartDate = activity.start_date 
     ? parseISO(activity.start_date) 
     : (() => {
         const anchorDate = parseISO(activity.weekend_date);
@@ -66,9 +62,8 @@ export default function ActivityDetailsModal({
         return date;
       })();
 
-  const dayOfMonth = format(eventDate, "d");
-  const monthName = format(eventDate, "MMMM", { locale: ca });
-  const dayNameLong = format(eventDate, "EEEE", { locale: ca });
+  const eventEndDate = activity.end_date ? parseISO(activity.end_date) : null;
+  const isMultiDay = !!eventEndDate && format(eventStartDate, "yyyy-MM-dd") !== format(eventEndDate, "yyyy-MM-dd");
 
   const startEditing = () => {
     setEditForm({
@@ -76,7 +71,9 @@ export default function ActivityDetailsModal({
       description: activity.description || "",
       day_of_week: activity.day_of_week,
       start_date: activity.start_date || activity.weekend_date,
+      end_date: activity.end_date || "",
       start_time: activity.start_time || "19:00",
+      end_time: activity.end_time || "22:00",
     });
     setIsEditing(true);
   };
@@ -89,7 +86,9 @@ export default function ActivityDetailsModal({
       formData.append("description", editForm.description);
       formData.append("day_of_week", editForm.day_of_week);
       formData.append("start_date", editForm.start_date);
+      formData.append("end_date", editForm.end_date);
       formData.append("start_time", editForm.start_time);
+      formData.append("end_time", editForm.end_time);
 
       const res = await updateActivity(formData);
       if (res.success) {
@@ -159,14 +158,25 @@ export default function ActivityDetailsModal({
             <div className="flex flex-col items-center gap-6 text-center w-full px-12">
               {isEditing ? (
                 <div className="flex flex-col gap-4 w-full items-center">
-                  <input
-                    type="date"
-                    value={editForm.start_date}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, start_date: e.target.value })
-                    }
-                    className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border-2 border-blue-500 outline-none"
-                  />
+                  <div className="flex flex-col gap-2">
+                    <input
+                      type="date"
+                      value={editForm.start_date}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, start_date: e.target.value })
+                      }
+                      className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border-2 border-blue-500 outline-none"
+                    />
+                    <input
+                      type="date"
+                      value={editForm.end_date}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, end_date: e.target.value })
+                      }
+                      placeholder="Data final"
+                      className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border-2 border-zinc-200 dark:border-zinc-700 outline-none"
+                    />
+                  </div>
                   <input
                     type="text"
                     value={editForm.title}
@@ -178,16 +188,14 @@ export default function ActivityDetailsModal({
                     className="text-2xl font-black text-zinc-950 dark:text-white bg-transparent border-b-2 border-blue-500 outline-none text-center w-full"
                     autoFocus
                   />
-                  <div className="flex justify-center w-full">
-                    <span className={`text-[10px] font-black ${editForm.title.length >= 45 ? 'text-red-500' : 'text-zinc-400'}`}>
-                      {editForm.title.length}/50
-                    </span>
-                  </div>
                 </div>
               ) : (
                 <>
                   <span className="inline-block bg-blue-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest first-letter:uppercase">
-                    {dayNameLong} {dayOfMonth} {monthName}
+                    {isMultiDay 
+                      ? `${format(eventStartDate, "d MMM", { locale: ca })} al ${format(eventEndDate!, "d MMM", { locale: ca })}`
+                      : format(eventStartDate, "EEEE d MMMM", { locale: ca })
+                    }
                   </span>
                   <h3 className="text-2xl font-black text-zinc-950 dark:text-white px-6 leading-tight">
                     {activity.title}
@@ -197,7 +205,7 @@ export default function ActivityDetailsModal({
             </div>
           </div>
 
-          <div className="p-8 space-y-8">
+          <div className="p-8 space-y-8 overflow-y-auto no-scrollbar">
             {/* Description & Info */}
             <div className="space-y-4">
               {isEditing ? (
@@ -212,48 +220,55 @@ export default function ActivityDetailsModal({
                       maxLength={200}
                       className="w-full bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-2xl border border-blue-500 outline-none text-zinc-600 dark:text-zinc-400 font-medium resize-none min-h-[100px]"
                     />
-                    <div className="flex justify-end px-1">
-                      <span className={`text-[10px] font-black ${editForm.description.length >= 180 ? 'text-red-500' : 'text-zinc-400'}`}>
-                        {editForm.description.length}/200
-                      </span>
-                    </div>
                   </div>
-                  <div className="flex items-center gap-3 bg-zinc-50 dark:bg-zinc-800/50 px-4 py-2 rounded-2xl border border-blue-500">
-                    <Clock size={16} className="text-zinc-400" />
-                    <div className="flex items-center gap-2 w-full">
-                      <select
-                        value={hour}
-                        onChange={(e) =>
-                          setEditForm({
-                            ...editForm,
-                            start_time: `${e.target.value}:${minute}`,
-                          })
-                        }
-                        className="bg-transparent text-xs font-black text-zinc-950 dark:text-white uppercase tracking-wider outline-none flex-1 appearance-none text-center"
-                      >
-                        {Array.from({ length: 24 }).map((_, i) => (
-                          <option key={i} value={i.toString().padStart(2, "0")}>
-                            {i.toString().padStart(2, "0")}h
-                          </option>
-                        ))}
-                      </select>
-                      <span className="font-bold text-zinc-400">:</span>
-                      <select
-                        value={minute}
-                        onChange={(e) =>
-                          setEditForm({
-                            ...editForm,
-                            start_time: `${hour}:${e.target.value}`,
-                          })
-                        }
-                        className="bg-transparent text-xs font-black text-zinc-950 dark:text-white uppercase tracking-wider outline-none flex-1 appearance-none text-center"
-                      >
-                        {["00", "15", "30", "45"].map((m) => (
-                          <option key={m} value={m}>
-                            {m}m
-                          </option>
-                        ))}
-                      </select>
+                  
+                  {/* Hours Edit */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest px-1">Hora inici</label>
+                      <div className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800/50 px-3 py-2 rounded-xl border border-blue-500">
+                        <select
+                          value={startHour}
+                          onChange={(e) => setEditForm({ ...editForm, start_time: `${e.target.value}:${startMinute}` })}
+                          className="bg-transparent text-xs font-black outline-none flex-1 text-center"
+                        >
+                          {Array.from({ length: 24 }).map((_, i) => (
+                            <option key={i} value={i.toString().padStart(2, "0")}>{i.toString().padStart(2, "0")}h</option>
+                          ))}
+                        </select>
+                        <select
+                          value={startMinute}
+                          onChange={(e) => setEditForm({ ...editForm, start_time: `${startHour}:${e.target.value}` })}
+                          className="bg-transparent text-xs font-black outline-none flex-1 text-center"
+                        >
+                          {["00", "15", "30", "45"].map((m) => (
+                            <option key={m} value={m}>{m}m</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest px-1">Hora final</label>
+                      <div className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800/50 px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                        <select
+                          value={endHour}
+                          onChange={(e) => setEditForm({ ...editForm, end_time: `${e.target.value}:${endMinute}` })}
+                          className="bg-transparent text-xs font-black outline-none flex-1 text-center"
+                        >
+                          {Array.from({ length: 24 }).map((_, i) => (
+                            <option key={i} value={i.toString().padStart(2, "0")}>{i.toString().padStart(2, "0")}h</option>
+                          ))}
+                        </select>
+                        <select
+                          value={endMinute}
+                          onChange={(e) => setEditForm({ ...editForm, end_time: `${endHour}:${e.target.value}` })}
+                          className="bg-transparent text-xs font-black outline-none flex-1 text-center"
+                        >
+                          {["00", "15", "30", "45"].map((m) => (
+                            <option key={m} value={m}>{m}m</option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -270,19 +285,16 @@ export default function ActivityDetailsModal({
                   )}
 
                   <div className="flex flex-wrap justify-center gap-4 pt-2">
-                    {activity.start_time && (
-                      <div className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800/50 px-4 py-2 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                        <Clock size={16} className="text-zinc-400" />
-                        <span className="text-xs font-black text-zinc-950 dark:text-white uppercase tracking-wider">
-                          {activity.start_time}h
-                        </span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800/50 px-4 py-2 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                      <Clock size={16} className="text-zinc-400" />
+                      <span className="text-xs font-black text-zinc-950 dark:text-white uppercase tracking-wider">
+                        {activity.start_time}h {activity.end_time ? `- ${activity.end_time}h` : ""}
+                      </span>
+                    </div>
                     <div className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800/50 px-4 py-2 rounded-2xl border border-zinc-100 dark:border-zinc-800">
                       <Users size={16} className="text-zinc-400" />
                       <span className="text-xs font-black text-zinc-950 dark:text-white uppercase tracking-wider">
-                        {totalAttendance}{" "}
-                        {totalAttendance === 1 ? "Persona" : "Persones"}
+                        {totalAttendance} {totalAttendance === 1 ? "Persona" : "Persones"}
                       </span>
                     </div>
                   </div>
@@ -302,12 +314,13 @@ export default function ActivityDetailsModal({
                 </>
               )}
             </div>
+
             {/* Participants List */}
             {!isEditing && (
               <div className="space-y-4">
                 <h4 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] px-1 text-center">
                   Qui s&apos;ha apuntat?
-                </h4>{" "}
+                </h4>
                 <div className="grid grid-cols-1 gap-3">
                   {participants.length > 0 ? (
                     participants.map((p, i) => (
@@ -318,30 +331,18 @@ export default function ActivityDetailsModal({
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-700 border-2 border-white dark:border-zinc-900 flex items-center justify-center overflow-hidden shrink-0">
                             {p.profiles?.avatar_url ? (
-                              <img
-                                src={p.profiles.avatar_url}
-                                alt=""
-                                className="w-full h-full object-cover"
-                              />
+                              <img src={p.profiles.avatar_url} alt="" className="w-full h-full object-cover" />
                             ) : (
-                              <span className="text-sm font-bold uppercase">
-                                {p.profiles?.full_name?.[0] ||
-                                  p.profiles?.email?.[0] ||
-                                  "?"}
-                              </span>
+                              <span className="text-sm font-bold uppercase">{p.profiles?.full_name?.[0] || "?"}</span>
                             )}
                           </div>
                           <div className="flex flex-col">
                             <span className="text-sm font-bold text-zinc-950 dark:text-white">
-                              {p.profiles?.full_name ||
-                                p.profiles?.email.split("@")[0]}
+                              {p.profiles?.full_name || p.profiles?.email.split("@")[0]}
                             </span>
                             {p.additional_participants > 0 && (
                               <span className="text-[10px] font-black text-blue-500 uppercase tracking-tighter">
-                                + {p.additional_participants}{" "}
-                                {p.additional_participants === 1
-                                  ? "acompanyant"
-                                  : "acompanyants"}
+                                + {p.additional_participants} {p.additional_participants === 1 ? "acompanyant" : "acompanyants"}
                               </span>
                             )}
                           </div>
@@ -350,9 +351,7 @@ export default function ActivityDetailsModal({
                     ))
                   ) : (
                     <div className="text-center py-6 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-700">
-                      <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
-                        Encara ningú
-                      </p>
+                      <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Encara ningú</p>
                     </div>
                   )}
                 </div>
