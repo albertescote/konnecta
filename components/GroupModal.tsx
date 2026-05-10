@@ -9,10 +9,11 @@ import { Group } from "@/types";
 interface Props {
   onClose: () => void;
   activeGroup?: Group;
+  initialMode?: "invite" | "create";
 }
 
-export default function GroupModal({ onClose, activeGroup }: Props) {
-  const [isCreating, setIsCreating] = useState(!activeGroup);
+export default function GroupModal({ onClose, activeGroup, initialMode = "invite" }: Props) {
+  const [isCreating, setIsCreating] = useState(initialMode === "create");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -94,16 +95,6 @@ export default function GroupModal({ onClose, activeGroup }: Props) {
                 >
                   {loading ? "CREANT..." : "CREAR GRUP"}
                 </button>
-                
-                {activeGroup && (
-                  <button
-                    type="button"
-                    onClick={() => setIsCreating(false)}
-                    className="w-full py-2 text-[10px] font-black text-zinc-400 uppercase tracking-widest hover:text-zinc-600 transition-colors"
-                  >
-                    Cancel·lar
-                  </button>
-                )}
               </form>
             ) : (
               <div className="space-y-8 text-center">
@@ -128,14 +119,6 @@ export default function GroupModal({ onClose, activeGroup }: Props) {
                     {copied ? <Check size={18} /> : <Copy size={18} />}
                   </button>
                 </div>
-
-                <button
-                  onClick={() => setIsCreating(true)}
-                  className="flex items-center justify-center gap-2 w-full py-4 bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-white rounded-2xl font-black active:scale-95 transition-all"
-                >
-                  <Plus size={20} />
-                  CREAR UN ALTRE GRUP
-                </button>
               </div>
             )}
           </div>

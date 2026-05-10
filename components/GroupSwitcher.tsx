@@ -13,7 +13,10 @@ interface Props {
 
 export default function GroupSwitcher({ groups, activeGroupId }: Props) {
   const [isPending, startTransition] = useTransition();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalState, setModalState] = useState<{ open: boolean; mode: "invite" | "create" }>({
+    open: false,
+    mode: "invite",
+  });
 
   const activeGroup = groups.find((g) => g.id === activeGroupId) || groups[0];
 
@@ -52,19 +55,30 @@ export default function GroupSwitcher({ groups, activeGroupId }: Props) {
           </div>
         </div>
 
+        {activeGroup && (
+          <button
+            onClick={() => setModalState({ open: true, mode: "invite" })}
+            className="p-3 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-sm text-zinc-500 dark:text-zinc-400 hover:scale-105 active:scale-95 transition-all"
+            title="Convida amics"
+          >
+            <UserPlus size={20} />
+          </button>
+        )}
+
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => setModalState({ open: true, mode: "create" })}
           className="p-3 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-sm text-zinc-500 dark:text-zinc-400 hover:scale-105 active:scale-95 transition-all"
-          title={activeGroup ? "Convida amics" : "Nou grup"}
+          title="Nou grup"
         >
-          {activeGroup ? <UserPlus size={20} /> : <Plus size={20} />}
+          <Plus size={20} />
         </button>
       </div>
 
-      {isModalOpen && (
+      {modalState.open && (
         <GroupModal
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => setModalState({ ...modalState, open: false })}
           activeGroup={activeGroup}
+          initialMode={modalState.mode}
         />
       )}
     </>
