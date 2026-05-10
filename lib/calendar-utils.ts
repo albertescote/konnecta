@@ -2,11 +2,16 @@ import { Activity } from "@/types";
 import { addDays, addHours, format, parseISO } from "date-fns";
 
 export function getEventDates(activity: Activity) {
-  const anchorDate = parseISO(activity.weekend_date);
-  let eventDate = anchorDate;
-
-  if (activity.day_of_week === "dissabte") eventDate = addDays(anchorDate, 1);
-  if (activity.day_of_week === "diumenge") eventDate = addDays(anchorDate, 2);
+  // Use start_date if available, fallback to legacy
+  const eventDate = activity.start_date 
+    ? parseISO(activity.start_date) 
+    : (() => {
+        const anchorDate = parseISO(activity.weekend_date);
+        let date = anchorDate;
+        if (activity.day_of_week === "dissabte") date = addDays(anchorDate, 1);
+        if (activity.day_of_week === "diumenge") date = addDays(anchorDate, 2);
+        return date;
+      })();
 
   const startTime = activity.start_time || "10:00";
   const [hours, minutes] = startTime.split(":").map(Number);

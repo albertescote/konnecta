@@ -5,12 +5,14 @@ export async function sendPushNotification({
   contents,
   date,
   excludedUserId,
+  groupId,
   playerIds: manualPlayerIds,
 }: {
   headings: string;
   contents: string;
   date: string;
   excludedUserId?: string;
+  groupId?: string;
   playerIds?: string[];
 }) {
   if (process.env.SILENT_NOTIFICATIONS === "true") {
@@ -26,11 +28,25 @@ export async function sendPushNotification({
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
     );
 
-    const { data: profiles } = await supabase
+    let query = supabase
       .from("profiles")
       .select("onesignal_id")
       .not("onesignal_id", "is", null)
       .not("id", "eq", excludedUserId || "");
+
+    if (groupId) {
+      const { data: memberIds } = await supabase
+        .from("group_memberships")
+        .select("user_id")
+        .eq("group_id", groupId);
+
+      if (memberIds) {
+        const ids = memberIds.map((m) => m.user_id);
+        query = query.in("id", ids);
+      }
+    }
+
+    const { data: profiles } = await query;
 
     if (!profiles || profiles.length === 0) return;
 

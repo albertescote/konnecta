@@ -99,7 +99,7 @@ export default function CalendarModal({
 
           <div className="grid grid-cols-7 gap-2 w-full">
             {calendarDays.map((day, idx) => {
-              const selectable = isFriday(day) && !isBefore(day, today);
+              const selectable = isFriday(day);
               const isSelected = isSameDay(day, selectedDate);
               const isCurrentMonth = isSameMonth(day, monthStart);
 

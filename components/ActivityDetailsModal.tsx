@@ -1,12 +1,13 @@
 "use client";
 
-import { Check, Clock, Edit2, Trash2, UserPlus, Users, X } from "lucide-react";
+import { Check, Clock, Edit2, MessageCircle, Trash2, UserPlus, Users, X } from "lucide-react";
 import Portal from "./Portal";
 import AddToCalendarButton from "./AddToCalendarButton";
 import { Activity, ActivityParticipant } from "@/types";
 import { useState, useTransition } from "react";
 import { deleteActivity, updateActivity } from "@/app/actions/activities";
 import { addDays, format, parseISO } from "date-fns";
+import { getWhatsAppShareUrl, ca } from "@/lib/utils";
 
 interface Props {
   activity: Activity;
@@ -41,6 +42,7 @@ export default function ActivityDetailsModal({
     title: activity.title,
     description: activity.description || "",
     day_of_week: activity.day_of_week,
+    start_date: activity.start_date || activity.weekend_date, // Fallback to weekend_date for legacy
     start_time: activity.start_time || "19:00",
   });
 
@@ -53,18 +55,27 @@ export default function ActivityDetailsModal({
     diumenge: "Diumenge",
   };
 
-  // Calculate day of the month
-  const anchorDate = parseISO(activity.weekend_date);
-  let eventDate = anchorDate;
-  if (activity.day_of_week === "dissabte") eventDate = addDays(anchorDate, 1);
-  if (activity.day_of_week === "diumenge") eventDate = addDays(anchorDate, 2);
+  // Use start_date if available, fallback to legacy calculation
+  const eventDate = activity.start_date 
+    ? parseISO(activity.start_date) 
+    : (() => {
+        const anchorDate = parseISO(activity.weekend_date);
+        let date = anchorDate;
+        if (activity.day_of_week === "dissabte") date = addDays(anchorDate, 1);
+        if (activity.day_of_week === "diumenge") date = addDays(anchorDate, 2);
+        return date;
+      })();
+
   const dayOfMonth = format(eventDate, "d");
+  const monthName = format(eventDate, "MMMM", { locale: ca });
+  const dayNameLong = format(eventDate, "EEEE", { locale: ca });
 
   const startEditing = () => {
     setEditForm({
       title: activity.title,
       description: activity.description || "",
       day_of_week: activity.day_of_week,
+      start_date: activity.start_date || activity.weekend_date,
       start_time: activity.start_time || "19:00",
     });
     setIsEditing(true);
@@ -77,6 +88,7 @@ export default function ActivityDetailsModal({
       formData.append("title", editForm.title);
       formData.append("description", editForm.description);
       formData.append("day_of_week", editForm.day_of_week);
+      formData.append("start_date", editForm.start_date);
       formData.append("start_time", editForm.start_time);
 
       const res = await updateActivity(formData);
@@ -147,20 +159,14 @@ export default function ActivityDetailsModal({
             <div className="flex flex-col items-center gap-6 text-center w-full px-12">
               {isEditing ? (
                 <div className="flex flex-col gap-4 w-full items-center">
-                  <select
-                    value={editForm.day_of_week}
+                  <input
+                    type="date"
+                    value={editForm.start_date}
                     onChange={(e) =>
-                      setEditForm({
-                        ...editForm,
-                        day_of_week: e.target.value as Activity["day_of_week"],
-                      })
+                      setEditForm({ ...editForm, start_date: e.target.value })
                     }
                     className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border-2 border-blue-500 outline-none"
-                  >
-                    <option value="divendres">Divendres</option>
-                    <option value="dissabte">Dissabte</option>
-                    <option value="diumenge">Diumenge</option>
-                  </select>
+                  />
                   <input
                     type="text"
                     value={editForm.title}
@@ -180,8 +186,8 @@ export default function ActivityDetailsModal({
                 </div>
               ) : (
                 <>
-                  <span className="inline-block bg-blue-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
-                    {dayLabels[activity.day_of_week]} {dayOfMonth}
+                  <span className="inline-block bg-blue-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest first-letter:uppercase">
+                    {dayNameLong} {dayOfMonth} {monthName}
                   </span>
                   <h3 className="text-2xl font-black text-zinc-950 dark:text-white px-6 leading-tight">
                     {activity.title}
@@ -282,8 +288,15 @@ export default function ActivityDetailsModal({
                   </div>
 
                   {!isEditing && (
-                    <div className="flex justify-center pt-2">
+                    <div className="flex justify-center gap-3 pt-2">
                       <AddToCalendarButton activity={activity} />
+                      <button
+                        onClick={() => window.open(getWhatsAppShareUrl(activity), "_blank")}
+                        className="inline-flex items-center gap-2 text-xs font-black text-green-600 dark:text-green-500 uppercase tracking-widest bg-green-50 dark:bg-green-900/20 px-4 py-2 rounded-2xl hover:bg-green-100 transition-colors border border-green-100 dark:border-green-900/40"
+                      >
+                        <MessageCircle size={18} />
+                        Compartir
+                      </button>
                     </div>
                   )}
                 </>

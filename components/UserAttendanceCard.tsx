@@ -9,9 +9,10 @@ import { Quote, X } from "lucide-react";
 interface Props {
   profile: Profile;
   comment?: string | null;
+  groupId: string;
 }
 
-export default function UserAttendanceCard({ profile, comment }: Props) {
+export default function UserAttendanceCard({ profile, comment, groupId }: Props) {
   const [showModal, setShowModal] = useState(false);
   const [showCommentPopup, setShowCommentPopup] = useState(false);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
@@ -82,6 +83,7 @@ export default function UserAttendanceCard({ profile, comment }: Props) {
       {showModal && (
         <UserSummaryModal
           profile={profile}
+          groupId={groupId}
           onClose={() => setShowModal(false)}
         />
       )}

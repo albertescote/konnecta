@@ -7,22 +7,33 @@ import { parseISO, addDays, format } from "date-fns";
 
 export default function NewActivityForm({
   weekendDate,
+  groupId,
 }: {
   weekendDate: string;
+  groupId: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState("dissabte");
+  const [isFlexible, setIsFlexible] = useState(false);
+  const anchorDate = parseISO(weekendDate);
+  const initialStartDate = format(addDays(anchorDate, 1), "yyyy-MM-dd");
+  const [startDate, setStartDate] = useState(initialStartDate);
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
-  const anchorDate = parseISO(weekendDate);
   const daysData = [
     { id: "divendres", label: "Div", date: anchorDate },
     { id: "dissabte", label: "Dis", date: addDays(anchorDate, 1) },
     { id: "diumenge", label: "Diu", date: addDays(anchorDate, 2) },
   ];
+
+  const handleDaySelect = (dayId: string, date: Date) => {
+    setSelectedDay(dayId);
+    setStartDate(format(date, "yyyy-MM-dd"));
+    setIsFlexible(false);
+  };
 
   if (!isOpen) {
     return (
@@ -79,29 +90,59 @@ export default function NewActivityForm({
 
       <input type="hidden" name="weekend_date" value={weekendDate} />
       <input type="hidden" name="day_of_week" value={selectedDay} />
+      <input type="hidden" name="groupId" value={groupId} />
+      <input type="hidden" name="start_date" value={startDate} />
 
       <div className="space-y-4">
         {/* Selector de Dia */}
-        <div className="flex gap-2 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-2xl">
-          {daysData.map((day) => (
+        <div className="space-y-3">
+          <div className="flex gap-2 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-2xl">
+            {daysData.map((day) => (
+              <button
+                key={day.id}
+                type="button"
+                onClick={() => handleDaySelect(day.id, day.date)}
+                className={`flex-1 py-2 flex flex-col items-center rounded-xl transition-all ${
+                  selectedDay === day.id && !isFlexible
+                    ? "bg-white dark:bg-zinc-700 text-zinc-950 dark:text-white shadow-sm scale-[1.02]"
+                    : "text-zinc-400"
+                }`}
+              >
+                <span className="text-[10px] font-black uppercase tracking-wider leading-none">
+                  {day.label}
+                </span>
+                <span className="text-sm font-bold mt-0.5">
+                  {format(day.date, "d")}
+                </span>
+              </button>
+            ))}
             <button
-              key={day.id}
               type="button"
-              onClick={() => setSelectedDay(day.id)}
-              className={`flex-1 py-2 flex flex-col items-center rounded-xl transition-all ${
-                selectedDay === day.id
+              onClick={() => setIsFlexible(true)}
+              className={`flex-1 py-2 flex flex-col items-center justify-center rounded-xl transition-all ${
+                isFlexible
                   ? "bg-white dark:bg-zinc-700 text-zinc-950 dark:text-white shadow-sm scale-[1.02]"
                   : "text-zinc-400"
               }`}
             >
-              <span className="text-[10px] font-black uppercase tracking-wider leading-none">
-                {day.label}
-              </span>
-              <span className="text-sm font-bold mt-0.5">
-                {format(day.date, "d")}
-              </span>
+              <span className="text-[10px] font-black uppercase tracking-wider leading-none">Altres</span>
+              <span className="text-sm font-bold mt-0.5">...</span>
             </button>
-          ))}
+          </div>
+
+          {isFlexible && (
+            <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-2 border-blue-500/30 outline-none focus:border-blue-500 font-bold text-zinc-950 dark:text-white"
+              />
+              <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mt-1.5 px-1">
+                Tria qualsevol data fora del cap de setmana
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="space-y-1">

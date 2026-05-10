@@ -14,6 +14,7 @@ type Status = "going" | "not_going" | "pending" | null;
 
 interface Props {
   userId: string;
+  groupId: string;
   weekendDate: string;
   initialStatus: Status;
   initialComment?: string | null;
@@ -22,6 +23,7 @@ interface Props {
 
 export default function VotingSection({
   userId,
+  groupId,
   weekendDate,
   initialStatus,
   initialComment,
@@ -47,7 +49,7 @@ export default function VotingSection({
     startTransition(async () => {
       setOptimisticStatus(status);
       try {
-        await updateStatus(userId, weekendDate, status, comment);
+        await updateStatus(userId, groupId, weekendDate, status, comment);
       } catch (error) {
         console.error(error);
       }
@@ -57,7 +59,7 @@ export default function VotingSection({
   async function handleSaveComment() {
     startTransition(async () => {
       try {
-        await updateComment(userId, weekendDate, comment);
+        await updateComment(userId, groupId, weekendDate, comment);
       } catch (error) {
         console.error(error);
       }
