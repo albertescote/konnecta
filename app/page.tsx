@@ -12,6 +12,7 @@ import PullToRefresh from "@/components/PullToRefresh";
 import ViewToggle from "@/components/ViewToggle";
 import PlansHub from "@/components/PlansHub";
 import SwipeContainer from "@/components/SwipeContainer";
+import GroupQuickSelect from "@/components/GroupQuickSelect";
 import { format, parseISO, addDays } from "date-fns";
 import { Suspense } from "react";
 import { cookies } from "next/headers";
@@ -97,9 +98,13 @@ export default async function Home({
             <h1 className="text-3xl font-black tracking-tighter leading-[0.85] text-zinc-950 dark:text-white flex flex-col">
               <span>KONNECTA</span>
             </h1>
-            <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] mt-3 truncate">
-              {activeGroup?.name || "Benvingut"}
-            </p>
+            {user && groupId ? (
+              <GroupQuickSelect groups={userGroups} activeGroupId={groupId} />
+            ) : (
+              <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] mt-3 truncate">
+                {activeGroup?.name || "Benvingut"}
+              </p>
+            )}
           </div>
 
           <div className="flex items-center gap-2 mt-1 text-zinc-950 dark:text-white">
