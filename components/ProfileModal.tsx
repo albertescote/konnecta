@@ -27,10 +27,18 @@ export default function ProfileModal({ user, profile, groups, activeGroupId, onC
 
   // Lock body scroll when modal is open
   useEffect(() => {
-    const originalStyle = window.getComputedStyle(document.body).overflow;
+    const originalOverflow = document.body.style.overflow;
+    const originalPosition = document.body.style.position;
+    const originalWidth = document.body.style.width;
+
+    // We use a combination of overflow and fixed position to ensure
+    // that even stubborn mobile browsers don't trigger the pull-to-refresh
     document.body.style.overflow = "hidden";
+    
     return () => {
-      document.body.style.overflow = originalStyle;
+      document.body.style.overflow = originalOverflow;
+      document.body.style.position = originalPosition;
+      document.body.style.width = originalWidth;
     };
   }, []);
 
@@ -83,12 +91,14 @@ export default function ProfileModal({ user, profile, groups, activeGroupId, onC
   return (
     <Portal>
       <div 
-        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md overflow-hidden touch-none"
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md overflow-hidden"
         onClick={onClose}
+        style={{ touchAction: 'none' }} // Strictly disable background gestures
       >
         <div 
-          className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-[2.5rem] shadow-2xl overflow-hidden border border-zinc-100 dark:border-zinc-800 animate-in zoom-in-95 duration-200 my-auto max-h-[90vh] flex flex-col touch-auto"
+          className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-[2.5rem] shadow-2xl overflow-hidden border border-zinc-100 dark:border-zinc-800 animate-in zoom-in-95 duration-200 my-auto max-h-[90vh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
+          style={{ touchAction: 'auto' }} // Re-enable for the modal itself
         >
           {/* Fixed Header */}
           <div className="p-6 flex items-center justify-between border-b border-zinc-50 dark:border-zinc-800 flex-shrink-0">
@@ -104,7 +114,7 @@ export default function ProfileModal({ user, profile, groups, activeGroupId, onC
           </div>
 
           {/* Scrollable Content */}
-          <div className="overflow-y-auto flex-1 no-scrollbar">
+          <div className="overflow-y-auto flex-1 no-scrollbar overscroll-contain">
             <div className="p-8 space-y-8">
               {/* Avatar Upload */}
               <div className="flex flex-col items-center gap-4">
@@ -163,7 +173,7 @@ export default function ProfileModal({ user, profile, groups, activeGroupId, onC
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Com et diuen els amics?"
                     required
-                    className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-bold"
+                    className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-bold text-zinc-950 dark:text-white"
                   />
                 </div>
 

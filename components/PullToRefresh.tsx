@@ -14,8 +14,8 @@ export default function PullToRefresh() {
 
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
-      // Only start pulling if we are at the absolute top
-      if (window.scrollY <= 0) {
+      // Only start pulling if we are at the absolute top AND body isn't locked (modal open)
+      if (window.scrollY <= 0 && document.body.style.overflow !== "hidden") {
         startY.current = e.touches[0].pageY;
         isPulling.current = true;
         setPulling(true);
