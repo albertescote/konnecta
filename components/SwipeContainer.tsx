@@ -23,6 +23,11 @@ export default function SwipeContainer({ children, activeView }: Props) {
   const currentX = useRef(0);
   const directionLocked = useRef<"horizontal" | "vertical" | null>(null);
 
+  // Scroll to top when view changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [internalView]);
+
   // Sync internal state if props change (e.g. from the toggle button)
   useEffect(() => {
     if (activeView !== internalView) {
