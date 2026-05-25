@@ -1,0 +1,22 @@
+# Xcode files
+build/
+DerivedData/
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+*.xcworkspace/*
+!*.xcworkspace/contents.xcworkspacedata
+xcuserdata/
+
+# Local configuration files
+*.xcconfig
+.swiftpm/
+.build/
+
+# OS files
+.DS_Store
+
+# CocoaPods (if used later)
+# Pods/
+# Podfile.lock

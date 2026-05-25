@@ -1,0 +1,40 @@
+name: Konnecta
+options:
+  bundleIdPrefix: com.konnecta
+targets:
+  Konnecta:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Konnecta
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.konnecta.app
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        INFOPLIST_FILE: Konnecta/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+      configFiles:
+        Debug: Secrets.xcconfig
+        Release: Secrets.xcconfig
+    dependencies:
+      - package: supabase-swift
+      - package: OneSignal-XCFramework
+    info:
+      path: Konnecta/Info.plist
+      properties:
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UILaunchScreen: {}
+        UIBackgroundModes: [remote-notification]
+        CFBundleURLTypes:
+          - CFBundleURLSchemes:
+              - konnecta
+            CFBundleURLName: com.konnecta.app
+
+packages:
+  supabase-swift:
+    url: https://github.com/supabase-community/supabase-swift.git
+    from: 2.0.0
+  OneSignal-XCFramework:
+    url: https://github.com/OneSignal/OneSignal-XCFramework.git
+    from: 5.0.0
