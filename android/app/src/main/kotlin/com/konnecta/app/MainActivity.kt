@@ -41,7 +41,12 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             KonnectaTheme {
-                MainContainer()
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    MainContainer()
+                }
             }
         }
     }
