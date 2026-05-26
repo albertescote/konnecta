@@ -20,6 +20,13 @@ import com.konnecta.app.data.remote.WeatherService
 import com.konnecta.app.data.model.Group
 import com.konnecta.app.data.remote.GroupService
 
+data class AttendanceState(
+    val going: List<Pair<Profile, String?>> = emptyList(),
+    val notGoing: List<Pair<Profile, String?>> = emptyList(),
+    val pending: List<Pair<Profile, String?>> = emptyList(),
+    val unanswered: List<Pair<Profile, String?>> = emptyList()
+)
+
 data class DashboardState(
     val attendance: AttendanceState = AttendanceState(),
     val activities: List<ActivityWithParticipants> = emptyList(),

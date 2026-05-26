@@ -9,12 +9,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.style.TextAlign
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.konnecta.app.ui.viewmodel.AuthViewModel
+
+import com.konnecta.app.data.remote.SupabaseClient
+import io.github.jan.supabase.compose.auth.composeAuth
+import io.github.jan.supabase.compose.auth.composable.rememberSignInWithGoogle
+
 @Composable
 fun LoginScreen(
-    onLoginSuccess: () -> Unit
+    onLoginSuccess: () -> Unit,
+    viewModel: AuthViewModel = viewModel()
 ) {
     var email by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) }
+    val state by viewModel.state.collectAsState()
+
+    val googleAction = SupabaseClient.client.composeAuth.rememberSignInWithGoogle(
+        onResult = { /* The session is automatically handled by the SDK */ }
+    )
 
     Column(
         modifier = Modifier
@@ -40,13 +54,14 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(48.dp))
 
         Button(
-            onClick = { /* Google Login Logic */ },
+            onClick = { googleAction.startFlow() },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp),
-            shape = MaterialTheme.shapes.large
+                .height(64.dp),
+            shape = RoundedCornerShape(24.dp),
+            enabled = !state.isLoading
         ) {
-            Text("CONTINUA AMB GOOGLE", fontWeight = FontWeight.Bold)
+            Text("CONTINUA AMB GOOGLE", fontWeight = FontWeight.Black)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -56,20 +71,34 @@ fun LoginScreen(
             onValueChange = { email = it },
             label = { Text("Correu electrònic") },
             modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.large
+            shape = RoundedCornerShape(24.dp),
+            enabled = !state.isLoading
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = { isLoading = true },
+            onClick = { viewModel.signInWithMagicLink(email, "konnecta://join") },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp),
-            shape = MaterialTheme.shapes.large,
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                .height(64.dp),
+            shape = RoundedCornerShape(24.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+            enabled = !state.isLoading && email.isNotBlank()
         ) {
-            Text("ENVIA ENLLAÇ MÀGIC", fontWeight = FontWeight.Bold)
+            Text(
+                text = if (state.isLoading) "ENVIANT..." else "ENVIA ENLLAÇ MÀGIC",
+                fontWeight = FontWeight.Black
+            )
+        }
+
+        if (state.error != null) {
+            Text(
+                text = state.error!!,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 16.dp),
+                textAlign = TextAlign.Center
+            )
         }
     }
 }

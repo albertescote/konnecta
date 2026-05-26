@@ -18,3 +18,5 @@ secrets.properties
 
 # OS files
 .DS_Store
+
+app/konnecta-release.keystore

@@ -120,11 +120,13 @@ fun NewActivityBottomSheet(
                                         title = title,
                                         description = description,
                                         group_id = groupId,
-                                        weekendDate = weekendDate,
-                                        day_of_week = selectedDay,
-                                        creator_id = "your-user-id", // Should come from auth
-                                        created_at = "",
-                                        start_time = "19:00"
+                                        start_date = weekendDate,
+                                        end_date = null,
+                                        start_time = "19:00",
+                                        end_time = null,
+                                        creator_id = "your-user-id",
+                                        weekend_date = weekendDate,
+                                        day_of_week = selectedDay
                                     )
                                 )
                                 onSuccess()

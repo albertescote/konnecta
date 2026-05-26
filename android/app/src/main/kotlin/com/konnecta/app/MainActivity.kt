@@ -21,10 +21,22 @@ import com.konnecta.app.ui.screens.PlansHubScreen
 import com.konnecta.app.ui.theme.KonnectaTheme
 import com.konnecta.app.ui.viewmodel.DashboardViewModel
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.material3.pulltorefresh.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.konnecta.app.ui.viewmodel.AuthViewModel
+import com.konnecta.app.ui.screens.LoginScreen
+import com.konnecta.app.ui.screens.NoGroupScreen
+import io.github.jan.supabase.auth.status.SessionStatus
+import io.github.jan.supabase.auth.handleDeeplinks
+import com.konnecta.app.data.remote.SupabaseClient
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Handle OAuth and Magic Link redirects
+        SupabaseClient.client.handleDeeplinks(intent)
+
         setContent {
             KonnectaTheme {
                 MainContainer()
@@ -35,110 +47,143 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainContainer(viewModel: DashboardViewModel = viewModel()) {
+fun MainContainer(
+    viewModel: DashboardViewModel = viewModel(),
+    authViewModel: AuthViewModel = viewModel()
+) {
+    val authState by authViewModel.state.collectAsState()
+    val dashboardState by viewModel.state.collectAsState()
+    
     var selectedTab by remember { mutableStateOf(0) }
     var showGroupSelector by remember { mutableStateOf(false) }
     var showProfile by remember { mutableStateOf(false) }
-    val state by viewModel.state.collectAsState()
     val context = androidx.compose.ui.platform.LocalContext.current
 
+    LaunchedEffect(authState.sessionStatus) {
+        val status = authState.sessionStatus
+        if (status is SessionStatus.Authenticated) {
+            viewModel.loadInitialData(status.session.user?.id ?: "")
+        }
+    }
+
     LaunchedEffect(Unit) {
-        viewModel.loadInitialData("your-user-id")
-        
         val intent = (context as? android.app.Activity)?.intent
         val data: android.net.Uri? = intent?.data
         if (data != null && data.scheme == "konnecta" && data.host == "join") {
             val token = data.lastPathSegment
-            if (token != null) {
-                viewModel.joinGroup(token, "your-user-id")
+            val user = (authState.sessionStatus as? SessionStatus.Authenticated)?.session?.user
+            if (token != null && user != null) {
+                viewModel.joinGroup(token, user.id)
             }
         }
     }
 
-    Scaffold(
-        topBar = {
-            if (selectedTab == 0 && state.activeGroup != null) {
-                CenterAlignedTopAppBar(
-                    navigationIcon = {
-                        IconButton(onClick = { showProfile = true }) {
-                            Text("👤", fontSize = 20.sp)
-                        }
-                    },
-                    title = {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.clickable { showGroupSelector = true }
-                        ) {
-                            Text(
-                                text = state.activeGroup?.name ?: "",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "CANVIA DE GRUP ▾",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Color.Gray
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background
-                    )
-                )
-            }
-        },
-        bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.background,
-                tonalElevation = 0.dp
-            ) {
-                NavigationBarItem(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    icon = { Text("🏠") },
-                    label = { Text("Inici") }
-                )
-                NavigationBarItem(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    icon = { Text("📅") },
-                    label = { Text("Plans") }
-                )
-            }
+    when (val status = authState.sessionStatus) {
+        is SessionStatus.NotAuthenticated -> {
+            LoginScreen(
+                onLoginSuccess = { /* Handle if needed, though LaunchedEffect handles it */ }
+            )
         }
-    ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) {
-            if (state.isLoading && state.activeGroup == null) {
+        is SessionStatus.Authenticated -> {
+            if (dashboardState.isLoading && dashboardState.activeGroup == null && dashboardState.userGroups.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
+            } else if (dashboardState.userGroups.isEmpty() && !dashboardState.isLoading) {
+                NoGroupScreen(
+                    userId = status.session.user?.id ?: "",
+                    onGroupCreated = { viewModel.loadInitialData(status.session.user?.id ?: "") }
+                )
             } else {
-                when (selectedTab) {
-                    0 -> DashboardScreen(
-                        groupId = state.activeGroup?.id ?: "",
-                        viewModel = viewModel
-                    )
-                    1 -> PlansHubScreen(groupId = state.activeGroup?.id ?: "")
+                Scaffold(
+                    topBar = {
+                        if (selectedTab == 0 && dashboardState.activeGroup != null) {
+                            CenterAlignedTopAppBar(
+                                navigationIcon = {
+                                    IconButton(onClick = { showProfile = true }) {
+                                        Text("👤", fontSize = 20.sp)
+                                    }
+                                },
+                                title = {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.clickable { showGroupSelector = true }
+                                    ) {
+                                        Text(
+                                            text = dashboardState.activeGroup?.name ?: "",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = "CANVIA DE GRUP ▾",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = Color.Gray
+                                        )
+                                    }
+                                },
+                                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                                    containerColor = MaterialTheme.colorScheme.background
+                                )
+                            )
+                        }
+                    },
+                    bottomBar = {
+                        NavigationBar(
+                            containerColor = MaterialTheme.colorScheme.background,
+                            tonalElevation = 0.dp
+                        ) {
+                            NavigationBarItem(
+                                selected = selectedTab == 0,
+                                onClick = { selectedTab = 0 },
+                                icon = { Text("🏠") },
+                                label = { Text("Inici") }
+                            )
+                            NavigationBarItem(
+                                selected = selectedTab == 1,
+                                onClick = { selectedTab = 1 },
+                                icon = { Text("📅") },
+                                label = { Text("Plans") }
+                            )
+                        }
+                    }
+                ) { innerPadding ->
+                    Box(modifier = Modifier.padding(innerPadding)) {
+                        when (selectedTab) {
+                            0 -> DashboardScreen(
+                                groupId = dashboardState.activeGroup?.id ?: "",
+                                viewModel = viewModel
+                            )
+                            1 -> PlansHubScreen(groupId = dashboardState.activeGroup?.id ?: "")
+                        }
+                    }
+
+                    if (showGroupSelector) {
+                        GroupSelectorBottomSheet(
+                            groups = dashboardState.userGroups,
+                            activeGroupId = dashboardState.activeGroup?.id ?: "",
+                            onGroupSelected = { viewModel.switchGroup(it, "2024-05-24") },
+                            onDismiss = { showGroupSelector = false }
+                        )
+                    }
+
+                    if (showProfile) {
+                        ProfileBottomSheet(
+                            profile = null,
+                            onSignOut = { 
+                                authViewModel.signOut()
+                                showProfile = false 
+                            },
+                            onDeleteAccount = { showProfile = false },
+                            onDismiss = { showProfile = false }
+                        )
+                    }
                 }
             }
         }
-
-        if (showGroupSelector) {
-            GroupSelectorBottomSheet(
-                groups = state.userGroups,
-                activeGroupId = state.activeGroup?.id ?: "",
-                onGroupSelected = { viewModel.switchGroup(it, "2024-05-24") },
-                onDismiss = { showGroupSelector = false }
-            )
-        }
-
-        if (showProfile) {
-            ProfileBottomSheet(
-                profile = null,
-                onSignOut = { showProfile = false },
-                onDeleteAccount = { showProfile = false },
-                onDismiss = { showProfile = false }
-            )
+        else -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
         }
     }
 }
@@ -177,7 +222,9 @@ fun DashboardScreen(groupId: String, viewModel: DashboardViewModel = viewModel()
             
             Text(
                 text = "KONNECTA",
-                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Black,
+                fontSize = 32.sp,
+                letterSpacing = (-1.5).sp,
                 modifier = Modifier.padding(horizontal = 24.dp)
             )
             
@@ -189,23 +236,25 @@ fun DashboardScreen(groupId: String, viewModel: DashboardViewModel = viewModel()
                 onDateSelected = { selectedDate = it }
             )
             
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                 WeatherCard(weather = state.weather)
             }
             
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
             
             VotingSection(
                 currentStatus = currentStatus,
                 onStatusChange = { currentStatus = it }
             )
 
+            Spacer(modifier = Modifier.height(40.dp))
+
             // Attendance Section
             Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                modifier = Modifier.padding(horizontal = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
                     text = "QUI VE?",
@@ -221,12 +270,12 @@ fun DashboardScreen(groupId: String, viewModel: DashboardViewModel = viewModel()
                 AttendanceSection(title = "PENDENT", users = state.attendance.unanswered, titleColor = Color.Gray.copy(alpha = 0.5f))
             }
 
-            Divider(modifier = Modifier.padding(vertical = 16.dp, horizontal = 24.dp), color = Color.Gray.copy(alpha = 0.1f))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 24.dp, horizontal = 24.dp), color = Color.Gray.copy(alpha = 0.1f))
 
             // Activity Board Section
             Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                modifier = Modifier.padding(horizontal = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
                     text = "PLANS",
@@ -240,12 +289,14 @@ fun DashboardScreen(groupId: String, viewModel: DashboardViewModel = viewModel()
                     Text(
                         text = "No hi ha cap pla encara...",
                         fontSize = 14.sp,
-                        color = Color.Gray,
-                        modifier = Modifier.padding(8.dp)
+                        color = Color.Gray.copy(alpha = 0.5f),
+                        modifier = Modifier.padding(vertical = 16.dp, horizontal = 8.dp)
                     )
                 } else {
-                    state.activities.forEach { activity ->
-                        ActivityCard(activity = activity)
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        state.activities.forEach { activity ->
+                            ActivityCard(activity = activity)
+                        }
                     }
                 }
 
@@ -280,7 +331,7 @@ fun DashboardScreen(groupId: String, viewModel: DashboardViewModel = viewModel()
                 }
             }
 
-            Divider(modifier = Modifier.padding(vertical = 16.dp, horizontal = 24.dp), color = Color.Gray.copy(alpha = 0.1f))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp, horizontal = 24.dp), color = Color.Gray.copy(alpha = 0.1f))
 
             // Hall of Fame Section
             HallOfFame(winners = state.leaderboard)

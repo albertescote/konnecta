@@ -1,8 +1,8 @@
 package com.konnecta.app.data.remote
 
 import com.konnecta.app.data.model.Group
-import io.github.jan_tennert.supabase.postgrest.postgrest
-import io.github.jan_tennert.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.serialization.Serializable
 
 @Serializable

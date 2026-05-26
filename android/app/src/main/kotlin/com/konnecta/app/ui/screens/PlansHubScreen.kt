@@ -16,6 +16,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.konnecta.app.ui.components.ActivityCard
 import com.konnecta.app.ui.viewmodel.PlansHubViewModel
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.*
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.Alignment
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
