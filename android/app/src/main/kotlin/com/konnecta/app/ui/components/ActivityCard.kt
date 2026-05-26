@@ -12,7 +12,7 @@ import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,14 +24,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.konnecta.app.data.model.*
+import com.konnecta.app.ui.viewmodel.DashboardViewModel
 import com.konnecta.app.utils.CalendarUtils
 import com.konnecta.app.utils.ShareUtils
 
 @Composable
 fun ActivityCard(
-    activity: ActivityWithParticipants
+    activity: ActivityWithParticipants,
+    viewModel: DashboardViewModel
 ) {
     val context = LocalContext.current
+    var showDetails by remember { mutableStateOf(false) }
     
     Column(
         modifier = Modifier
@@ -39,6 +42,7 @@ fun ActivityCard(
             .clip(RoundedCornerShape(28.dp))
             .background(MaterialTheme.colorScheme.surface)
             .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(28.dp))
+            .clickable { showDetails = true }
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -155,5 +159,13 @@ fun ActivityCard(
                 )
             }
         }
+    }
+
+    if (showDetails) {
+        ActivityDetailsBottomSheet(
+            activity = activity,
+            onDismiss = { showDetails = false },
+            viewModel = viewModel
+        )
     }
 }

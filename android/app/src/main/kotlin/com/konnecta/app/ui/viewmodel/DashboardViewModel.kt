@@ -242,6 +242,46 @@ class DashboardViewModel : ViewModel() {
         }
     }
 
+    fun createActivity(activity: Activity, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val success = activityService.createActivity(activity)
+            onResult(success)
+        }
+    }
+
+    fun updateParticipation(activityId: String, isJoining: Boolean, additionalParticipants: Int = 0, weekendDate: String) {
+        val userId = currentUserId ?: return
+        val groupId = _state.value.activeGroup?.id ?: return
+        viewModelScope.launch {
+            val success = activityService.updateParticipation(activityId, userId, isJoining, additionalParticipants)
+            if (success) {
+                loadDashboardData(weekendDate, groupId)
+            }
+        }
+    }
+
+    fun updateActivity(activityId: String, updates: Map<String, Any?>, weekendDate: String) {
+        val groupId = _state.value.activeGroup?.id ?: return
+        viewModelScope.launch {
+            val success = activityService.updateActivity(activityId, updates)
+            if (success) {
+                loadDashboardData(weekendDate, groupId)
+            }
+        }
+    }
+
+    fun deleteActivity(activityId: String, weekendDate: String) {
+        val groupId = _state.value.activeGroup?.id ?: return
+        viewModelScope.launch {
+            val success = activityService.deleteActivity(activityId)
+            if (success) {
+                loadDashboardData(weekendDate, groupId)
+            }
+        }
+    }
+
+    fun getCurrentUserId(): String? = currentUserId
+
     suspend fun refreshInviteToken(groupId: String): Group? {
         val result = groupService.refreshInviteToken(groupId)
         if (result != null && _state.value.activeGroup?.id == groupId) {

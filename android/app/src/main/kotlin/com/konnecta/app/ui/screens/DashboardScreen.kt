@@ -28,7 +28,7 @@ import com.konnecta.app.utils.DateUtils
 @Composable
 fun DashboardScreen(
     groupId: String, 
-    viewModel: DashboardViewModel = viewModel()
+    viewModel: DashboardViewModel
 ) {
     val initialDate = remember { DateUtils.formatDbDate(DateUtils.getUpcomingFriday()) }
     var selectedDate by remember { mutableStateOf(initialDate) }
@@ -132,7 +132,7 @@ fun DashboardScreen(
                     if (state.activities.isNotEmpty()) {
                         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                             state.activities.forEach { activity ->
-                                ActivityCard(activity = activity)
+                                ActivityCard(activity = activity, viewModel = viewModel)
                             }
                         }
                     }
@@ -179,7 +179,8 @@ fun DashboardScreen(
                                 showNewActivitySheet = false
                                 viewModel.loadDashboardData(selectedDate, groupId)
                             },
-                            onDismiss = { showNewActivitySheet = false }
+                            onDismiss = { showNewActivitySheet = false },
+                            viewModel = viewModel
                         )
                     }
                 }

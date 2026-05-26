@@ -20,6 +20,7 @@ import com.konnecta.app.data.model.*
 import com.konnecta.app.ui.components.ActivityCard
 import com.konnecta.app.ui.components.AppFooter
 import com.konnecta.app.ui.components.NewActivityBottomSheet
+import com.konnecta.app.ui.viewmodel.DashboardViewModel
 import com.konnecta.app.ui.viewmodel.PlansHubViewModel
 import com.konnecta.app.utils.DateUtils
 import java.util.Date
@@ -28,7 +29,8 @@ import java.util.Date
 @Composable
 fun PlansHubScreen(
     groupId: String,
-    viewModel: PlansHubViewModel = viewModel()
+    viewModel: PlansHubViewModel = viewModel(),
+    dashboardViewModel: DashboardViewModel
 ) {
     val activities by viewModel.activities.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -84,7 +86,7 @@ fun PlansHubScreen(
                     } else {
                         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                             activities.forEach { activity ->
-                                ActivityCard(activity = activity)
+                                ActivityCard(activity = activity, viewModel = dashboardViewModel)
                             }
                         }
                     }
@@ -116,7 +118,8 @@ fun PlansHubScreen(
                                 showNewActivitySheet = false
                                 viewModel.loadFutureActivities(groupId)
                             },
-                            onDismiss = { showNewActivitySheet = false }
+                            onDismiss = { showNewActivitySheet = false },
+                            viewModel = dashboardViewModel
                         )
                     }
                 }

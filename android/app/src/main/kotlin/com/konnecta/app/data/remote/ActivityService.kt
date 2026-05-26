@@ -29,9 +29,64 @@ class ActivityService {
             .decodeList<ActivityWithParticipants>()
     }
 
-    suspend fun createActivity(activity: Activity): Activity {
-        return client.postgrest["activities"]
-            .insert(activity)
-            .decodeSingle<Activity>()
+    suspend fun createActivity(activity: Activity): Boolean {
+        return try {
+            client.postgrest["activities"].insert(activity)
+            true
+        } catch (e: Exception) {
+            println("ActivityService: Error creating activity: ${e.message}")
+            false
+        }
+    }
+
+    suspend fun updateActivity(activityId: String, updates: Map<String, Any?>): Boolean {
+        return try {
+            client.postgrest["activities"].update(updates) {
+                filter { eq("id", activityId) }
+            }
+            true
+        } catch (e: Exception) {
+            println("ActivityService: Error updating activity: ${e.message}")
+            false
+        }
+    }
+
+    suspend fun deleteActivity(activityId: String): Boolean {
+        return try {
+            client.postgrest["activities"].delete {
+                filter { eq("id", activityId) }
+            }
+            true
+        } catch (e: Exception) {
+            println("ActivityService: Error deleting activity: ${e.message}")
+            false
+        }
+    }
+
+    suspend fun updateParticipation(activityId: String, userId: String, isJoining: Boolean, additionalParticipants: Int = 0): Boolean {
+        return try {
+            if (isJoining) {
+                client.postgrest["activity_participants"].upsert(
+                    mapOf(
+                        "activity_id" to activityId,
+                        "user_id" to userId,
+                        "additional_participants" to additionalParticipants
+                    )
+                ) {
+                    onConflict = "activity_id,user_id"
+                }
+            } else {
+                client.postgrest["activity_participants"].delete {
+                    filter {
+                        eq("activity_id", activityId)
+                        eq("user_id", userId)
+                    }
+                }
+            }
+            true
+        } catch (e: Exception) {
+            println("ActivityService: Error updating participation: ${e.message}")
+            false
+        }
     }
 }

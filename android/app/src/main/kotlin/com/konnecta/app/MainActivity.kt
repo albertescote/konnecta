@@ -226,7 +226,8 @@ fun MainContainer(
                                     viewModel = viewModel
                                 )
                                 1 -> PlansHubScreen(
-                                    groupId = dashboardState.activeGroup?.id ?: ""
+                                    groupId = dashboardState.activeGroup?.id ?: "",
+                                    dashboardViewModel = viewModel
                                 )
                             }
                         }
