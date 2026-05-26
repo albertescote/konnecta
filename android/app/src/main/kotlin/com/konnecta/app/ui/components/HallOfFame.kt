@@ -1,6 +1,7 @@
 package com.konnecta.app.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,7 +28,7 @@ fun HallOfFame(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(horizontal = 8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Row(
@@ -38,7 +39,7 @@ fun HallOfFame(
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "ELS FIXES",
-                fontSize = 10.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Black,
                 letterSpacing = 2.sp,
                 color = Color.Gray.copy(alpha = 0.6f)
@@ -49,7 +50,8 @@ fun HallOfFame(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(32.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                .background(MaterialTheme.colorScheme.surface)
+                .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(32.dp))
                 .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -60,27 +62,27 @@ fun HallOfFame(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (user.avatar_url != null) {
-                            AsyncImage(
-                                model = user.avatar_url,
-                                contentDescription = "Avatar de ${user.full_name}",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.Gray.copy(alpha = 0.1f))
-                            )
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.Gray.copy(alpha = 0.2f)),
-                                contentAlignment = Alignment.Center
-                            ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (user.avatar_url != null) {
+                                AsyncImage(
+                                    model = user.avatar_url,
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize().clip(CircleShape)
+                                )
+                            } else {
                                 Text(
-                                    text = user.full_name?.take(1) ?: "?",
-                                    fontWeight = FontWeight.Bold
+                                    text = (user.full_name ?: user.email).take(1).uppercase(),
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Gray,
+                                    fontSize = 14.sp
                                 )
                             }
                         }
@@ -89,15 +91,16 @@ fun HallOfFame(
                         
                         Text(
                             text = user.full_name ?: user.email.split("@")[0],
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
 
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.surface)
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
                         Text(

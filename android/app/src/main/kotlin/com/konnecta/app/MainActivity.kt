@@ -3,34 +3,39 @@ package com.konnecta.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.compose.AsyncImage
+import com.konnecta.app.data.model.*
+import com.konnecta.app.data.remote.SupabaseClient
 import com.konnecta.app.ui.components.*
-import com.konnecta.app.ui.screens.PlansHubScreen
-import com.konnecta.app.ui.theme.KonnectaTheme
-import com.konnecta.app.ui.viewmodel.DashboardViewModel
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.material3.pulltorefresh.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import com.konnecta.app.ui.viewmodel.AuthViewModel
+import com.konnecta.app.ui.screens.DashboardScreen
 import com.konnecta.app.ui.screens.LoginScreen
 import com.konnecta.app.ui.screens.NoGroupScreen
-import io.github.jan.supabase.auth.status.SessionStatus
-import io.github.jan.supabase.auth.handleDeeplinks
-import com.konnecta.app.data.remote.SupabaseClient
-import com.konnecta.app.data.model.*
+import com.konnecta.app.ui.screens.PlansHubScreen
+import com.konnecta.app.ui.theme.KonnectaTheme
+import com.konnecta.app.ui.viewmodel.AuthViewModel
+import com.konnecta.app.ui.viewmodel.DashboardViewModel
 import com.konnecta.app.utils.DateUtils
+import io.github.jan.supabase.auth.handleDeeplinks
+import io.github.jan.supabase.auth.status.SessionStatus
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,7 +57,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun MainContainer(
     viewModel: DashboardViewModel = viewModel(),
@@ -61,10 +66,24 @@ fun MainContainer(
     val authState by authViewModel.state.collectAsState()
     val dashboardState by viewModel.state.collectAsState()
     
-    var selectedTab by remember { mutableStateOf(0) }
+    val pagerState = rememberPagerState(pageCount = { 2 })
+    val scope = rememberCoroutineScope()
+    
     var showGroupSelector by remember { mutableStateOf(false) }
     var showProfile by remember { mutableStateOf(false) }
     val context = androidx.compose.ui.platform.LocalContext.current
+
+    // Extract user profile for the header - checking both avatar_url and picture
+    val userProfile = authState.user?.let { user ->
+        val metadata = user.userMetadata
+        Profile(
+            id = user.id,
+            full_name = metadata?.get("full_name")?.toString() ?: metadata?.get("name")?.toString(),
+            avatar_url = metadata?.get("avatar_url")?.toString() ?: metadata?.get("picture")?.toString(),
+            email = user.email ?: "",
+            updated_at = null
+        )
+    }
 
     LaunchedEffect(authState.sessionStatus) {
         val status = authState.sessionStatus
@@ -86,11 +105,6 @@ fun MainContainer(
     }
 
     when (val status = authState.sessionStatus) {
-        is SessionStatus.NotAuthenticated -> {
-            LoginScreen(
-                onLoginSuccess = { /* Handle if needed, though LaunchedEffect handles it */ }
-            )
-        }
         is SessionStatus.Authenticated -> {
             if (dashboardState.isLoading && dashboardState.activeGroup == null && dashboardState.userGroups.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -104,63 +118,47 @@ fun MainContainer(
             } else {
                 Scaffold(
                     topBar = {
-                        if (selectedTab == 0 && dashboardState.activeGroup != null) {
-                            CenterAlignedTopAppBar(
-                                navigationIcon = {
-                                    IconButton(onClick = { showProfile = true }) {
-                                        Text("👤", fontSize = 20.sp)
-                                    }
-                                },
-                                title = {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        modifier = Modifier.clickable { showGroupSelector = true }
-                                    ) {
-                                        Text(
-                                            text = dashboardState.activeGroup?.name ?: "",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        Text(
-                                            text = "CANVIA DE GRUP ▾",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = Color.Gray
-                                        )
-                                    }
-                                },
-                                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                                    containerColor = MaterialTheme.colorScheme.background
-                                )
-                            )
-                        }
-                    },
-                    bottomBar = {
-                        NavigationBar(
-                            containerColor = MaterialTheme.colorScheme.background,
-                            tonalElevation = 0.dp
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.background)
+                                .padding(horizontal = 24.dp)
+                                .padding(top = 32.dp, bottom = 8.dp) // Reduced bottom padding
                         ) {
-                            NavigationBarItem(
-                                selected = selectedTab == 0,
-                                onClick = { selectedTab = 0 },
-                                icon = { Text("🏠") },
-                                label = { Text("Inici") }
+                            DashboardHeader(
+                                profile = userProfile,
+                                dashboardState = dashboardState,
+                                onProfileClick = { showProfile = true },
+                                onGroupClick = { showGroupSelector = true }
                             )
-                            NavigationBarItem(
-                                selected = selectedTab == 1,
-                                onClick = { selectedTab = 1 },
-                                icon = { Text("📅") },
-                                label = { Text("Plans") }
+                            
+                            Spacer(modifier = Modifier.height(16.dp)) // Reduced spacing
+                            
+                            ViewToggle(
+                                activePage = pagerState.currentPage,
+                                onPageSelected = { page ->
+                                    scope.launch { pagerState.animateScrollToPage(page) }
+                                }
                             )
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                         }
                     }
                 ) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
-                        when (selectedTab) {
-                            0 -> DashboardScreen(
-                                groupId = dashboardState.activeGroup?.id ?: "",
-                                viewModel = viewModel
-                            )
-                            1 -> PlansHubScreen(groupId = dashboardState.activeGroup?.id ?: "")
+                        HorizontalPager(
+                            state = pagerState,
+                            modifier = Modifier.fillMaxSize(),
+                            verticalAlignment = Alignment.Top
+                        ) { page ->
+                            when (page) {
+                                0 -> DashboardScreen(
+                                    groupId = dashboardState.activeGroup?.id ?: "",
+                                    viewModel = viewModel
+                                )
+                                1 -> PlansHubScreen(groupId = dashboardState.activeGroup?.id ?: "")
+                            }
                         }
                     }
 
@@ -168,14 +166,14 @@ fun MainContainer(
                         GroupSelectorBottomSheet(
                             groups = dashboardState.userGroups,
                             activeGroupId = dashboardState.activeGroup?.id ?: "",
-                            onGroupSelected = { viewModel.switchGroup(it, "2024-05-24") },
+                            onGroupSelected = { viewModel.switchGroup(it, DateUtils.formatDbDate(DateUtils.getUpcomingFriday())) },
                             onDismiss = { showGroupSelector = false }
                         )
                     }
 
                     if (showProfile) {
                         ProfileBottomSheet(
-                            profile = null,
+                            profile = userProfile,
                             onSignOut = { 
                                 authViewModel.signOut()
                                 showProfile = false 
@@ -187,6 +185,11 @@ fun MainContainer(
                 }
             }
         }
+        is SessionStatus.NotAuthenticated -> {
+            LoginScreen(
+                onLoginSuccess = { /* Handle if needed */ }
+            )
+        }
         else -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
@@ -195,160 +198,138 @@ fun MainContainer(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardScreen(groupId: String, viewModel: DashboardViewModel = viewModel()) {
-    val initialDate = remember { DateUtils.formatDbDate(DateUtils.getUpcomingFriday()) }
-    var selectedDate by remember { mutableStateOf(initialDate) }
-
-    val state by viewModel.state.collectAsState()
-    val dates = remember { DateUtils.getNextWeekends(10) }
-
-    val pullToRefreshState = rememberPullToRefreshState()
-    if (pullToRefreshState.isRefreshing) {
-        LaunchedEffect(Unit) {
-            viewModel.loadDashboardData(selectedDate, groupId)
-        }
-    }
-
-    LaunchedEffect(state.isLoading) {
-        if (!state.isLoading) pullToRefreshState.endRefresh()
-    }
-
-    LaunchedEffect(selectedDate, groupId) {
-        viewModel.loadDashboardData(selectedDate, groupId)
-    }
-
-    Box(modifier = Modifier.nestedScroll(pullToRefreshState.nestedScrollConnection)) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-        ) {
-            Spacer(modifier = Modifier.height(16.dp))
-            
+fun DashboardHeader(
+    profile: Profile?,
+    dashboardState: DashboardState,
+    onProfileClick: () -> Unit,
+    onGroupClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Top
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = "KONNECTA",
                 fontWeight = FontWeight.Black,
                 fontSize = 32.sp,
-                letterSpacing = (-1.5).sp,
-                modifier = Modifier.padding(horizontal = 24.dp)
+                letterSpacing = (-2).sp,
+                lineHeight = 28.sp
             )
             
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            WeekendSelector(
-                dates = dates,
-                selectedDate = selectedDate,
-                onDateSelected = { selectedDate = it }
-            )
-            
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                WeatherCard(weather = state.weather)
-            }
-            
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            VotingSection(
-                currentStatus = state.currentUserStatus,
-                onStatusChange = { viewModel.updateStatus(it, selectedDate) }
-            )
-
-            Spacer(modifier = Modifier.height(40.dp))
-
-            // Attendance Section
-            Column(
-                modifier = Modifier.padding(horizontal = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            Row(
+                modifier = Modifier
+                    .padding(top = 4.dp) // Reduced padding from 12dp to 4dp
+                    .clickable { onGroupClick() },
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "QUI VE?",
-                    fontSize = 12.sp,
+                    text = dashboardState.activeGroup?.name?.uppercase() ?: "BENVINGUT",
+                    fontSize = 10.sp,
                     fontWeight = FontWeight.Black,
                     letterSpacing = 2.sp,
-                    color = Color.Gray.copy(alpha = 0.6f)
+                    color = Color.Gray,
+                    modifier = Modifier.weight(1f, fill = false)
                 )
-
-                AttendanceSection(title = "SÍ", users = state.attendance.going, titleColor = Color(0xFF4ADE80))
-                AttendanceSection(title = "NO", users = state.attendance.notGoing, titleColor = Color(0xFFF87171))
-                AttendanceSection(title = "POTSER", users = state.attendance.pending, titleColor = Color.Gray)
-                AttendanceSection(title = "PENDENT", users = state.attendance.unanswered, titleColor = Color.Gray.copy(alpha = 0.5f))
+                if (dashboardState.userGroups.size > 1) {
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("▾", fontSize = 10.sp, color = Color.Gray)
+                }
             }
+        }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 24.dp, horizontal = 24.dp), color = Color.Gray.copy(alpha = 0.1f))
-
-            // Activity Board Section
-            Column(
-                modifier = Modifier.padding(horizontal = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            ThemeToggle()
+            Spacer(modifier = Modifier.width(8.dp))
+            // Profile Button with actual avatar
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .clickable { onProfileClick() },
+                contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "PLANS",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 2.sp,
-                    color = Color.Gray.copy(alpha = 0.6f)
-                )
-
-                if (state.activities.isEmpty()) {
-                    Text(
-                        text = "No hi ha cap pla encara...",
-                        fontSize = 14.sp,
-                        color = Color.Gray.copy(alpha = 0.5f),
-                        modifier = Modifier.padding(vertical = 16.dp, horizontal = 8.dp)
+                if (profile?.avatar_url != null) {
+                    AsyncImage(
+                        model = profile.avatar_url,
+                        contentDescription = "El meu perfil",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
                     )
                 } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        state.activities.forEach { activity ->
-                            ActivityCard(activity = activity)
-                        }
-                    }
-                }
-
-                var showNewActivitySheet by remember { mutableStateOf(false) }
-
-                OutlinedButton(
-                    onClick = { showNewActivitySheet = true },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    border = androidx.compose.foundation.BorderStroke(2.dp, Color.LightGray.copy(alpha = 0.5f)),
-                    contentPadding = PaddingValues(16.dp)
-                ) {
                     Text(
-                        text = "+ PROPOSA UN PLA",
-                        fontWeight = FontWeight.Black,
-                        color = Color.Gray
-                    )
-                }
-
-                if (showNewActivitySheet) {
-                    NewActivityBottomSheet(
-                        weekendDate = selectedDate,
-                        groupId = groupId,
-                        onDismiss = { showNewActivitySheet = false },
-                        onSuccess = {
-                            showNewActivitySheet = false
-                            viewModel.loadDashboardData(selectedDate, groupId)
-                        }
+                        text = profile?.full_name?.take(1) ?: profile?.email?.take(1) ?: "👤", 
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Black
                     )
                 }
             }
+        }
+    }
+}
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp, horizontal = 24.dp), color = Color.Gray.copy(alpha = 0.1f))
-
-            // Hall of Fame Section
-            HallOfFame(winners = state.leaderboard)
-
-            Spacer(modifier = Modifier.height(32.dp))
+@Composable
+fun ViewToggle(
+    activePage: Int,
+    onPageSelected: (Int) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().height(48.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .clickable { onPageSelected(0) },
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "CAP DE SETMANA",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 2.sp,
+                color = if (activePage == 0) MaterialTheme.colorScheme.onBackground else Color.Gray
+            )
+            if (activePage == 0) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .width(40.dp)
+                        .height(2.dp)
+                        .background(MaterialTheme.colorScheme.onBackground)
+                )
+            }
         }
         
-        PullToRefreshContainer(
-            modifier = Modifier.align(Alignment.TopCenter),
-            state = pullToRefreshState,
-        )
+        Box(modifier = Modifier.width(1.dp).height(16.dp).background(Color.LightGray.copy(alpha = 0.3f)))
+
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .clickable { onPageSelected(1) },
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "TOTS ELS PLANS",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 2.sp,
+                color = if (activePage == 1) MaterialTheme.colorScheme.onBackground else Color.Gray
+            )
+            if (activePage == 1) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .width(40.dp)
+                        .height(2.dp)
+                        .background(MaterialTheme.colorScheme.onBackground)
+                )
+            }
+        }
     }
 }

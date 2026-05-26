@@ -9,24 +9,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-data class AttendanceState(
-    val going: List<Pair<Profile, String?>> = emptyList(),
-    val notGoing: List<Pair<Profile, String?>> = emptyList(),
-    val pending: List<Pair<Profile, String?>> = emptyList(),
-    val unanswered: List<Pair<Profile, String?>> = emptyList()
-)
-
-data class DashboardState(
-    val attendance: AttendanceState = AttendanceState(),
-    val activities: List<ActivityWithParticipants> = emptyList(),
-    val weather: WeatherDay? = null,
-    val leaderboard: List<LeaderboardEntry> = emptyList(),
-    val userGroups: List<Group> = emptyList(),
-    val activeGroup: Group? = null,
-    val currentUserStatus: String? = null,
-    val isLoading: Boolean = false
-)
-
 class DashboardViewModel : ViewModel() {
     private val attendanceService = AttendanceService()
     private val activityService = ActivityService()

@@ -7,6 +7,7 @@ import java.util.Locale
 
 object DateUtils {
     private val dbDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    private val monthFormat = SimpleDateFormat("MMM", Locale("ca"))
 
     fun getUpcomingFriday(): Date {
         val calendar = Calendar.getInstance()
@@ -14,7 +15,7 @@ object DateUtils {
         
         when (dayOfWeek) {
             Calendar.FRIDAY -> {
-                // If it's Friday, return today at midnight
+                // If it's Friday, return today
             }
             Calendar.SATURDAY -> {
                 calendar.add(Calendar.DAY_OF_YEAR, -1)
@@ -41,6 +42,33 @@ object DateUtils {
         return dbDateFormat.format(date)
     }
 
+    fun parseDbDate(dateStr: String): Date {
+        return try {
+            dbDateFormat.parse(dateStr) ?: Date()
+        } catch (e: Exception) {
+            Date()
+        }
+    }
+
+    fun formatMonth(date: Date): String {
+        val fullMonth = monthFormat.format(date).lowercase()
+        // Remove "de " or "d'" prefix if present in the localized string
+        return fullMonth.replace("de ", "").replace("d'", "").uppercase()
+    }
+
+    fun getDayOfMonth(date: Date): String {
+        val calendar = Calendar.getInstance()
+        calendar.time = date
+        return calendar.get(Calendar.DAY_OF_MONTH).toString()
+    }
+
+    fun addDays(date: Date, days: Int): Date {
+        val calendar = Calendar.getInstance()
+        calendar.time = date
+        calendar.add(Calendar.DAY_OF_YEAR, days)
+        return calendar.time
+    }
+
     fun getNextWeekends(count: Int = 10): List<String> {
         val weekends = mutableListOf<String>()
         val calendar = Calendar.getInstance()
@@ -52,5 +80,14 @@ object DateUtils {
         }
         
         return weekends
+    }
+
+    fun formatDisplayDate(fridayStr: String): String {
+        val friday = parseDbDate(fridayStr)
+        val sat = addDays(friday, 1)
+        val sun = addDays(friday, 2)
+        
+        val dayMonthFormat = SimpleDateFormat("d 'de' MMM", Locale("ca"))
+        return "${dayMonthFormat.format(sat)} - ${dayMonthFormat.format(sun)}"
     }
 }

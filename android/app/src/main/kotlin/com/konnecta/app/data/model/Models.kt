@@ -104,6 +104,24 @@ data class PlanWithProfileOnly(
     val profiles: Profile
 )
 
+data class AttendanceState(
+    val going: List<Pair<Profile, String?>> = emptyList(),
+    val notGoing: List<Pair<Profile, String?>> = emptyList(),
+    val pending: List<Pair<Profile, String?>> = emptyList(),
+    val unanswered: List<Pair<Profile, String?>> = emptyList()
+)
+
+data class DashboardState(
+    val attendance: AttendanceState = AttendanceState(),
+    val activities: List<ActivityWithParticipants> = emptyList(),
+    val weather: WeatherDay? = null,
+    val leaderboard: List<LeaderboardEntry> = emptyList(),
+    val userGroups: List<Group> = emptyList(),
+    val activeGroup: Group? = null,
+    val currentUserStatus: String? = null,
+    val isLoading: Boolean = false
+)
+
 @Serializable
 data class WeatherDay(
     val date: String,

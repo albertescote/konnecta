@@ -1,10 +1,15 @@
 package com.konnecta.app.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Link
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -13,16 +18,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.konnecta.app.data.model.*
-
-import androidx.compose.ui.platform.LocalContext
-import com.konnecta.app.utils.ShareUtils
-
 import com.konnecta.app.utils.CalendarUtils
+import com.konnecta.app.utils.ShareUtils
 
 @Composable
 fun ActivityCard(
@@ -33,10 +36,11 @@ fun ActivityCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .clip(RoundedCornerShape(32.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(32.dp))
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -48,7 +52,9 @@ fun ActivityCard(
                     text = activity.title.uppercase(),
                     fontWeight = FontWeight.Black,
                     fontSize = 18.sp,
-                    letterSpacing = (-0.5).sp
+                    letterSpacing = (-0.5).sp,
+                    lineHeight = 22.sp,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 
                 val timeText = if (activity.start_time != null) {
@@ -61,7 +67,7 @@ fun ActivityCard(
                     text = timeText,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = Color(0xFF3B82F6),
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
@@ -71,22 +77,22 @@ fun ActivityCard(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                         .clickable { CalendarUtils.addToCalendar(context, activity) },
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "📅", fontSize = 16.sp)
+                    Icon(Icons.Outlined.CalendarMonth, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurface)
                 }
 
                 Box(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                         .clickable { ShareUtils.shareActivity(context, activity) },
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "🔗", fontSize = 16.sp)
+                    Icon(Icons.Outlined.Link, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurface)
                 }
             }
         }
@@ -95,7 +101,7 @@ fun ActivityCard(
             Text(
                 text = activity.description,
                 fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                color = Color.Gray,
                 lineHeight = 20.sp
             )
         }
@@ -106,35 +112,35 @@ fun ActivityCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             activity.activity_participants.take(5).forEach { participant ->
-                if (participant.profiles.avatar_url != null) {
-                    AsyncImage(
-                        model = participant.profiles.avatar_url,
-                        contentDescription = "Avatar de ${participant.profiles.full_name}",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(CircleShape)
-                            .background(Color.White)
-                            .padding(2.dp)
-                            .clip(CircleShape)
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(CircleShape)
-                            .background(Color.Gray)
-                            .padding(2.dp)
-                            .clip(CircleShape)
-                            .background(Color.LightGray),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = participant.profiles.full_name?.take(1) ?: "?",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(2.dp)
+                        .clip(CircleShape)
+                ) {
+                    if (participant.profiles.avatar_url != null) {
+                        AsyncImage(
+                            model = participant.profiles.avatar_url,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
                         )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.Gray.copy(alpha = 0.2f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = (participant.profiles.full_name ?: participant.profiles.email).take(1).uppercase(),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Gray
+                            )
+                        }
                     }
                 }
             }
@@ -142,10 +148,10 @@ fun ActivityCard(
             if (activity.activity_participants.size > 5) {
                 Text(
                     text = "+${activity.activity_participants.size - 5}",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Black,
                     modifier = Modifier.padding(start = 16.dp),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    color = Color.Gray.copy(alpha = 0.6f)
                 )
             }
         }
