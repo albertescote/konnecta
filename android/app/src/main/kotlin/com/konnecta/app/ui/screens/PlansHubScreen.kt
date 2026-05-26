@@ -20,6 +20,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.*
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.Alignment
+import com.konnecta.app.data.model.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

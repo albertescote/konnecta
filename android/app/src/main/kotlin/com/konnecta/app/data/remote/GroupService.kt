@@ -1,34 +1,27 @@
 package com.konnecta.app.data.remote
 
-import com.konnecta.app.data.model.Group
+import com.konnecta.app.data.model.*
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
-import kotlinx.serialization.Serializable
-
-@Serializable
-private data class MembershipWithGroup(
-    val role: String,
-    val groups: Group
-)
 
 class GroupService {
     private val client = SupabaseClient.client
-
-    suspend fun getUserGroups(userId: String): List<Group> {
-        return try {
-            val memberships = client.postgrest["group_memberships"]
-                .select(columns = Columns.raw("role, groups(*)")) {
-                    filter {
-                        eq("user_id", userId)
-                    }
+suspend fun getUserGroups(userId: String): List<Group> {
+    return try {
+        val memberships = client.postgrest["group_memberships"]
+            .select(columns = Columns.raw("role, groups(*)")) {
+                filter {
+                    eq("user_id", userId)
                 }
-                .decodeList<MembershipWithGroup>()
-            
-            memberships.map { it.groups.copy(role = it.role) }
-        } catch (e: Exception) {
-            emptyList()
-        }
+            }
+            .decodeList<MembershipWithGroup>()
+
+        memberships.map { it.groups.copy(role = it.role) }
+    } catch (e: Exception) {
+        emptyList()
     }
+}
+
 
     suspend fun joinGroupByToken(token: String, userId: String): Boolean {
         return try {

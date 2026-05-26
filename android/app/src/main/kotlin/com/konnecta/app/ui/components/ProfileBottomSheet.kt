@@ -7,10 +7,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import com.konnecta.app.data.model.Profile
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,17 +47,29 @@ fun ProfileBottomSheet(
 
             // User Info
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .background(Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(40.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = profile?.full_name?.take(1) ?: "?",
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Bold
+                if (profile?.avatar_url != null) {
+                    AsyncImage(
+                        model = profile.avatar_url,
+                        contentDescription = "Avatar de ${profile.full_name}",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(RoundedCornerShape(40.dp))
+                            .background(Color.Gray.copy(alpha = 0.1f))
                     )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .background(Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(40.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = profile?.full_name?.take(1) ?: "?",
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(

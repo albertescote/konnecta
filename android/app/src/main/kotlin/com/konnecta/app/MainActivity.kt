@@ -29,6 +29,8 @@ import com.konnecta.app.ui.screens.NoGroupScreen
 import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.auth.handleDeeplinks
 import com.konnecta.app.data.remote.SupabaseClient
+import com.konnecta.app.data.model.*
+import com.konnecta.app.utils.DateUtils
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -191,11 +193,11 @@ fun MainContainer(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(groupId: String, viewModel: DashboardViewModel = viewModel()) {
-    var selectedDate by remember { mutableStateOf("2024-05-24") }
-    var currentStatus by remember { mutableStateOf<String?>(null) }
+    val initialDate = remember { DateUtils.formatDbDate(DateUtils.getUpcomingFriday()) }
+    var selectedDate by remember { mutableStateOf(initialDate) }
 
     val state by viewModel.state.collectAsState()
-    val dates = listOf("2024-05-24", "2024-05-31", "2024-06-07", "2024-06-14")
+    val dates = remember { DateUtils.getNextWeekends(10) }
 
     val pullToRefreshState = rememberPullToRefreshState()
     if (pullToRefreshState.isRefreshing) {
@@ -245,8 +247,8 @@ fun DashboardScreen(groupId: String, viewModel: DashboardViewModel = viewModel()
             Spacer(modifier = Modifier.height(32.dp))
             
             VotingSection(
-                currentStatus = currentStatus,
-                onStatusChange = { currentStatus = it }
+                currentStatus = state.currentUserStatus,
+                onStatusChange = { viewModel.updateStatus(it, selectedDate) }
             )
 
             Spacer(modifier = Modifier.height(40.dp))

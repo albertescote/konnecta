@@ -1,26 +1,11 @@
 package com.konnecta.app.data.remote
 
-import com.konnecta.app.data.model.Profile
+import com.konnecta.app.data.model.*
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
-import kotlinx.serialization.Serializable
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
-@Serializable
-data class LeaderboardEntry(
-    val full_name: String?,
-    val avatar_url: String?,
-    val email: String,
-    val visit_count: Int
-)
-
-@Serializable
-private data class PlanWithProfileOnly(
-    val user_id: String,
-    val profiles: Profile
-)
 
 class LeaderboardService {
     private val client = SupabaseClient.client

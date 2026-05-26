@@ -8,7 +8,7 @@ data class Profile(
     val full_name: String?,
     val avatar_url: String?,
     val email: String,
-    val updated_at: String
+    val updated_at: String?
 )
 
 @Serializable
@@ -16,10 +16,39 @@ data class Group(
     val id: String,
     val name: String,
     val slug: String,
-    val created_at: String,
+    val created_at: String?,
     val created_by: String,
     val description: String?,
     val role: String? = null // local UI state
+)
+
+@Serializable
+data class MembershipWithGroup(
+    val role: String,
+    val groups: Group
+)
+
+@Serializable
+data class ParticipantWithProfile(
+    val user_id: String,
+    val additional_participants: Int,
+    val profiles: Profile
+)
+
+@Serializable
+data class ActivityWithParticipants(
+    val id: String,
+    val title: String,
+    val description: String?,
+    val group_id: String,
+    val start_date: String?,
+    val end_date: String?,
+    val start_time: String?,
+    val end_time: String?,
+    val creator_id: String,
+    val weekend_date: String,
+    val day_of_week: String,
+    val activity_participants: List<ParticipantWithProfile> = emptyList()
 )
 
 @Serializable
@@ -45,5 +74,46 @@ data class WeekendPlan(
     val weekend_date: String,
     val status: String,
     val comment: String?,
-    val updated_at: String
+    val updated_at: String?
+)
+
+@Serializable
+data class PlanWithProfile(
+    val user_id: String,
+    val status: String,
+    val comment: String?,
+    val profiles: Profile
+)
+
+@Serializable
+data class MembershipWithProfile(
+    val profiles: Profile
+)
+
+@Serializable
+data class LeaderboardEntry(
+    val full_name: String?,
+    val avatar_url: String?,
+    val email: String,
+    val visit_count: Int
+)
+
+@Serializable
+data class PlanWithProfileOnly(
+    val user_id: String,
+    val profiles: Profile
+)
+
+@Serializable
+data class WeatherDay(
+    val date: String,
+    val maxTemp: Int,
+    val minTemp: Int,
+    val code: Int
+)
+
+@Serializable
+data class WeatherForecast(
+    val summary: WeatherDay,
+    val details: List<WeatherDay?>
 )

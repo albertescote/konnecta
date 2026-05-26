@@ -1,22 +1,16 @@
 package com.konnecta.app.data.remote
 
+import com.konnecta.app.data.model.WeatherDay
+import com.konnecta.app.data.model.WeatherForecast
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.net.URL
-
-@Serializable
-data class WeatherDay(
-    val date: String,
-    val maxTemp: Int,
-    val minTemp: Int,
-    val code: Int
-)
-
-@Serializable
-data class WeatherForecast(
-    val summary: WeatherDay,
-    val details: List<WeatherDay?>
-)
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 @Serializable
 private data class OpenMeteoResponse(
@@ -35,11 +29,12 @@ class WeatherService {
     private val lat = 41.2856
     private val lng = 1.2504
     private val json = Json { ignoreUnknownKeys = true }
+    private val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
-    suspend fun getWeekendWeather(fridayDateStr: String): WeatherForecast? {
+    suspend fun getWeekendWeather(fridayDateStr: String): WeatherForecast? = withContext(Dispatchers.IO) {
         val url = "https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lng&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto"
         
-        return try {
+        try {
             val responseText = URL(url).readText()
             val data = json.decodeFromString<OpenMeteoResponse>(responseText)
             
@@ -59,18 +54,27 @@ class WeatherService {
                 )
             }
             
-            if (weekendForecast.all { it == null }) return null
+            if (weekendForecast.all { it == null }) return@withContext null
             
-            val summary = weekendForecast[1] ?: weekendForecast.find { it != null } ?: return null
+            // For the summary, use Saturday's weather if available, or the first available day
+            val summary = weekendForecast[1] ?: weekendForecast.find { it != null } ?: return@withContext null
             
             WeatherForecast(summary, weekendForecast)
         } catch (e: Exception) {
+            println("Weather: Error fetching data: ${e.message}")
             null
         }
     }
 
     private fun addDays(dateStr: String, days: Int): String {
-        // Simple mock for scaffolding, in real app use java.time
-        return dateStr // This would be properly calculated
+        return try {
+            val date = sdf.parse(dateStr) ?: return dateStr
+            val calendar = Calendar.getInstance()
+            calendar.time = date
+            calendar.add(Calendar.DAY_OF_YEAR, days)
+            sdf.format(calendar.time)
+        } catch (e: Exception) {
+            dateStr
+        }
     }
 }

@@ -2,8 +2,8 @@ package com.konnecta.app.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.konnecta.app.data.model.*
 import com.konnecta.app.data.remote.ActivityService
-import com.konnecta.app.data.remote.ActivityWithParticipants
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

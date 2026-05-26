@@ -1,23 +1,8 @@
 package com.konnecta.app.data.remote
 
-import com.konnecta.app.data.model.Profile
-import com.konnecta.app.data.model.WeekendPlan
+import com.konnecta.app.data.model.*
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
-import kotlinx.serialization.Serializable
-
-@Serializable
-data class PlanWithProfile(
-    val user_id: String,
-    val status: String,
-    val comment: String?,
-    val profiles: Profile
-)
-
-@Serializable
-data class MembershipWithProfile(
-    val profiles: Profile
-)
 
 class AttendanceService {
     private val client = SupabaseClient.client
@@ -42,5 +27,23 @@ class AttendanceService {
             }
             .decodeList<MembershipWithProfile>()
         return memberships.map { it.profiles }
+    }
+
+    suspend fun updateAttendance(userId: String, groupId: String, weekendDate: String, status: String): Boolean {
+        return try {
+            val plan = mapOf(
+                "user_id" to userId,
+                "group_id" to groupId,
+                "weekend_date" to weekendDate,
+                "status" to status
+            )
+            client.postgrest["weekend_plans"].upsert(plan) {
+                onConflict = "user_id,group_id,weekend_date"
+            }
+            true
+        } catch (e: Exception) {
+            println("Dashboard: Error updating attendance: ${e.message}")
+            false
+        }
     }
 }

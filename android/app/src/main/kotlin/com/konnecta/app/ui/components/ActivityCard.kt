@@ -12,10 +12,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.konnecta.app.data.remote.ActivityWithParticipants
+import coil3.compose.AsyncImage
+import com.konnecta.app.data.model.*
 
 import androidx.compose.ui.platform.LocalContext
 import com.konnecta.app.utils.ShareUtils
@@ -104,22 +106,36 @@ fun ActivityCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             activity.activity_participants.take(5).forEach { participant ->
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(Color.Gray)
-                        .padding(2.dp)
-                        .clip(CircleShape)
-                        .background(Color.LightGray),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = participant.profiles.full_name?.take(1) ?: "?",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                if (participant.profiles.avatar_url != null) {
+                    AsyncImage(
+                        model = participant.profiles.avatar_url,
+                        contentDescription = "Avatar de ${participant.profiles.full_name}",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(Color.White)
+                            .padding(2.dp)
+                            .clip(CircleShape)
                     )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(Color.Gray)
+                            .padding(2.dp)
+                            .clip(CircleShape)
+                            .background(Color.LightGray),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = participant.profiles.full_name?.take(1) ?: "?",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
                 }
             }
             

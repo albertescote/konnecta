@@ -2,7 +2,7 @@ package com.konnecta.app.utils
 
 import android.content.Context
 import android.content.Intent
-import com.konnecta.app.data.remote.ActivityWithParticipants
+import com.konnecta.app.data.model.*
 
 object ShareUtils {
     fun shareActivity(context: Context, activity: ActivityWithParticipants) {
