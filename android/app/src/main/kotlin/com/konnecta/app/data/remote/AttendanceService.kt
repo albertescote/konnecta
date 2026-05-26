@@ -20,7 +20,7 @@ class AttendanceService {
 
     suspend fun getGroupMembers(groupId: String): List<Profile> {
         val memberships = client.postgrest["group_memberships"]
-            .select(columns = Columns.raw("profiles(id, full_name, avatar_url, email, updated_at)")) {
+            .select(columns = Columns.raw("user_id, role, profiles(id, full_name, avatar_url, email, updated_at)")) {
                 filter {
                     eq("group_id", groupId)
                 }

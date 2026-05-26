@@ -28,29 +28,34 @@ class DashboardViewModel : ViewModel() {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
             
-            // Load user profile from DB to ensure it's up to date
-            val profile = profileService.getProfile(userId)
-            
-            val groups = groupService.getUserGroups(userId)
-            if (groups.isNotEmpty()) {
-                val activeGroup = _state.value.activeGroup ?: groups.first()
-                // Ensure the active group is in the current list
-                val validatedActiveGroup = groups.find { it.id == activeGroup.id } ?: groups.first()
+            try {
+                // Load user profile from DB to ensure it's up to date
+                val profile = profileService.getProfile(userId)
                 
-                _state.value = _state.value.copy(
-                    userGroups = groups, 
-                    activeGroup = validatedActiveGroup,
-                    currentUserProfile = profile
-                )
-                val initialDate = DateUtils.formatDbDate(DateUtils.getUpcomingFriday())
-                loadDashboardData(initialDate, validatedActiveGroup.id)
-            } else {
-                _state.value = _state.value.copy(
-                    userGroups = emptyList(), 
-                    activeGroup = null,
-                    currentUserProfile = profile,
-                    isLoading = false
-                )
+                val groups = groupService.getUserGroups(userId)
+                if (groups.isNotEmpty()) {
+                    val activeGroup = _state.value.activeGroup ?: groups.first()
+                    // Ensure the active group is in the current list
+                    val validatedActiveGroup = groups.find { it.id == activeGroup.id } ?: groups.first()
+                    
+                    _state.value = _state.value.copy(
+                        userGroups = groups, 
+                        activeGroup = validatedActiveGroup,
+                        currentUserProfile = profile
+                    )
+                    val initialDate = DateUtils.formatDbDate(DateUtils.getUpcomingFriday())
+                    loadDashboardData(initialDate, validatedActiveGroup.id)
+                } else {
+                    _state.value = _state.value.copy(
+                        userGroups = emptyList(), 
+                        activeGroup = null,
+                        currentUserProfile = profile,
+                        isLoading = false
+                    )
+                }
+            } catch (e: Exception) {
+                println("DashboardViewModel: Error loading initial data: ${e.message}")
+                _state.value = _state.value.copy(isLoading = false)
             }
         }
     }
@@ -123,14 +128,31 @@ class DashboardViewModel : ViewModel() {
                 _state.value = _state.value.copy(isLoading = true)
                 
                 // Refresh profile too just in case
-                val profile = if (userId != null) profileService.getProfile(userId) else null
+                val profile = if (userId != null) {
+                    try { profileService.getProfile(userId) } catch (e: Exception) { null }
+                } else null
                 
-                // Fetch in parallel for better performance
-                val plans = attendanceService.getAttendance(weekendDate, groupId)
-                val allMembers = attendanceService.getGroupMembers(groupId)
-                val activities = activityService.getActivities(weekendDate, groupId)
-                val weatherForecast = weatherService.getWeekendWeather(weekendDate)
-                val leaderboard = leaderboardService.getLeaderboard(groupId)
+                // Fetch each piece of data with its own try-catch to prevent one failure from breaking everything
+                val plans = try { attendanceService.getAttendance(weekendDate, groupId) } catch (e: Exception) { 
+                    println("Error loading plans: ${e.message}")
+                    emptyList() 
+                }
+                val allMembers = try { attendanceService.getGroupMembers(groupId) } catch (e: Exception) { 
+                    println("Error loading members: ${e.message}")
+                    emptyList() 
+                }
+                val activities = try { activityService.getActivities(weekendDate, groupId) } catch (e: Exception) { 
+                    println("Error loading activities: ${e.message}")
+                    emptyList() 
+                }
+                val weatherForecast = try { weatherService.getWeekendWeather(weekendDate) } catch (e: Exception) { 
+                    println("Error loading weather: ${e.message}")
+                    null 
+                }
+                val leaderboard = try { leaderboardService.getLeaderboard(groupId) } catch (e: Exception) { 
+                    println("Error loading leaderboard: ${e.message}")
+                    emptyList() 
+                }
                 
                 val myPlan = if (userId != null) plans.find { it.user_id == userId } else null
                 val answeredIds = plans.map { it.user_id }.toSet()
@@ -156,6 +178,7 @@ class DashboardViewModel : ViewModel() {
                     isLoading = false
                 )
             } catch (e: Exception) {
+                println("DashboardViewModel: Global error loading dashboard data: ${e.message}")
                 _state.value = _state.value.copy(isLoading = false)
             }
         }
@@ -163,7 +186,11 @@ class DashboardViewModel : ViewModel() {
 
     // Group Management Methods
     suspend fun getGroupMembers(groupId: String): List<MembershipWithProfile> {
-        return groupService.getGroupMembers(groupId)
+        return try {
+            groupService.getGroupMembers(groupId)
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 
     fun updateMemberRole(userId: String, role: String, onResult: (Boolean) -> Unit) {

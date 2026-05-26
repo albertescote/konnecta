@@ -73,10 +73,12 @@ fun MainContainer(
     
     var showGroupSelector by remember { mutableStateOf(false) }
     var showProfile by remember { mutableStateOf(false) }
+    var showCreateGroup by remember { mutableStateOf(false) }
     var showInviteFriends by remember { mutableStateOf<Group?>(null) }
     
     val context = androidx.compose.ui.platform.LocalContext.current
 
+    // Use the profile from dashboardState if available, fallback to auth metadata
     val userProfile = dashboardState.currentUserProfile ?: authState.user?.let { user ->
         val metadata = user.userMetadata
         Profile(
@@ -114,10 +116,72 @@ fun MainContainer(
                     CircularProgressIndicator()
                 }
             } else if (dashboardState.userGroups.isEmpty() && !dashboardState.isLoading) {
-                NoGroupScreen(
-                    userId = status.session.user?.id ?: "",
-                    onGroupCreated = { viewModel.loadInitialData(status.session.user?.id ?: "") }
-                )
+                Scaffold(
+                    topBar = {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.background)
+                                .padding(top = 32.dp)
+                        ) {
+                            DashboardHeader(
+                                profile = userProfile,
+                                dashboardState = dashboardState,
+                                onProfileClick = { showProfile = true },
+                                onGroupClick = { }, // No group to click
+                                modifier = Modifier.padding(horizontal = 24.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                        }
+                    }
+                ) { innerPadding ->
+                    Box(modifier = Modifier.padding(innerPadding)) {
+                        NoGroupScreen(
+                            onNavigateToCreate = { showCreateGroup = true }
+                        )
+                    }
+                }
+                
+                if (showCreateGroup) {
+                    CreateGroupBottomSheet(
+                        onDismiss = { showCreateGroup = false },
+                        onGroupCreated = { newGroup ->
+                            showCreateGroup = false
+                            showInviteFriends = newGroup
+                        },
+                        viewModel = viewModel
+                    )
+                }
+                
+                if (showProfile) {
+                    ProfileBottomSheet(
+                        profile = userProfile,
+                        groups = dashboardState.userGroups,
+                        activeGroupId = "",
+                        onSignOut = { 
+                            authViewModel.signOut()
+                            showProfile = false 
+                        },
+                        onDismiss = { showProfile = false },
+                        onGroupCreated = { newGroup ->
+                            showProfile = false
+                            showInviteFriends = newGroup
+                        },
+                        onInviteClick = { group ->
+                            showProfile = false
+                            showInviteFriends = group
+                        }
+                    )
+                }
+
+                showInviteFriends?.let { group ->
+                    InviteFriendsBottomSheet(
+                        group = group,
+                        onDismiss = { showInviteFriends = null },
+                        viewModel = viewModel
+                    )
+                }
             } else {
                 Scaffold(
                     topBar = {
@@ -188,9 +252,11 @@ fun MainContainer(
                             },
                             onDismiss = { showProfile = false },
                             onGroupCreated = { newGroup ->
+                                showProfile = false
                                 showInviteFriends = newGroup
                             },
                             onInviteClick = { group ->
+                                showProfile = false
                                 showInviteFriends = group
                             }
                         )

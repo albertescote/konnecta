@@ -16,9 +16,7 @@ data class Group(
     val id: String,
     val name: String,
     val slug: String,
-    val created_at: String?,
     val created_by: String,
-    val description: String?,
     val invite_token: String? = null,
     val invite_token_expires_at: String? = null,
     val role: String? = null // local UI state
