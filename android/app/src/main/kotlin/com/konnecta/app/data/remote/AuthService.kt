@@ -5,8 +5,12 @@ import io.github.jan.supabase.auth.providers.Google
 import io.github.jan.supabase.auth.providers.builtin.OTP
 import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.auth.user.*
+import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.util.UUID
+import java.time.Instant
 
 import com.onesignal.OneSignal
 
@@ -44,8 +48,42 @@ class AuthService {
         auth.signOut()
     }
 
+    suspend fun updateProfile(userId: String, fullName: String, avatarUrl: String?): Boolean {
+        return try {
+            client.postgrest["profiles"].update(
+                mapOf(
+                    "full_name" to fullName,
+                    "avatar_url" to avatarUrl,
+                    "updated_at" to Instant.now().toString()
+                )
+            ) {
+                filter {
+                    eq("id", userId)
+                }
+            }
+            true
+        } catch (e: Exception) {
+            println("AuthService: Error updating profile: ${e.message}")
+            false
+        }
+    }
+
+    suspend fun uploadAvatar(userId: String, bytes: ByteArray, fileName: String): String? {
+        return try {
+            val bucket = client.storage["avatars"]
+            val fileExt = fileName.split(".").last()
+            val filePath = "$userId/${UUID.randomUUID()}.$fileExt"
+            bucket.upload(filePath, bytes) {
+                upsert = true
+            }
+            bucket.publicUrl(filePath)
+        } catch (e: Exception) {
+            println("AuthService: Error uploading avatar: ${e.message}")
+            null
+        }
+    }
+
     suspend fun deleteAccount() {
         auth.signOut()
     }
 }
-

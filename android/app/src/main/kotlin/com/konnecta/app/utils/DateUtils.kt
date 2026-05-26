@@ -56,12 +56,6 @@ object DateUtils {
         return fullMonth.replace("de ", "").replace("d'", "").uppercase()
     }
 
-    fun getDayOfMonth(date: Date): String {
-        val calendar = Calendar.getInstance()
-        calendar.time = date
-        return calendar.get(Calendar.DAY_OF_MONTH).toString()
-    }
-
     fun addDays(date: Date, days: Int): Date {
         val calendar = Calendar.getInstance()
         calendar.time = date
@@ -89,5 +83,19 @@ object DateUtils {
         
         val dayMonthFormat = SimpleDateFormat("d 'de' MMM", Locale("ca"))
         return "${dayMonthFormat.format(sat)} - ${dayMonthFormat.format(sun)}"
+    }
+
+    fun formatDayOfWeek(date: Date): String {
+        return SimpleDateFormat("EEEE", Locale("ca")).format(date)
+    }
+
+    fun formatDayAndMonth(date: Date): String {
+        return SimpleDateFormat("d MMM", Locale("ca")).format(date)
+    }
+
+    fun getDayOfMonth(date: Date): Int {
+        val cal = Calendar.getInstance()
+        cal.time = date
+        return cal.get(Calendar.DAY_OF_MONTH)
     }
 }

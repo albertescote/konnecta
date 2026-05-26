@@ -79,16 +79,6 @@ fun GroupSelectorBottomSheet(
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            OutlinedButton(
-                onClick = { /* Implement Create/Join Logic */ },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp)
-            ) {
-                Text("GESTIONAR GRUPS", fontWeight = FontWeight.Bold)
-            }
         }
     }
 }

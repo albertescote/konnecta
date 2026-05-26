@@ -8,10 +8,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Thermostat
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,8 +24,11 @@ import com.konnecta.app.data.model.WeatherDay
 
 @Composable
 fun WeatherCard(
-    weather: WeatherDay?
+    weather: WeatherDay?,
+    forecast: List<WeatherDay?> = emptyList()
 ) {
+    var showModal by remember { mutableStateOf(false) }
+
     if (weather == null) {
         val stroke = Stroke(width = 2f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f))
         
@@ -68,10 +69,10 @@ fun WeatherCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(32.dp))
+            .clip(RoundedCornerShape(28.dp))
             .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(32.dp))
-            .clickable { /* Show Weather Modal */ }
+            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(28.dp))
+            .clickable { if (forecast.isNotEmpty()) showModal = true }
             .padding(20.dp)
     ) {
         Row(
@@ -135,6 +136,13 @@ fun WeatherCard(
                 )
             }
         }
+    }
+
+    if (showModal && forecast.isNotEmpty()) {
+        WeatherModal(
+            forecast = forecast,
+            onDismiss = { showModal = false }
+        )
     }
 }
 

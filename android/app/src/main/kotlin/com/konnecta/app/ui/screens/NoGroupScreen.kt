@@ -11,6 +11,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.konnecta.app.ui.components.AppFooter
 
 @Composable
 fun NoGroupScreen(
@@ -26,6 +27,8 @@ fun NoGroupScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Spacer(modifier = Modifier.weight(1f))
+
         Box(
             modifier = Modifier
                 .size(80.dp)
@@ -90,11 +93,13 @@ fun NoGroupScreen(
             textAlign = TextAlign.Center,
             letterSpacing = 1.sp
         )
+
+        Spacer(modifier = Modifier.weight(1f))
+        
+        AppFooter()
     }
 
     if (showModal) {
-        // Since we don't have a GroupModal yet, we'll just show a simple Dialog or placeholder
-        // In a real implementation, this would be a BottomSheet or a full screen modal
         AlertDialog(
             onDismissRequest = { showModal = false },
             title = { Text("Crear nou grup") },

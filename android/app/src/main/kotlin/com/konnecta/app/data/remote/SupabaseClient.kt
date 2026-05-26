@@ -7,6 +7,7 @@ import io.github.jan.supabase.compose.auth.ComposeAuth
 import io.github.jan.supabase.compose.auth.composeAuth
 import io.github.jan.supabase.compose.auth.googleNativeLogin
 import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.storage.Storage
 import io.github.jan.supabase.serializer.KotlinXSerializer
 import kotlinx.serialization.json.Json
 
@@ -31,6 +32,7 @@ object SupabaseClient {
                 coerceInputValues = true
             })
         }
+        install(Storage)
 
         defaultSerializer = KotlinXSerializer(Json {
             ignoreUnknownKeys = true

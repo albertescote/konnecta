@@ -35,7 +35,6 @@ class LeaderboardService {
                     )
                 }
                 .sortedByDescending { it.visit_count }
-                .take(5)
 
             userCounts
         } catch (e: Exception) {

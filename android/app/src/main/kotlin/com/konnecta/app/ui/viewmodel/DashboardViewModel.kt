@@ -15,6 +15,7 @@ class DashboardViewModel : ViewModel() {
     private val weatherService = WeatherService()
     private val leaderboardService = LeaderboardService()
     private val groupService = GroupService()
+    private val profileService = ProfileService()
 
     private val _state = MutableStateFlow(DashboardState())
     val state: StateFlow<DashboardState> = _state
@@ -26,14 +27,30 @@ class DashboardViewModel : ViewModel() {
         currentUserId = userId
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
+            
+            // Load user profile from DB to ensure it's up to date
+            val profile = profileService.getProfile(userId)
+            
             val groups = groupService.getUserGroups(userId)
             if (groups.isNotEmpty()) {
-                val firstGroup = groups.first()
-                _state.value = _state.value.copy(userGroups = groups, activeGroup = firstGroup)
+                val activeGroup = _state.value.activeGroup ?: groups.first()
+                // Ensure the active group is in the current list
+                val validatedActiveGroup = groups.find { it.id == activeGroup.id } ?: groups.first()
+                
+                _state.value = _state.value.copy(
+                    userGroups = groups, 
+                    activeGroup = validatedActiveGroup,
+                    currentUserProfile = profile
+                )
                 val initialDate = DateUtils.formatDbDate(DateUtils.getUpcomingFriday())
-                loadDashboardData(initialDate, firstGroup.id)
+                loadDashboardData(initialDate, validatedActiveGroup.id)
             } else {
-                _state.value = _state.value.copy(userGroups = emptyList(), isLoading = false)
+                _state.value = _state.value.copy(
+                    userGroups = emptyList(), 
+                    activeGroup = null,
+                    currentUserProfile = profile,
+                    isLoading = false
+                )
             }
         }
     }
@@ -59,12 +76,40 @@ class DashboardViewModel : ViewModel() {
         }
     }
 
-    fun updateStatus(status: String, weekendDate: String) {
+    fun createGroup(name: String, onResult: (Group?) -> Unit) {
+        val userId = currentUserId ?: return
+        viewModelScope.launch {
+            val slug = name.lowercase().replace(" ", "-").replace(Regex("[^a-z0-9-]"), "")
+            val group = groupService.createGroup(userId, name, slug)
+            if (group != null) {
+                // Refresh and set the new group as active before calling initial data
+                _state.value = _state.value.copy(activeGroup = group.copy(role = "admin"))
+                loadInitialData(userId)
+                onResult(group.copy(role = "admin"))
+            } else {
+                onResult(null)
+            }
+        }
+    }
+
+    fun updateStatus(status: String, weekendDate: String, comment: String? = null) {
         val userId = currentUserId ?: return
         val groupId = _state.value.activeGroup?.id ?: return
         
         viewModelScope.launch {
-            val success = attendanceService.updateAttendance(userId, groupId, weekendDate, status)
+            val success = attendanceService.updateAttendance(userId, groupId, weekendDate, status, comment)
+            if (success) {
+                loadDashboardData(weekendDate, groupId)
+            }
+        }
+    }
+
+    fun updateComment(comment: String, weekendDate: String) {
+        val userId = currentUserId ?: return
+        val groupId = _state.value.activeGroup?.id ?: return
+        
+        viewModelScope.launch {
+            val success = attendanceService.updateComment(userId, groupId, weekendDate, comment)
             if (success) {
                 loadDashboardData(weekendDate, groupId)
             }
@@ -76,6 +121,10 @@ class DashboardViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 _state.value = _state.value.copy(isLoading = true)
+                
+                // Refresh profile too just in case
+                val profile = if (userId != null) profileService.getProfile(userId) else null
+                
                 // Fetch in parallel for better performance
                 val plans = attendanceService.getAttendance(weekendDate, groupId)
                 val allMembers = attendanceService.getGroupMembers(groupId)
@@ -99,13 +148,78 @@ class DashboardViewModel : ViewModel() {
                     attendance = AttendanceState(going, notGoing, pending, unanswered),
                     activities = sortedActivities,
                     weather = weatherForecast?.summary,
+                    fullForecast = weatherForecast?.details ?: emptyList(),
                     leaderboard = leaderboard,
+                    currentUserProfile = profile ?: _state.value.currentUserProfile,
                     currentUserStatus = myPlan?.status,
+                    currentUserComment = myPlan?.comment,
                     isLoading = false
                 )
             } catch (e: Exception) {
                 _state.value = _state.value.copy(isLoading = false)
             }
         }
+    }
+
+    // Group Management Methods
+    suspend fun getGroupMembers(groupId: String): List<MembershipWithProfile> {
+        return groupService.getGroupMembers(groupId)
+    }
+
+    fun updateMemberRole(userId: String, role: String, onResult: (Boolean) -> Unit) {
+        val groupId = _state.value.activeGroup?.id ?: return
+        viewModelScope.launch {
+            val success = groupService.updateMemberRole(groupId, userId, role)
+            onResult(success)
+        }
+    }
+
+    fun removeMember(userId: String, onResult: (Boolean) -> Unit) {
+        val groupId = _state.value.activeGroup?.id ?: return
+        viewModelScope.launch {
+            val success = groupService.removeMember(groupId, userId)
+            if (success) {
+                // If it was the current user, we should probably reload everything
+                if (userId == currentUserId) {
+                    loadInitialData(userId)
+                }
+            }
+            onResult(success)
+        }
+    }
+
+    fun deleteGroup(onResult: (Boolean) -> Unit) {
+        val groupId = _state.value.activeGroup?.id ?: return
+        viewModelScope.launch {
+            val success = groupService.deleteGroup(groupId)
+            if (success) {
+                currentUserId?.let { 
+                    _state.value = _state.value.copy(activeGroup = null)
+                    loadInitialData(it) 
+                }
+            }
+            onResult(success)
+        }
+    }
+
+    fun leaveGroup(onResult: (Boolean) -> Unit) {
+        val userId = currentUserId ?: return
+        val groupId = _state.value.activeGroup?.id ?: return
+        viewModelScope.launch {
+            val success = groupService.leaveGroup(groupId, userId)
+            if (success) {
+                _state.value = _state.value.copy(activeGroup = null)
+                loadInitialData(userId)
+            }
+            onResult(success)
+        }
+    }
+
+    suspend fun refreshInviteToken(groupId: String): Group? {
+        val result = groupService.refreshInviteToken(groupId)
+        if (result != null && _state.value.activeGroup?.id == groupId) {
+            _state.value = _state.value.copy(activeGroup = result.copy(role = _state.value.activeGroup?.role))
+        }
+        return result
     }
 }

@@ -26,7 +26,10 @@ import com.konnecta.app.utils.DateUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardScreen(groupId: String, viewModel: DashboardViewModel = viewModel()) {
+fun DashboardScreen(
+    groupId: String, 
+    viewModel: DashboardViewModel = viewModel()
+) {
     val initialDate = remember { DateUtils.formatDbDate(DateUtils.getUpcomingFriday()) }
     var selectedDate by remember { mutableStateOf(initialDate) }
 
@@ -49,31 +52,44 @@ fun DashboardScreen(groupId: String, viewModel: DashboardViewModel = viewModel()
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(32.dp),
-            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 24.dp)
+            contentPadding = PaddingValues(top = 24.dp, bottom = 24.dp)
         ) {
             item {
-                WeekendSelector(
-                    dates = dates,
-                    selectedDate = selectedDate,
-                    onDateSelected = { selectedDate = it }
-                )
+                Box(modifier = Modifier.padding(horizontal = 24.dp)) {
+                    WeekendSelector(
+                        dates = dates,
+                        selectedDate = selectedDate,
+                        onDateSelected = { selectedDate = it }
+                    )
+                }
             }
 
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
-                    WeatherCard(weather = state.weather)
+                Column(
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    WeatherCard(
+                        weather = state.weather,
+                        forecast = state.fullForecast
+                    )
                     
                     VotingSection(
                         currentStatus = state.currentUserStatus,
+                        currentComment = state.currentUserComment,
                         weekendDate = selectedDate,
-                        onStatusChange = { viewModel.updateStatus(it, selectedDate) }
+                        onStatusChange = { viewModel.updateStatus(it, selectedDate) },
+                        onCommentSave = { viewModel.updateComment(it, selectedDate) }
                     )
                 }
             }
 
             // Attendance Section
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                     Text(
                         text = "QUI VE?",
                         fontSize = 13.sp,
@@ -83,20 +99,27 @@ fun DashboardScreen(groupId: String, viewModel: DashboardViewModel = viewModel()
                         modifier = Modifier.padding(horizontal = 8.dp)
                     )
                     
-                    AttendanceSection(title = "SÍ", users = state.attendance.going, titleColor = Color(0xFF4ADE80))
-                    AttendanceSection(title = "NO", users = state.attendance.notGoing, titleColor = Color(0xFFF87171))
-                    AttendanceSection(title = "POTSER", users = state.attendance.pending, titleColor = Color(0xFFFBBF24))
-                    AttendanceSection(title = "PENDENT", users = state.attendance.unanswered, titleColor = Color.Gray, isUnanswered = true)
+                    AttendanceSection(title = "SÍ", groupId = groupId, users = state.attendance.going, titleColor = Color(0xFF22C55E))
+                    AttendanceSection(title = "NO", groupId = groupId, users = state.attendance.notGoing, titleColor = Color(0xFFEF4444))
+                    AttendanceSection(title = "POTSER", groupId = groupId, users = state.attendance.pending, titleColor = Color(0xFFA1A1AA))
+                    AttendanceSection(title = "PENDENT", groupId = groupId, users = state.attendance.unanswered, titleColor = Color.Gray, isUnanswered = true)
                 }
             }
 
             item {
-                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), modifier = Modifier.padding(horizontal = 8.dp))
+                HorizontalDivider(
+                    thickness = 1.dp, 
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f), 
+                    modifier = Modifier.padding(horizontal = 32.dp)
+                )
             }
 
             // Activity Board Section
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                     Text(
                         text = "PLANS",
                         fontSize = 13.sp,
@@ -163,12 +186,24 @@ fun DashboardScreen(groupId: String, viewModel: DashboardViewModel = viewModel()
             }
 
             item {
-                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), modifier = Modifier.padding(horizontal = 8.dp))
+                HorizontalDivider(
+                    thickness = 1.dp, 
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f), 
+                    modifier = Modifier.padding(horizontal = 32.dp)
+                )
             }
 
             // Hall of Fame Section
             item {
-                HallOfFame(winners = state.leaderboard)
+                Box(modifier = Modifier.padding(horizontal = 24.dp)) {
+                    HallOfFame(winners = state.leaderboard)
+                }
+            }
+
+            item {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                    AppFooter()
+                }
             }
         }
         

@@ -19,6 +19,8 @@ data class Group(
     val created_at: String?,
     val created_by: String,
     val description: String?,
+    val invite_token: String? = null,
+    val invite_token_expires_at: String? = null,
     val role: String? = null // local UI state
 )
 
@@ -87,6 +89,8 @@ data class PlanWithProfile(
 
 @Serializable
 data class MembershipWithProfile(
+    val user_id: String,
+    val role: String,
     val profiles: Profile
 )
 
@@ -115,11 +119,26 @@ data class DashboardState(
     val attendance: AttendanceState = AttendanceState(),
     val activities: List<ActivityWithParticipants> = emptyList(),
     val weather: WeatherDay? = null,
+    val fullForecast: List<WeatherDay?> = emptyList(),
     val leaderboard: List<LeaderboardEntry> = emptyList(),
     val userGroups: List<Group> = emptyList(),
     val activeGroup: Group? = null,
+    val currentUserProfile: Profile? = null,
     val currentUserStatus: String? = null,
+    val currentUserComment: String? = null,
     val isLoading: Boolean = false
+)
+
+@Serializable
+data class UserPlanSummary(
+    val weekend_date: String,
+    val status: String
+)
+
+@Serializable
+data class UserStats(
+    val totalVisits: Int,
+    val upcomingPlans: List<UserPlanSummary>
 )
 
 @Serializable

@@ -10,6 +10,8 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -71,10 +73,11 @@ fun MainContainer(
     
     var showGroupSelector by remember { mutableStateOf(false) }
     var showProfile by remember { mutableStateOf(false) }
+    var showInviteFriends by remember { mutableStateOf<Group?>(null) }
+    
     val context = androidx.compose.ui.platform.LocalContext.current
 
-    // Extract user profile for the header - checking both avatar_url and picture
-    val userProfile = authState.user?.let { user ->
+    val userProfile = dashboardState.currentUserProfile ?: authState.user?.let { user ->
         val metadata = user.userMetadata
         Profile(
             id = user.id,
@@ -122,27 +125,28 @@ fun MainContainer(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(MaterialTheme.colorScheme.background)
-                                .padding(horizontal = 24.dp)
-                                .padding(top = 32.dp, bottom = 8.dp) // Reduced bottom padding
+                                .padding(top = 32.dp)
                         ) {
                             DashboardHeader(
                                 profile = userProfile,
                                 dashboardState = dashboardState,
                                 onProfileClick = { showProfile = true },
-                                onGroupClick = { showGroupSelector = true }
+                                onGroupClick = { showGroupSelector = true },
+                                modifier = Modifier.padding(horizontal = 24.dp)
                             )
                             
-                            Spacer(modifier = Modifier.height(16.dp)) // Reduced spacing
+                            Spacer(modifier = Modifier.height(16.dp))
                             
                             ViewToggle(
                                 activePage = pagerState.currentPage,
-                                onPageSelected = { page ->
-                                    scope.launch { pagerState.animateScrollToPage(page) }
-                                }
+                                onPageSelected = { targetPage ->
+                                    scope.launch { pagerState.animateScrollToPage(targetPage) }
+                                },
+                                modifier = Modifier.padding(horizontal = 24.dp)
                             )
                             
                             Spacer(modifier = Modifier.height(8.dp))
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                            HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                         }
                     }
                 ) { innerPadding ->
@@ -157,7 +161,9 @@ fun MainContainer(
                                     groupId = dashboardState.activeGroup?.id ?: "",
                                     viewModel = viewModel
                                 )
-                                1 -> PlansHubScreen(groupId = dashboardState.activeGroup?.id ?: "")
+                                1 -> PlansHubScreen(
+                                    groupId = dashboardState.activeGroup?.id ?: ""
+                                )
                             }
                         }
                     }
@@ -174,12 +180,27 @@ fun MainContainer(
                     if (showProfile) {
                         ProfileBottomSheet(
                             profile = userProfile,
+                            groups = dashboardState.userGroups,
+                            activeGroupId = dashboardState.activeGroup?.id ?: "",
                             onSignOut = { 
                                 authViewModel.signOut()
                                 showProfile = false 
                             },
-                            onDeleteAccount = { showProfile = false },
-                            onDismiss = { showProfile = false }
+                            onDismiss = { showProfile = false },
+                            onGroupCreated = { newGroup ->
+                                showInviteFriends = newGroup
+                            },
+                            onInviteClick = { group ->
+                                showInviteFriends = group
+                            }
+                        )
+                    }
+
+                    showInviteFriends?.let { group ->
+                        InviteFriendsBottomSheet(
+                            group = group,
+                            onDismiss = { showInviteFriends = null },
+                            viewModel = viewModel
                         )
                     }
                 }
@@ -203,10 +224,11 @@ fun DashboardHeader(
     profile: Profile?,
     dashboardState: DashboardState,
     onProfileClick: () -> Unit,
-    onGroupClick: () -> Unit
+    onGroupClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Top
     ) {
@@ -221,7 +243,7 @@ fun DashboardHeader(
             
             Row(
                 modifier = Modifier
-                    .padding(top = 4.dp) // Reduced padding from 12dp to 4dp
+                    .padding(top = 4.dp)
                     .clickable { onGroupClick() },
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -235,7 +257,12 @@ fun DashboardHeader(
                 )
                 if (dashboardState.userGroups.size > 1) {
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("▾", fontSize = 10.sp, color = Color.Gray)
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowDown,
+                        contentDescription = null,
+                        tint = Color.Gray,
+                        modifier = Modifier.size(12.dp)
+                    )
                 }
             }
         }
@@ -252,7 +279,7 @@ fun DashboardHeader(
                     .clickable { onProfileClick() },
                 contentAlignment = Alignment.Center
             ) {
-                if (profile?.avatar_url != null) {
+                if (profile?.avatar_url != null && profile.avatar_url.isNotBlank()) {
                     AsyncImage(
                         model = profile.avatar_url,
                         contentDescription = "El meu perfil",
@@ -274,10 +301,11 @@ fun DashboardHeader(
 @Composable
 fun ViewToggle(
     activePage: Int,
-    onPageSelected: (Int) -> Unit
+    onPageSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().height(48.dp),
+        modifier = modifier.fillMaxWidth().height(48.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(

@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.konnecta.app.data.model.*
 import com.konnecta.app.ui.components.ActivityCard
+import com.konnecta.app.ui.components.AppFooter
 import com.konnecta.app.ui.components.NewActivityBottomSheet
 import com.konnecta.app.ui.viewmodel.PlansHubViewModel
 import com.konnecta.app.utils.DateUtils
@@ -47,11 +48,14 @@ fun PlansHubScreen(
     Box(modifier = Modifier.nestedScroll(pullToRefreshState.nestedScrollConnection)) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 24.dp),
+            contentPadding = PaddingValues(top = 24.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(32.dp)
         ) {
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                     Text(
                         text = "PROPERS ESDEVENIMENTS",
                         fontSize = 13.sp,
@@ -67,7 +71,7 @@ fun PlansHubScreen(
                                 .fillMaxWidth()
                                 .padding(vertical = 12.dp)
                                 .height(120.dp)
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(32.dp)),
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(28.dp)),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -117,9 +121,11 @@ fun PlansHubScreen(
                     }
                 }
             }
-            
+
             item {
-                Spacer(modifier = Modifier.height(32.dp))
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    AppFooter()
+                }
             }
         }
         

@@ -1,8 +1,21 @@
 package com.konnecta.app.ui.components
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -10,119 +23,360 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
+import com.konnecta.app.data.model.Group
 import com.konnecta.app.data.model.Profile
+import com.konnecta.app.ui.viewmodel.AuthViewModel
+import com.konnecta.app.ui.viewmodel.DashboardViewModel
+import com.konnecta.app.utils.DateUtils
+import com.konnecta.app.utils.ShareUtils
+import java.io.ByteArrayOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileBottomSheet(
     profile: Profile?,
+    groups: List<Group>,
+    activeGroupId: String,
     onSignOut: () -> Unit,
-    onDeleteAccount: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onGroupCreated: (Group) -> Unit,
+    onInviteClick: (Group) -> Unit,
+    authViewModel: AuthViewModel = viewModel(),
+    dashboardViewModel: DashboardViewModel = viewModel()
 ) {
-    var showDeleteConfirmation by remember { mutableStateOf(false) }
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState()
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(24.dp)
-                .padding(bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "EL MEU PERFIL",
-                fontWeight = FontWeight.Black,
-                fontSize = 12.sp,
-                letterSpacing = 2.sp,
-                color = Color.Gray
-            )
-
-            // User Info
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                if (profile?.avatar_url != null) {
-                    AsyncImage(
-                        model = profile.avatar_url,
-                        contentDescription = "Avatar de ${profile.full_name}",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(RoundedCornerShape(40.dp))
-                            .background(Color.Gray.copy(alpha = 0.1f))
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .background(Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(40.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = profile?.full_name?.take(1) ?: "?",
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+    var fullName by remember(profile) { mutableStateOf(profile?.full_name ?: "") }
+    var avatarUrl by remember(profile) { mutableStateOf(profile?.avatar_url ?: "") }
+    var isSaving by remember { mutableStateOf(false) }
+    var showGroupManagement by remember { mutableStateOf(false) }
+    var showCreateGroup by remember { mutableStateOf(false) }
+    
+    val context = LocalContext.current
+    val activeGroup = groups.find { it.id == activeGroupId }
+    val isAdmin = activeGroup?.role == "admin"
+    
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            val inputStream = context.contentResolver.openInputStream(it)
+            val bitmap = BitmapFactory.decodeStream(inputStream)
+            val outputStream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
+            val bytes = outputStream.toByteArray()
+            
+            authViewModel.uploadAvatar(bytes, "avatar.jpg") { newUrl ->
+                if (newUrl != null) {
+                    avatarUrl = newUrl
+                    // Immediately update profile with new avatar URL
+                    authViewModel.updateProfile(fullName, newUrl) { success ->
+                        if (success) {
+                            dashboardViewModel.loadDashboardData(
+                                DateUtils.formatDbDate(DateUtils.getUpcomingFriday()),
+                                activeGroupId
+                            )
+                            Toast.makeText(context, "Imatge actualitzada", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = profile?.full_name ?: "Usuari",
-                    fontWeight = FontWeight.Black,
-                    fontSize = 20.sp
-                )
-                Text(
-                    text = profile?.email ?: "",
-                    color = Color.Gray,
-                    fontSize = 14.sp
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Button(
-                onClick = onSignOut,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
-            ) {
-                Text("TANCAR SESSIÓ", fontWeight = FontWeight.Bold)
-            }
-
-            TextButton(
-                onClick = { showDeleteConfirmation = true }
-            ) {
-                Text(
-                    text = "ELIMINAR COMPTE",
-                    color = Color.Red.copy(alpha = 0.6f),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp
-                )
             }
         }
     }
 
-    if (showDeleteConfirmation) {
-        AlertDialog(
-            onDismissRequest = { showDeleteConfirmation = false },
-            title = { Text("Eliminar compte?") },
-            text = { Text("Aquesta acció és permanent i no es pot desfer. Es perdran totes les teves dades.") },
-            confirmButton = {
-                TextButton(onClick = onDeleteAccount) {
-                    Text("ELIMINAR", color = Color.Red, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirmation = false }) {
-                    Text("CANCEL·LAR")
+    val isDirty = fullName != (profile?.full_name ?: "") || avatarUrl != (profile?.avatar_url ?: "")
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = MaterialTheme.colorScheme.surface,
+        dragHandle = { BottomSheetDefaults.DragHandle(color = Color.Gray.copy(alpha = 0.3f)) }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 48.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(32.dp)
+        ) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "EL TEU PERFIL",
+                    fontWeight = FontWeight.Black,
+                    fontSize = 20.sp,
+                    letterSpacing = (-0.5).sp
+                )
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.Default.Close, contentDescription = "Tancar")
                 }
             }
+
+            // Avatar Section
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(contentAlignment = Alignment.BottomEnd) {
+                    Box(
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (avatarUrl.isNotBlank()) {
+                            AsyncImage(
+                                model = avatarUrl,
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            Text(
+                                text = (profile?.full_name ?: profile?.email ?: "?").take(1).uppercase(),
+                                fontSize = 40.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Color.Gray.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                    
+                    Surface(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .clickable { imagePickerLauncher.launch("image/*") },
+                        color = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        shadowElevation = 4.dp
+                    ) {
+                        Icon(
+                            Icons.Default.CameraAlt,
+                            contentDescription = "Canviar foto",
+                            modifier = Modifier.padding(6.dp)
+                        )
+                    }
+                }
+                Text(
+                    text = "CLICA PER CANVIAR LA FOTO",
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color.Gray,
+                    letterSpacing = 1.sp
+                )
+            }
+
+            // Form
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Email (Read-only)
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = "CORREU ELECTRÒNIC",
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Black,
+                        color = Color.Gray,
+                        letterSpacing = 1.sp,
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+                    OutlinedTextField(
+                        value = profile?.email ?: "",
+                        onValueChange = {},
+                        readOnly = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color.Transparent,
+                            focusedBorderColor = Color.Transparent,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                            unfocusedTextColor = Color.Gray
+                        )
+                    )
+                }
+
+                // Name
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = "NOM D'USUARI",
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Black,
+                        color = Color.Gray,
+                        letterSpacing = 1.sp,
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+                    OutlinedTextField(
+                        value = fullName,
+                        onValueChange = { fullName = it },
+                        placeholder = { Text("Com et diuen els amics?") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color.Transparent,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        )
+                    )
+                }
+
+                Button(
+                    onClick = {
+                        isSaving = true
+                        authViewModel.updateProfile(fullName, avatarUrl) { success ->
+                            if (success) {
+                                dashboardViewModel.loadDashboardData(
+                                    DateUtils.formatDbDate(DateUtils.getUpcomingFriday()),
+                                    activeGroupId
+                                )
+                                Toast.makeText(context, "Perfil actualitzat", Toast.LENGTH_SHORT).show()
+                            }
+                            isSaving = false
+                        }
+                    },
+                    enabled = isDirty && !isSaving,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.onSurface,
+                        contentColor = MaterialTheme.colorScheme.surface
+                    )
+                ) {
+                    Text(
+                        text = if (isSaving) "GUARDANT..." else "GUARDAR CANVIS",
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 0.5.sp
+                    )
+                }
+            }
+
+            // Group Management
+            if (activeGroup != null) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    ) {
+                        Icon(Icons.Default.Settings, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(14.dp))
+                        Text(
+                            text = "GESTIÓ DE GRUP: ${activeGroup.name.uppercase()}",
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color.Gray,
+                            letterSpacing = 1.sp
+                        )
+                    }
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        if (isAdmin) {
+                            OutlinedButton(
+                                onClick = { onInviteClick(activeGroup) },
+                                modifier = Modifier.weight(1f).height(56.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                border = ButtonDefaults.outlinedButtonBorder.copy(width = 1.dp, brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outline))
+                            ) {
+                                Icon(Icons.Default.PersonAdd, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("CONVIDAR", fontSize = 10.sp, fontWeight = FontWeight.Black)
+                            }
+                        }
+                        
+                        OutlinedButton(
+                            onClick = { showGroupManagement = true },
+                            modifier = Modifier.weight(1f).height(56.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            border = ButtonDefaults.outlinedButtonBorder.copy(width = 1.dp, brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outline))
+                        ) {
+                            Icon(Icons.Default.Settings, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("GESTIONAR", fontSize = 10.sp, fontWeight = FontWeight.Black)
+                        }
+                    }
+                }
+            }
+
+            // Create Group Section
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(14.dp))
+                    Text(
+                        text = "VOLS CREAR UN GRUP?",
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Black,
+                        color = Color.Gray,
+                        letterSpacing = 1.sp
+                    )
+                }
+                OutlinedButton(
+                    onClick = { showCreateGroup = true },
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
+                    border = ButtonDefaults.outlinedButtonBorder.copy(width = 1.dp, brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outline))
+                ) {
+                    Text("CREAR NOU GRUP", fontSize = 10.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onSurface)
+                }
+            }
+
+            // Logout
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = onSignOut,
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+                ) {
+                    Icon(Icons.Default.Logout, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("TANCAR SESSIÓ", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+
+    if (showGroupManagement && activeGroup != null) {
+        GroupManagementBottomSheet(
+            group = activeGroup,
+            currentUserId = profile?.id ?: "",
+            onDismiss = { showGroupManagement = false },
+            viewModel = dashboardViewModel
+        )
+    }
+
+    if (showCreateGroup) {
+        CreateGroupBottomSheet(
+            onDismiss = { showCreateGroup = false },
+            onGroupCreated = onGroupCreated,
+            viewModel = dashboardViewModel
         )
     }
 }

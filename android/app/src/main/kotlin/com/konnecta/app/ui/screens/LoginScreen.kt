@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.konnecta.app.R // Make sure to import your R class!
 import com.konnecta.app.data.remote.SupabaseClient
+import com.konnecta.app.ui.components.AppFooter
 import com.konnecta.app.ui.components.ThemeToggle
 import com.konnecta.app.ui.viewmodel.AuthViewModel
 import io.github.jan.supabase.compose.auth.composeAuth
@@ -145,13 +146,6 @@ fun LoginScreen(
         Spacer(modifier = Modifier.weight(1f))
 
         // Footer
-        Text(
-            text = "KONNECTA v1.0",
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Black,
-            color = Color.Gray,
-            letterSpacing = 2.sp,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+        AppFooter()
     }
 }

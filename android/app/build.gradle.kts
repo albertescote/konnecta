@@ -33,6 +33,7 @@ android {
         buildConfigField("String", "SUPABASE_URL", "\"${secrets.getProperty("SUPABASE_URL") ?: ""}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${secrets.getProperty("SUPABASE_ANON_KEY") ?: ""}\"")
         buildConfigField("String", "ONESIGNAL_APP_ID", "\"${secrets.getProperty("ONESIGNAL_APP_ID") ?: ""}\"")
+        buildConfigField("String", "BASE_URL", "\"${secrets.getProperty("BASE_URL") ?: ""}\"")
     }
 
     signingConfigs {
@@ -90,11 +91,12 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
-    
+
     // Supabase
     implementation(platform("io.github.jan-tennert.supabase:bom:3.0.1"))
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
     implementation("io.github.jan-tennert.supabase:auth-kt")
+    implementation("io.github.jan-tennert.supabase:storage-kt")
     implementation("io.github.jan-tennert.supabase:compose-auth")
     implementation("io.github.jan-tennert.supabase:compose-auth-ui")
 
@@ -108,14 +110,14 @@ dependencies {
     implementation("io.ktor:ktor-client-android:3.0.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
 
-    
+
     // OneSignal
     implementation("com.onesignal:OneSignal:[5.0.0, 5.99.99]")
 
     // Coil (Image Loading)
     implementation("io.coil-kt.coil3:coil-compose:3.0.4")
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
-    
+
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")

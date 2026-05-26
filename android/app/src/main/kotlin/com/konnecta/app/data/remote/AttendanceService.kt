@@ -29,20 +29,41 @@ class AttendanceService {
         return memberships.map { it.profiles }
     }
 
-    suspend fun updateAttendance(userId: String, groupId: String, weekendDate: String, status: String): Boolean {
+    suspend fun updateAttendance(userId: String, groupId: String, weekendDate: String, status: String, comment: String? = null): Boolean {
         return try {
-            val plan = mapOf(
+            val plan = mutableMapOf<String, Any?>(
                 "user_id" to userId,
                 "group_id" to groupId,
                 "weekend_date" to weekendDate,
                 "status" to status
             )
+            if (comment != null) {
+                plan["comment"] = comment
+            }
             client.postgrest["weekend_plans"].upsert(plan) {
                 onConflict = "user_id,group_id,weekend_date"
             }
             true
         } catch (e: Exception) {
             println("Dashboard: Error updating attendance: ${e.message}")
+            false
+        }
+    }
+
+    suspend fun updateComment(userId: String, groupId: String, weekendDate: String, comment: String): Boolean {
+        return try {
+            val plan = mapOf(
+                "user_id" to userId,
+                "group_id" to groupId,
+                "weekend_date" to weekendDate,
+                "comment" to comment
+            )
+            client.postgrest["weekend_plans"].upsert(plan) {
+                onConflict = "user_id,group_id,weekend_date"
+            }
+            true
+        } catch (e: Exception) {
+            println("Dashboard: Error updating comment: ${e.message}")
             false
         }
     }

@@ -60,4 +60,34 @@ class AuthViewModel : ViewModel() {
             authService.signOut()
         }
     }
+
+    fun updateProfile(fullName: String, avatarUrl: String?, onResult: (Boolean) -> Unit = {}) {
+        val user = _state.value.user ?: return
+        viewModelScope.launch {
+            try {
+                _state.value = _state.value.copy(isLoading = true)
+                val success = authService.updateProfile(user.id, fullName, avatarUrl)
+                onResult(success)
+                _state.value = _state.value.copy(isLoading = false)
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(isLoading = false, error = e.message)
+                onResult(false)
+            }
+        }
+    }
+
+    fun uploadAvatar(bytes: ByteArray, fileName: String, onResult: (String?) -> Unit) {
+        val user = _state.value.user ?: return
+        viewModelScope.launch {
+            try {
+                _state.value = _state.value.copy(isLoading = true)
+                val url = authService.uploadAvatar(user.id, bytes, fileName)
+                onResult(url)
+                _state.value = _state.value.copy(isLoading = false)
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(isLoading = false, error = e.message)
+                onResult(null)
+            }
+        }
+    }
 }

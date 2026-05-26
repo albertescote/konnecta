@@ -46,8 +46,8 @@ fun WeekendSelector(
             Box(
                 modifier = Modifier
                     .width(100.dp)
-                    .height(96.dp) // Slightly increased from 88dp to prevent cutting
-                    .clip(RoundedCornerShape(32.dp))
+                    .height(88.dp)
+                    .clip(RoundedCornerShape(24.dp))
                     .background(
                         if (isSelected) MaterialTheme.colorScheme.onBackground 
                         else MaterialTheme.colorScheme.surface
@@ -55,7 +55,7 @@ fun WeekendSelector(
                     .border(
                         1.dp, 
                         if (isSelected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), 
-                        RoundedCornerShape(32.dp)
+                        RoundedCornerShape(24.dp)
                     )
                     .clickable { onDateSelected(dateStr) }
                     .padding(vertical = 12.dp),
@@ -90,12 +90,12 @@ fun WeekendSelector(
             Box(
                 modifier = Modifier
                     .width(100.dp)
-                    .height(96.dp) // Match
-                    .clip(RoundedCornerShape(32.dp))
+                    .height(88.dp) // Match
+                    .clip(RoundedCornerShape(24.dp))
                     .border(
                         width = 1.dp,
                         color = MaterialTheme.colorScheme.outline,
-                        shape = RoundedCornerShape(32.dp)
+                        shape = RoundedCornerShape(24.dp)
                     )
                     .clickable { /* Show Calendar Modal */ },
                 contentAlignment = Alignment.Center

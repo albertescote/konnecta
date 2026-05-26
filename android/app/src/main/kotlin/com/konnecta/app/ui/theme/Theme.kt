@@ -1,6 +1,8 @@
 package com.konnecta.app.ui.theme
 
 import android.app.Activity
+import android.app.Application
+import android.content.Context
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -14,18 +16,23 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-// Theme ViewModel to handle persistent state in the app session
-class ThemeViewModel : ViewModel() {
-    private val _isDarkTheme = MutableStateFlow<Boolean?>(null)
+// Theme ViewModel to handle persistent state
+class ThemeViewModel(application: Application) : AndroidViewModel(application) {
+    private val prefs = application.getSharedPreferences("konnecta_prefs", Context.MODE_PRIVATE)
+    private val _isDarkTheme = MutableStateFlow<Boolean?>(
+        if (prefs.contains("is_dark_theme")) prefs.getBoolean("is_dark_theme", false) else null
+    )
     val isDarkTheme: StateFlow<Boolean?> = _isDarkTheme
 
     fun toggleTheme(currentDark: Boolean) {
-        _isDarkTheme.value = !currentDark
+        val newValue = !currentDark
+        _isDarkTheme.value = newValue
+        prefs.edit().putBoolean("is_dark_theme", newValue).apply()
     }
 }
 
@@ -36,9 +43,9 @@ private val DarkColorScheme = darkColorScheme(
     onPrimary = Black,
     background = Black,
     onBackground = White,
-    surface = Zinc950,
+    surface = Zinc900,
     onSurface = White,
-    surfaceVariant = Zinc900,
+    surfaceVariant = Zinc800,
     onSurfaceVariant = Zinc400,
     outline = Zinc800
 )
@@ -48,7 +55,7 @@ private val LightColorScheme = lightColorScheme(
     onPrimary = White,
     background = White,
     onBackground = Black,
-    surface = White,
+    surface = Zinc50,
     onSurface = Black,
     surfaceVariant = Zinc100,
     onSurfaceVariant = Zinc500,
