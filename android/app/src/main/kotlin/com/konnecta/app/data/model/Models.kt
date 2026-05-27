@@ -134,6 +134,7 @@ data class AttendanceState(
 data class DashboardState(
     val attendance: AttendanceState = AttendanceState(),
     val activities: List<ActivityWithParticipants> = emptyList(),
+    val futureActivities: List<ActivityWithParticipants> = emptyList(),
     val weather: WeatherDay? = null,
     val fullForecast: List<WeatherDay?> = emptyList(),
     val leaderboard: List<LeaderboardEntry> = emptyList(),
@@ -142,7 +143,8 @@ data class DashboardState(
     val currentUserProfile: Profile? = null,
     val currentUserStatus: String? = null,
     val currentUserComment: String? = null,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val isFutureActivitiesLoading: Boolean = false
 )
 
 @Serializable

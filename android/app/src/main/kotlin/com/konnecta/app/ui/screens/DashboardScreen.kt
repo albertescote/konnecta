@@ -32,9 +32,10 @@ fun DashboardScreen(
 ) {
     val initialDate = remember { DateUtils.formatDbDate(DateUtils.getUpcomingFriday()) }
     var selectedDate by remember { mutableStateOf(initialDate) }
+    var showWeekendCalendar by remember { mutableStateOf(false) }
 
     val state by viewModel.state.collectAsState()
-    val dates = remember { DateUtils.getNextWeekends(10) }
+    val dates = remember { mutableStateListOf(*DateUtils.getNextWeekends(10).toTypedArray()) }
 
     val pullToRefreshState = rememberPullToRefreshState()
     if (pullToRefreshState.isRefreshing) {
@@ -59,7 +60,8 @@ fun DashboardScreen(
                     WeekendSelector(
                         dates = dates,
                         selectedDate = selectedDate,
-                        onDateSelected = { selectedDate = it }
+                        onDateSelected = { selectedDate = it },
+                        onMoreDatesClick = { showWeekendCalendar = true }
                     )
                 }
             }
@@ -214,5 +216,18 @@ fun DashboardScreen(
             containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface
         )
+
+        if (showWeekendCalendar) {
+            WeekendCalendarBottomSheet(
+                onDateSelected = { newDate ->
+                    if (!dates.contains(newDate)) {
+                        dates.add(0, newDate)
+                    }
+                    selectedDate = newDate
+                    showWeekendCalendar = false
+                },
+                onDismiss = { showWeekendCalendar = false }
+            )
+        }
     }
 }

@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,9 +56,9 @@ fun ActivityCard(
     val context = LocalContext.current
     var showDetails by remember { mutableStateOf(false) }
     val currentUserId = viewModel.getCurrentUserId() ?: ""
-    val userParticipation = activity.activity_participants.find { it.user_id == currentUserId }
-    val isJoined = userParticipation != null
-    val hasPlusOne = (userParticipation?.additional_participants ?: 0) > 0
+
+    val isJoined = activity.activity_participants.any { it.user_id == currentUserId }
+    val hasPlusOne = (activity.activity_participants.find { it.user_id == currentUserId }?.additional_participants ?: 0) > 0
     val totalAttendance = activity.activity_participants.sumOf { 1 + it.additional_participants }
 
     val eventDate = DateUtils.parseDbDate(activity.start_date ?: activity.weekend_date)
@@ -185,12 +186,7 @@ fun ActivityCard(
                     .clip(RoundedCornerShape(16.dp))
                     .background(if (isJoined) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface)
                     .clickable {
-                        viewModel.updateParticipation(
-                            activity.id,
-                            !isJoined,
-                            0,
-                            activity.weekend_date
-                        )
+                        viewModel.updateParticipation(activity.id, !isJoined, 0, activity.weekend_date)
                     },
                 contentAlignment = Alignment.Center
             ) {
@@ -219,12 +215,7 @@ fun ActivityCard(
                             RoundedCornerShape(16.dp)
                         )
                         .clickable {
-                            viewModel.updateParticipation(
-                                activity.id,
-                                true,
-                                if (hasPlusOne) 0 else 1,
-                                activity.weekend_date
-                            )
+                            viewModel.updateParticipation(activity.id, true, if (hasPlusOne) 0 else 1, activity.weekend_date)
                         },
                     contentAlignment = Alignment.Center
                 ) {

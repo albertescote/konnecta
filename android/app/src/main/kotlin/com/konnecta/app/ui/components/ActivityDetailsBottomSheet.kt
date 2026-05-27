@@ -1,22 +1,59 @@
 package com.konnecta.app.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
-import java.text.SimpleDateFormat
-import java.util.Locale
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.PersonRemove
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Groups
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,6 +76,8 @@ import com.konnecta.app.ui.viewmodel.DashboardViewModel
 import com.konnecta.app.utils.CalendarUtils
 import com.konnecta.app.utils.DateUtils
 import com.konnecta.app.utils.ShareUtils
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,9 +88,11 @@ fun ActivityDetailsBottomSheet(
 ) {
     val currentUserId = viewModel.getCurrentUserId() ?: ""
     val isCreator = activity.creator_id == currentUserId
-    val myParticipation = activity.activity_participants.find { it.user_id == currentUserId }
-    val isJoined = myParticipation != null
-    val hasPlusOne = (myParticipation?.additional_participants ?: 0) > 0
+
+    val isJoined = activity.activity_participants.any { it.user_id == currentUserId }
+    val hasPlusOne =
+        (activity.activity_participants.find { it.user_id == currentUserId }?.additional_participants
+            ?: 0) > 0
     val totalAttendance = activity.activity_participants.sumOf { 1 + it.additional_participants }
 
     var isEditing by remember { mutableStateOf(false) }
@@ -61,10 +102,26 @@ fun ActivityDetailsBottomSheet(
     var editDescription by remember { mutableStateOf(activity.description ?: "") }
     var editStartDate by remember { mutableStateOf(activity.start_date ?: activity.weekend_date) }
     var editEndDate by remember { mutableStateOf(activity.end_date ?: "") }
-    var editStartHour by remember { mutableStateOf(activity.start_time?.split(":")?.getOrNull(0) ?: "19") }
-    var editStartMinute by remember { mutableStateOf(activity.start_time?.split(":")?.getOrNull(1) ?: "00") }
-    var editEndHour by remember { mutableStateOf(activity.end_time?.split(":")?.getOrNull(0) ?: "22") }
-    var editEndMinute by remember { mutableStateOf(activity.end_time?.split(":")?.getOrNull(1) ?: "00") }
+    var editStartHour by remember {
+        mutableStateOf(
+            activity.start_time?.split(":")?.getOrNull(0) ?: "19"
+        )
+    }
+    var editStartMinute by remember {
+        mutableStateOf(
+            activity.start_time?.split(":")?.getOrNull(1) ?: "00"
+        )
+    }
+    var editEndHour by remember {
+        mutableStateOf(
+            activity.end_time?.split(":")?.getOrNull(0) ?: "22"
+        )
+    }
+    var editEndMinute by remember {
+        mutableStateOf(
+            activity.end_time?.split(":")?.getOrNull(1) ?: "00"
+        )
+    }
     var isMultiDay by remember { mutableStateOf(!activity.end_date.isNullOrBlank()) }
 
     val anchorDate = remember { DateUtils.parseDbDate(activity.weekend_date) }
@@ -90,7 +147,8 @@ fun ActivityDetailsBottomSheet(
         )
     }
     var editSelectedEndDay by remember {
-        val endD = activity.end_date?.takeIf { it.isNotBlank() } ?: (activity.start_date ?: activity.weekend_date)
+        val endD = activity.end_date?.takeIf { it.isNotBlank() } ?: (activity.start_date
+            ?: activity.weekend_date)
         mutableStateOf(
             when (endD) {
                 fridayStr -> "divendres"
@@ -150,8 +208,16 @@ fun ActivityDetailsBottomSheet(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        HeaderIconButton(onClick = { isEditing = false }, bg = Color.Red.copy(alpha = 0.2f)) {
-                            Icon(Icons.Default.Close, contentDescription = "Cancel·lar", tint = Color.Red, modifier = Modifier.size(15.dp))
+                        HeaderIconButton(
+                            onClick = { isEditing = false },
+                            bg = Color.Red.copy(alpha = 0.2f)
+                        ) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Cancel·lar",
+                                tint = Color.Red,
+                                modifier = Modifier.size(18.dp)
+                            )
                         }
                         Text(
                             text = "EDITAR PLA",
@@ -164,7 +230,12 @@ fun ActivityDetailsBottomSheet(
                             onClick = { if (editTitle.isNotBlank()) saveActivity() },
                             bg = Color(0xFF22C55E).copy(alpha = 0.2f)
                         ) {
-                            Icon(Icons.Default.Check, contentDescription = "Guardar", tint = Color(0xFF22C55E), modifier = Modifier.size(15.dp))
+                            Icon(
+                                Icons.Default.Check,
+                                contentDescription = "Guardar",
+                                tint = Color(0xFF22C55E),
+                                modifier = Modifier.size(18.dp)
+                            )
                         }
                     }
                 } else {
@@ -178,7 +249,12 @@ fun ActivityDetailsBottomSheet(
                                 onClick = { isEditing = true },
                                 bg = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
                             ) {
-                                Icon(Icons.Outlined.Edit, contentDescription = "Editar", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(14.dp))
+                                Icon(
+                                    Icons.Outlined.Edit,
+                                    contentDescription = "Editar",
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.size(18.dp)
+                                )
                             }
                             HeaderIconButton(
                                 onClick = {
@@ -187,7 +263,12 @@ fun ActivityDetailsBottomSheet(
                                 },
                                 bg = Color.Red.copy(alpha = 0.2f)
                             ) {
-                                Icon(Icons.Outlined.Delete, contentDescription = "Esborrar", tint = Color.Red, modifier = Modifier.size(14.dp))
+                                Icon(
+                                    Icons.Outlined.Delete,
+                                    contentDescription = "Esborrar",
+                                    tint = Color.Red,
+                                    modifier = Modifier.size(18.dp)
+                                )
                             }
                         }
                     }
@@ -197,20 +278,37 @@ fun ActivityDetailsBottomSheet(
                         bg = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
                         modifier = Modifier.align(Alignment.TopEnd)
                     ) {
-                        Icon(Icons.Default.Close, contentDescription = "Tancar", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(14.dp))
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Tancar",
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
 
-                    val eventDate = DateUtils.parseDbDate(activity.start_date ?: activity.weekend_date)
-                    val endDate = if (activity.end_date != null) DateUtils.parseDbDate(activity.end_date) else null
+                    val eventDate =
+                        DateUtils.parseDbDate(activity.start_date ?: activity.weekend_date)
+                    val endDate =
+                        if (activity.end_date != null) DateUtils.parseDbDate(activity.end_date) else null
                     val isMultiDayView = endDate != null && activity.start_date != activity.end_date
                     val dateText = if (isMultiDayView) {
-                        "${DateUtils.formatDayAndMonth(eventDate)} al ${DateUtils.formatDayAndMonth(endDate!!)}"
+                        "${DateUtils.formatDayAndMonth(eventDate)} al ${
+                            DateUtils.formatDayAndMonth(
+                                endDate!!
+                            )
+                        }"
                     } else {
-                        "${DateUtils.formatDayOfWeek(eventDate)} ${DateUtils.formatDayAndMonth(eventDate)}"
+                        "${DateUtils.formatDayOfWeek(eventDate)} ${
+                            DateUtils.formatDayAndMonth(
+                                eventDate
+                            )
+                        }"
                     }
 
                     Column(
-                        modifier = Modifier.fillMaxWidth().padding(top = 34.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 34.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
@@ -278,7 +376,9 @@ fun ActivityDetailsBottomSheet(
                             value = editDescription,
                             onValueChange = { if (it.length <= 200) editDescription = it },
                             placeholder = { Text("Detalls (opcional)") },
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 64.dp),
                             shape = RoundedCornerShape(16.dp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 unfocusedBorderColor = Color.Transparent,
@@ -297,7 +397,12 @@ fun ActivityDetailsBottomSheet(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(Color(0xFF3B82F6)))
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF3B82F6))
+                            )
                             EditSectionLabel("INICI DEL PLA")
                         }
 
@@ -321,7 +426,9 @@ fun ActivityDetailsBottomSheet(
                                             editSelectedDay = id
                                             editStartDate = DateUtils.formatDbDate(date)
                                             // Clamp end day so it's never before start day
-                                            if ((dayIndex[editSelectedEndDay] ?: 1) < (dayIndex[id] ?: 1)) {
+                                            if ((dayIndex[editSelectedEndDay] ?: 1) < (dayIndex[id]
+                                                    ?: 1)
+                                            ) {
                                                 editSelectedEndDay = id
                                                 editEndDate = DateUtils.formatDbDate(date)
                                             }
@@ -336,7 +443,9 @@ fun ActivityDetailsBottomSheet(
                                         color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Text(
-                                        text = SimpleDateFormat("d", Locale.getDefault()).format(date),
+                                        text = SimpleDateFormat("d", Locale.getDefault()).format(
+                                            date
+                                        ),
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
@@ -358,7 +467,12 @@ fun ActivityDetailsBottomSheet(
                                 onValueChange = { editStartHour = it },
                                 modifier = Modifier.weight(1f)
                             )
-                            Text(":", fontWeight = FontWeight.Black, fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                ":",
+                                fontWeight = FontWeight.Black,
+                                fontSize = 18.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                             TimeSelect(
                                 label = "Min",
                                 value = editStartMinute,
@@ -413,7 +527,12 @@ fun ActivityDetailsBottomSheet(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(Color.Red))
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .clip(CircleShape)
+                                        .background(Color.Red)
+                                )
                                 EditSectionLabel("FINAL DEL PLA")
                             }
 
@@ -428,7 +547,8 @@ fun ActivityDetailsBottomSheet(
                             ) {
                                 daysData.forEach { (id, label, date) ->
                                     val isSelected = editSelectedEndDay == id
-                                    val isEnabled = (dayIndex[id] ?: 1) >= (dayIndex[editSelectedDay] ?: 1)
+                                    val isEnabled =
+                                        (dayIndex[id] ?: 1) >= (dayIndex[editSelectedDay] ?: 1)
                                     Column(
                                         modifier = Modifier
                                             .weight(1f)
@@ -449,17 +569,26 @@ fun ActivityDetailsBottomSheet(
                                             fontWeight = FontWeight.Black,
                                             color = when {
                                                 isSelected -> MaterialTheme.colorScheme.onSurface
-                                                !isEnabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f)
+                                                !isEnabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                                    alpha = 0.25f
+                                                )
+
                                                 else -> MaterialTheme.colorScheme.onSurfaceVariant
                                             }
                                         )
                                         Text(
-                                            text = SimpleDateFormat("d", Locale.getDefault()).format(date),
+                                            text = SimpleDateFormat(
+                                                "d",
+                                                Locale.getDefault()
+                                            ).format(date),
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = when {
                                                 isSelected -> MaterialTheme.colorScheme.onSurface
-                                                !isEnabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f)
+                                                !isEnabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                                    alpha = 0.25f
+                                                )
+
                                                 else -> MaterialTheme.colorScheme.onSurfaceVariant
                                             }
                                         )
@@ -480,7 +609,12 @@ fun ActivityDetailsBottomSheet(
                                     onValueChange = { editEndHour = it },
                                     modifier = Modifier.weight(1f)
                                 )
-                                Text(":", fontWeight = FontWeight.Black, fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(
+                                    ":",
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 18.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                                 TimeSelect(
                                     label = "Min",
                                     value = editEndMinute,
@@ -495,7 +629,9 @@ fun ActivityDetailsBottomSheet(
                     // Save button
                     Button(
                         onClick = { if (editTitle.isNotBlank()) saveActivity() },
-                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
                         shape = RoundedCornerShape(16.dp),
                         enabled = editTitle.isNotBlank(),
                         colors = ButtonDefaults.buttonColors(
@@ -503,7 +639,12 @@ fun ActivityDetailsBottomSheet(
                             contentColor = MaterialTheme.colorScheme.surface
                         )
                     ) {
-                        Text("GUARDAR PLA", fontWeight = FontWeight.Black, letterSpacing = 1.sp, fontSize = 12.sp)
+                        Text(
+                            "GUARDAR PLA",
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.sp,
+                            fontSize = 12.sp
+                        )
                     }
 
                 } else {
@@ -512,7 +653,8 @@ fun ActivityDetailsBottomSheet(
                     // Description
                     val hasDescription = !activity.description.isNullOrBlank()
                     Text(
-                        text = activity.description?.takeIf { it.isNotBlank() } ?: "Sense descripció addicional.",
+                        text = activity.description?.takeIf { it.isNotBlank() }
+                            ?: "Sense descripció addicional.",
                         fontSize = 14.sp,
                         color = if (hasDescription) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                         fontStyle = if (hasDescription) FontStyle.Normal else FontStyle.Italic,
@@ -524,7 +666,10 @@ fun ActivityDetailsBottomSheet(
                     // Info chips
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+                        horizontalArrangement = Arrangement.spacedBy(
+                            8.dp,
+                            Alignment.CenterHorizontally
+                        )
                     ) {
                         InfoChip(
                             icon = Icons.Outlined.Schedule,
@@ -539,7 +684,10 @@ fun ActivityDetailsBottomSheet(
                     // Action buttons
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+                        horizontalArrangement = Arrangement.spacedBy(
+                            8.dp,
+                            Alignment.CenterHorizontally
+                        )
                     ) {
                         OutlinedButton(
                             onClick = { CalendarUtils.addToCalendar(context, activity) },
@@ -551,7 +699,11 @@ fun ActivityDetailsBottomSheet(
                                 contentColor = MaterialTheme.colorScheme.onSurface
                             )
                         ) {
-                            Icon(Icons.Outlined.CalendarMonth, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Icon(
+                                Icons.Outlined.CalendarMonth,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp)
+                            )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text("CALENDARI", fontSize = 9.sp, fontWeight = FontWeight.Black)
                         }
@@ -566,7 +718,11 @@ fun ActivityDetailsBottomSheet(
                             ),
                             border = BorderStroke(1.dp, Color(0xFF22C55E).copy(alpha = 0.3f))
                         ) {
-                            Icon(Icons.Outlined.Share, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Icon(
+                                Icons.Outlined.Share,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp)
+                            )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text("COMPARTIR", fontSize = 9.sp, fontWeight = FontWeight.Black)
                         }
@@ -585,7 +741,8 @@ fun ActivityDetailsBottomSheet(
                         )
 
                         if (activity.activity_participants.isEmpty()) {
-                            val dashedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                            val dashedBorderColor =
+                                MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -598,7 +755,12 @@ fun ActivityDetailsBottomSheet(
                                             cornerRadius = CornerRadius(16.dp.toPx()),
                                             style = Stroke(
                                                 width = 1.dp.toPx(),
-                                                pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 5f), 0f)
+                                                pathEffect = PathEffect.dashPathEffect(
+                                                    floatArrayOf(
+                                                        8f,
+                                                        5f
+                                                    ), 0f
+                                                )
                                             )
                                         )
                                     },
@@ -627,18 +789,24 @@ fun ActivityDetailsBottomSheet(
                             Button(
                                 onClick = {
                                     viewModel.updateParticipation(
-                                        activity.id, true,
+                                        activity.id,
+                                        true,
                                         if (hasPlusOne) 0 else 1,
                                         activity.weekend_date
                                     )
                                 },
-                                modifier = Modifier.weight(1f).height(52.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(52.dp),
                                 shape = RoundedCornerShape(16.dp),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = if (hasPlusOne) Color(0xFF3B82F6).copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant,
                                     contentColor = if (hasPlusOne) Color(0xFF3B82F6) else MaterialTheme.colorScheme.onSurfaceVariant
                                 ),
-                                border = if (hasPlusOne) BorderStroke(1.dp, Color(0xFF3B82F6).copy(alpha = 0.3f)) else null
+                                border = if (hasPlusOne) BorderStroke(
+                                    1.dp,
+                                    Color(0xFF3B82F6).copy(alpha = 0.3f)
+                                ) else null
                             ) {
                                 Icon(
                                     if (hasPlusOne) Icons.Default.PersonRemove else Icons.Default.PersonAdd,
@@ -646,19 +814,35 @@ fun ActivityDetailsBottomSheet(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text(if (hasPlusOne) "TREURE +1" else "AFEGIR +1", fontSize = 10.sp, fontWeight = FontWeight.Black)
+                                Text(
+                                    if (hasPlusOne) "TREURE +1" else "AFEGIR +1",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Black
+                                )
                             }
                         }
 
                         Button(
-                            onClick = { viewModel.updateParticipation(activity.id, !isJoined, 0, activity.weekend_date) },
-                            modifier = Modifier.weight(1.5f).height(52.dp),
+                            onClick = {
+                                viewModel.updateParticipation(
+                                    activity.id,
+                                    !isJoined,
+                                    0,
+                                    activity.weekend_date
+                                )
+                            },
+                            modifier = Modifier
+                                .weight(1.5f)
+                                .height(52.dp),
                             shape = RoundedCornerShape(16.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (isJoined) Color.Red.copy(alpha = 0.15f) else MaterialTheme.colorScheme.onSurface,
                                 contentColor = if (isJoined) Color.Red else MaterialTheme.colorScheme.surface
                             ),
-                            border = if (isJoined) BorderStroke(1.dp, Color.Red.copy(alpha = 0.3f)) else null
+                            border = if (isJoined) BorderStroke(
+                                1.dp,
+                                Color.Red.copy(alpha = 0.3f)
+                            ) else null
                         ) {
                             Text(
                                 if (isJoined) "SORTIR DEL PLA" else "APUNTA'T AL PLA",
@@ -696,7 +880,7 @@ private fun HeaderIconButton(
 ) {
     Box(
         modifier = modifier
-            .size(26.dp)
+            .size(30.dp)
             .clip(CircleShape)
             .background(bg)
             .clickable(onClick = onClick),
@@ -717,8 +901,19 @@ fun InfoChip(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Icon(icon, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(text = text, fontSize = 10.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onSurface, letterSpacing = 0.5.sp)
+        Icon(
+            icon,
+            contentDescription = null,
+            modifier = Modifier.size(14.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = text,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Black,
+            color = MaterialTheme.colorScheme.onSurface,
+            letterSpacing = 0.5.sp
+        )
     }
 }
 
@@ -729,13 +924,20 @@ fun ParticipantRow(participant: com.konnecta.app.data.model.ParticipantWithProfi
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
-            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+            .border(
+                1.dp,
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                RoundedCornerShape(16.dp)
+            )
             .padding(10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(modifier = Modifier.size(34.dp)) {
             Box(
-                modifier = Modifier.fillMaxSize().clip(CircleShape).background(MaterialTheme.colorScheme.surface),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surface),
                 contentAlignment = Alignment.Center
             ) {
                 if (participant.profiles.avatar_url != null) {
@@ -747,7 +949,8 @@ fun ParticipantRow(participant: com.konnecta.app.data.model.ParticipantWithProfi
                     )
                 } else {
                     Text(
-                        text = (participant.profiles.full_name ?: participant.profiles.email).take(1).uppercase(),
+                        text = (participant.profiles.full_name
+                            ?: participant.profiles.email).take(1).uppercase(),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant

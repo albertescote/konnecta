@@ -10,21 +10,26 @@ object DateUtils {
     private val monthFormat = SimpleDateFormat("MMM", Locale("ca"))
 
     fun getUpcomingFriday(): Date {
+        return getFridayForDate(Date())
+    }
+
+    fun getFridayForDate(date: Date): Date {
         val calendar = Calendar.getInstance()
+        calendar.time = date
         val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
         
         when (dayOfWeek) {
-            Calendar.FRIDAY -> {
-                // If it's Friday, return today
-            }
             Calendar.SATURDAY -> {
                 calendar.add(Calendar.DAY_OF_YEAR, -1)
             }
             Calendar.SUNDAY -> {
                 calendar.add(Calendar.DAY_OF_YEAR, -2)
             }
+            Calendar.FRIDAY -> {
+                // Already Friday
+            }
             else -> {
-                // Move to next Friday
+                // For Mon-Thu, move to the next Friday
                 val daysUntilFriday = (Calendar.FRIDAY - dayOfWeek + 7) % 7
                 calendar.add(Calendar.DAY_OF_YEAR, daysUntilFriday)
             }
@@ -36,6 +41,13 @@ object DateUtils {
         calendar.set(Calendar.MILLISECOND, 0)
         
         return calendar.time
+    }
+
+    fun isWeekend(date: Date): Boolean {
+        val cal = Calendar.getInstance()
+        cal.time = date
+        val dayOfWeek = cal.get(Calendar.DAY_OF_WEEK)
+        return dayOfWeek == Calendar.FRIDAY || dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY
     }
 
     fun formatDbDate(date: Date): String {

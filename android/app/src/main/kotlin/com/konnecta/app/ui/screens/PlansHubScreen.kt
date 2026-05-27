@@ -29,22 +29,23 @@ import java.util.Date
 @Composable
 fun PlansHubScreen(
     groupId: String,
-    viewModel: PlansHubViewModel = viewModel(),
+    @Suppress("UNUSED_PARAMETER") viewModel: PlansHubViewModel = viewModel(),
     dashboardViewModel: DashboardViewModel
 ) {
-    val activities by viewModel.activities.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
+    val dashboardState by dashboardViewModel.state.collectAsState()
+    val activities = dashboardState.futureActivities
+    val isLoading = dashboardState.isFutureActivitiesLoading
 
     val pullToRefreshState = rememberPullToRefreshState()
     if (pullToRefreshState.isRefreshing) {
         LaunchedEffect(Unit) {
-            viewModel.loadFutureActivities(groupId)
+            dashboardViewModel.loadFutureActivities(groupId)
             pullToRefreshState.endRefresh()
         }
     }
 
     LaunchedEffect(groupId) {
-        viewModel.loadFutureActivities(groupId)
+        dashboardViewModel.loadFutureActivities(groupId)
     }
 
     Box(modifier = Modifier.nestedScroll(pullToRefreshState.nestedScrollConnection)) {
@@ -86,7 +87,10 @@ fun PlansHubScreen(
                     } else {
                         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                             activities.forEach { activity ->
-                                ActivityCard(activity = activity, viewModel = dashboardViewModel)
+                                ActivityCard(
+                                    activity = activity,
+                                    viewModel = dashboardViewModel
+                                )
                             }
                         }
                     }
@@ -117,7 +121,7 @@ fun PlansHubScreen(
                             freeDate = true,
                             onSuccess = {
                                 showNewActivitySheet = false
-                                viewModel.loadFutureActivities(groupId)
+                                dashboardViewModel.loadFutureActivities(groupId)
                             },
                             onDismiss = { showNewActivitySheet = false },
                             viewModel = dashboardViewModel

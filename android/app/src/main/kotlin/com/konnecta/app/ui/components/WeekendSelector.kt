@@ -26,7 +26,8 @@ import com.konnecta.app.utils.DateUtils
 fun WeekendSelector(
     dates: List<String>,
     selectedDate: String,
-    onDateSelected: (String) -> Unit
+    onDateSelected: (String) -> Unit,
+    onMoreDatesClick: () -> Unit
 ) {
     // Only take first 5 as requested
     val limitedDates = dates.take(5)
@@ -36,6 +37,7 @@ fun WeekendSelector(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
+        // ... (rest of items)
         items(limitedDates) { dateStr ->
             val isSelected = dateStr == selectedDate
             val date = DateUtils.parseDbDate(dateStr)
@@ -97,7 +99,7 @@ fun WeekendSelector(
                         color = MaterialTheme.colorScheme.outline,
                         shape = RoundedCornerShape(24.dp)
                     )
-                    .clickable { /* Show Calendar Modal */ },
+                    .clickable { onMoreDatesClick() },
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {

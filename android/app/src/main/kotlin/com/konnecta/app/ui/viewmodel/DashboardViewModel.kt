@@ -8,6 +8,9 @@ import com.konnecta.app.utils.DateUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class DashboardViewModel : ViewModel() {
     private val attendanceService = AttendanceService()
@@ -249,23 +252,57 @@ class DashboardViewModel : ViewModel() {
         }
     }
 
-    fun updateParticipation(activityId: String, isJoining: Boolean, additionalParticipants: Int = 0, weekendDate: String) {
-        val userId = currentUserId ?: run {
-            println("DashboardViewModel: Cannot update participation, currentUserId is null")
-            return
-        }
-        val groupId = _state.value.activeGroup?.id ?: run {
-            println("DashboardViewModel: Cannot update participation, activeGroup is null")
-            return
-        }
-        
+    fun loadFutureActivities(groupId: String) {
         viewModelScope.launch {
-            println("DashboardViewModel: Updating participation for user $userId on activity $activityId. Joining: $isJoining, PlusOne: $additionalParticipants")
+            _state.value = _state.value.copy(isFutureActivitiesLoading = true)
+            try {
+                val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+                val fetched = activityService.getFutureActivities(today, groupId)
+                _state.value = _state.value.copy(
+                    futureActivities = fetched.sortedBy { it.start_date ?: it.weekend_date },
+                    isFutureActivitiesLoading = false
+                )
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(isFutureActivitiesLoading = false)
+            }
+        }
+    }
+
+    fun updateParticipation(activityId: String, isJoining: Boolean, additionalParticipants: Int = 0, weekendDate: String) {
+        val userId = currentUserId ?: return
+        val groupId = _state.value.activeGroup?.id ?: return
+        val userProfile = _state.value.currentUserProfile
+
+        fun applyToList(list: List<ActivityWithParticipants>): List<ActivityWithParticipants> = list.map { activity ->
+            if (activity.id != activityId) return@map activity
+            val participants = activity.activity_participants
+            val updated = when {
+                isJoining -> {
+                    val existing = participants.find { it.user_id == userId }
+                    when {
+                        existing != null -> participants.map {
+                            if (it.user_id == userId) it.copy(additional_participants = additionalParticipants) else it
+                        }
+                        userProfile != null -> participants + ParticipantWithProfile(userId, additionalParticipants, userProfile)
+                        else -> participants
+                    }
+                }
+                else -> participants.filter { it.user_id != userId }
+            }
+            activity.copy(activity_participants = updated)
+        }
+
+        // Synchronous optimistic update on the main thread before any DB call
+        _state.value = _state.value.copy(
+            activities = applyToList(_state.value.activities),
+            futureActivities = applyToList(_state.value.futureActivities)
+        )
+
+        viewModelScope.launch {
             val success = activityService.updateParticipation(activityId, userId, isJoining, additionalParticipants)
-            println("DashboardViewModel: Participation update success: $success")
-            
-            if (success) {
+            if (!success) {
                 loadDashboardData(weekendDate, groupId)
+                loadFutureActivities(groupId)
             }
         }
     }
