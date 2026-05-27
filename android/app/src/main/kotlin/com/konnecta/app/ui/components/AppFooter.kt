@@ -9,11 +9,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.konnecta.app.BuildConfig
 
 @Composable
 fun AppFooter(modifier: Modifier = Modifier) {
     Text(
-        text = "KONNECTA v1.0",
+        text = "KONNECTA v${BuildConfig.VERSION_NAME}",
         fontSize = 10.sp,
         fontWeight = FontWeight.Black,
         color = Color.Gray.copy(alpha = 0.6f),
