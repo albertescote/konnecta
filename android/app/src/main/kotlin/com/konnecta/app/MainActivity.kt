@@ -235,10 +235,6 @@ fun MainContainer(
                                 showGroupSelector = false
                                 showInviteFriends = newGroup
                             },
-                            onInviteClick = { group ->
-                                showGroupSelector = false
-                                showInviteFriends = group
-                            },
                             onDismiss = { showGroupSelector = false }
                         )
                     }

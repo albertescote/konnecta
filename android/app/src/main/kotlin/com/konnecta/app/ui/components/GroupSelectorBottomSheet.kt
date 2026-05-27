@@ -31,12 +31,12 @@ fun GroupSelectorBottomSheet(
     currentUserId: String,
     onGroupSelected: (String) -> Unit,
     onGroupCreated: (Group) -> Unit,
-    onInviteClick: (Group) -> Unit,
     onDismiss: () -> Unit,
     dashboardViewModel: DashboardViewModel = viewModel()
 ) {
     var showGroupManagement by remember { mutableStateOf(false) }
     var showCreateGroup by remember { mutableStateOf(false) }
+    var showInviteFriends by remember { mutableStateOf<Group?>(null) }
     
     val activeGroup = groups.find { it.id == activeGroupId }
     val isAdmin = activeGroup?.role == "admin"
@@ -54,6 +54,7 @@ fun GroupSelectorBottomSheet(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            // ... (rest of the header and group list)
             // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -139,7 +140,7 @@ fun GroupSelectorBottomSheet(
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         if (isAdmin) {
                             OutlinedButton(
-                                onClick = { onInviteClick(activeGroup) },
+                                onClick = { showInviteFriends = activeGroup },
                                 modifier = Modifier.weight(1f).height(56.dp),
                                 shape = RoundedCornerShape(16.dp),
                                 border = ButtonDefaults.outlinedButtonBorder.copy(width = 1.dp, brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outline))
@@ -208,7 +209,18 @@ fun GroupSelectorBottomSheet(
     if (showCreateGroup) {
         CreateGroupBottomSheet(
             onDismiss = { showCreateGroup = false },
-            onGroupCreated = onGroupCreated,
+            onGroupCreated = { newGroup ->
+                showCreateGroup = false
+                showInviteFriends = newGroup
+            },
+            viewModel = dashboardViewModel
+        )
+    }
+
+    showInviteFriends?.let { group ->
+        InviteFriendsBottomSheet(
+            group = group,
+            onDismiss = { showInviteFriends = null },
             viewModel = dashboardViewModel
         )
     }

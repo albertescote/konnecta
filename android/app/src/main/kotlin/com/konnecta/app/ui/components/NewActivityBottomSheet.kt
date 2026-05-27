@@ -61,8 +61,10 @@ fun NewActivityBottomSheet(
     
     var isMultiDay by remember { mutableStateOf(false) }
     var endDate by remember { mutableStateOf(DateUtils.formatDbDate(DateUtils.addDays(anchorDate, 2))) }
+    var selectedEndDay by remember { mutableStateOf("diumenge") }
     var endHour by remember { mutableStateOf("22") }
     var endMinute by remember { mutableStateOf("00") }
+    val dayIndex = mapOf("divendres" to 0, "dissabte" to 1, "diumenge" to 2)
     
     var isPending by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -144,6 +146,10 @@ fun NewActivityBottomSheet(
                                 .clickable {
                                     selectedDay = id
                                     startDate = DateUtils.formatDbDate(date)
+                                    if ((dayIndex[selectedEndDay] ?: 1) < (dayIndex[id] ?: 1)) {
+                                        selectedEndDay = id
+                                        endDate = DateUtils.formatDbDate(date)
+                                    }
                                 }
                                 .padding(vertical = 7.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
@@ -250,18 +256,69 @@ fun NewActivityBottomSheet(
                         )
                     }
 
-                    Button(
-                        onClick = { showDatePicker(endDate) { endDate = it } },
-                        modifier = Modifier.fillMaxWidth().height(44.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f),
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        )
-                    ) {
-                        Icon(Icons.Default.CalendarMonth, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(text = endDate, fontWeight = FontWeight.Bold)
+                    if (freeDate) {
+                        Button(
+                            onClick = { showDatePicker(endDate) { endDate = it } },
+                            modifier = Modifier.fillMaxWidth().height(44.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f),
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            )
+                        ) {
+                            Icon(Icons.Default.CalendarMonth, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(text = endDate, fontWeight = FontWeight.Bold)
+                        }
+                    } else {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                .padding(3.dp),
+                            horizontalArrangement = Arrangement.spacedBy(3.dp)
+                        ) {
+                            daysData.forEach { (id, label, date) ->
+                                val isSelected = selectedEndDay == id
+                                val isEnabled = (dayIndex[id] ?: 1) >= (dayIndex[selectedDay] ?: 1)
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(13.dp))
+                                        .background(if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent)
+                                        .then(
+                                            if (isEnabled) Modifier.clickable {
+                                                selectedEndDay = id
+                                                endDate = DateUtils.formatDbDate(date)
+                                            } else Modifier
+                                        )
+                                        .padding(vertical = 7.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = label,
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = when {
+                                            isSelected -> MaterialTheme.colorScheme.onSurface
+                                            !isEnabled -> Color.Gray.copy(alpha = 0.3f)
+                                            else -> Color.Gray
+                                        }
+                                    )
+                                    Text(
+                                        text = SimpleDateFormat("d", Locale.getDefault()).format(date),
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = when {
+                                            isSelected -> MaterialTheme.colorScheme.onSurface
+                                            !isEnabled -> Color.Gray.copy(alpha = 0.3f)
+                                            else -> Color.Gray
+                                        }
+                                    )
+                                }
+                            }
+                        }
                     }
 
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
