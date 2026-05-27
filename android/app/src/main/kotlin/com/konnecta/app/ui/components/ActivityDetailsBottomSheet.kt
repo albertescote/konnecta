@@ -1,7 +1,8 @@
 package com.konnecta.app.ui.components
 
-import android.app.DatePickerDialog
 import androidx.compose.animation.AnimatedVisibility
+import java.text.SimpleDateFormat
+import java.util.Locale
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -38,7 +39,6 @@ import com.konnecta.app.ui.viewmodel.DashboardViewModel
 import com.konnecta.app.utils.CalendarUtils
 import com.konnecta.app.utils.DateUtils
 import com.konnecta.app.utils.ShareUtils
-import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,27 +67,46 @@ fun ActivityDetailsBottomSheet(
     var editEndMinute by remember { mutableStateOf(activity.end_time?.split(":")?.getOrNull(1) ?: "00") }
     var isMultiDay by remember { mutableStateOf(!activity.end_date.isNullOrBlank()) }
 
+    val anchorDate = remember { DateUtils.parseDbDate(activity.weekend_date) }
+    val daysData = remember {
+        listOf(
+            Triple("divendres", "DIV", anchorDate),
+            Triple("dissabte", "DIS", DateUtils.addDays(anchorDate, 1)),
+            Triple("diumenge", "DIU", DateUtils.addDays(anchorDate, 2))
+        )
+    }
+    val fridayStr = remember { DateUtils.formatDbDate(anchorDate) }
+    val saturdayStr = remember { DateUtils.formatDbDate(DateUtils.addDays(anchorDate, 1)) }
+    val sundayStr = remember { DateUtils.formatDbDate(DateUtils.addDays(anchorDate, 2)) }
+    var editSelectedDay by remember {
+        val startD = activity.start_date ?: activity.weekend_date
+        mutableStateOf(
+            when (startD) {
+                fridayStr -> "divendres"
+                saturdayStr -> "dissabte"
+                sundayStr -> "diumenge"
+                else -> "dissabte"
+            }
+        )
+    }
+    var editSelectedEndDay by remember {
+        val endD = activity.end_date?.takeIf { it.isNotBlank() } ?: (activity.start_date ?: activity.weekend_date)
+        mutableStateOf(
+            when (endD) {
+                fridayStr -> "divendres"
+                saturdayStr -> "dissabte"
+                sundayStr -> "diumenge"
+                else -> "dissabte"
+            }
+        )
+    }
+    val dayIndex = mapOf("divendres" to 0, "dissabte" to 1, "diumenge" to 2)
+
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
     val headerBg = MaterialTheme.colorScheme.surfaceVariant
     val bodyBg = MaterialTheme.colorScheme.surface
-
-    // Reusable date picker helper (same pattern as NewActivityBottomSheet)
-    fun showDatePicker(initialDate: String, onDateSelected: (String) -> Unit) {
-        val date = DateUtils.parseDbDate(initialDate.ifBlank { activity.weekend_date })
-        val cal = Calendar.getInstance().apply { time = date }
-        DatePickerDialog(
-            context,
-            { _, year, month, day ->
-                val newCal = Calendar.getInstance().apply { set(year, month, day) }
-                onDateSelected(DateUtils.formatDbDate(newCal.time))
-            },
-            cal.get(Calendar.YEAR),
-            cal.get(Calendar.MONTH),
-            cal.get(Calendar.DAY_OF_MONTH)
-        ).show()
-    }
 
     fun saveActivity() {
         viewModel.updateActivity(
@@ -282,23 +301,48 @@ fun ActivityDetailsBottomSheet(
                             EditSectionLabel("INICI DEL PLA")
                         }
 
-                        // Start date picker
-                        Button(
-                            onClick = { showDatePicker(editStartDate) { editStartDate = it } },
-                            modifier = Modifier.fillMaxWidth().height(40.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = headerBg.copy(alpha = 0.5f),
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            )
+                        // Start day pill selector
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                .padding(3.dp),
+                            horizontalArrangement = Arrangement.spacedBy(3.dp)
                         ) {
-                            Icon(Icons.Outlined.CalendarMonth, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text(
-                                text = formatEditDate(editStartDate),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp
-                            )
+                            daysData.forEach { (id, label, date) ->
+                                val isSelected = editSelectedDay == id
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(13.dp))
+                                        .background(if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent)
+                                        .clickable {
+                                            editSelectedDay = id
+                                            editStartDate = DateUtils.formatDbDate(date)
+                                            // Clamp end day so it's never before start day
+                                            if ((dayIndex[editSelectedEndDay] ?: 1) < (dayIndex[id] ?: 1)) {
+                                                editSelectedEndDay = id
+                                                editEndDate = DateUtils.formatDbDate(date)
+                                            }
+                                        }
+                                        .padding(vertical = 7.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = label,
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = SimpleDateFormat("d", Locale.getDefault()).format(date),
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
                         }
 
                         // Start time
@@ -331,7 +375,10 @@ fun ActivityDetailsBottomSheet(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
                             .clickable {
-                                if (!isMultiDay && editEndDate.isBlank()) editEndDate = editStartDate
+                                if (!isMultiDay && editEndDate.isBlank()) {
+                                    editEndDate = editStartDate
+                                    editSelectedEndDay = editSelectedDay
+                                }
                                 isMultiDay = !isMultiDay
                             }
                             .padding(vertical = 2.dp),
@@ -341,7 +388,10 @@ fun ActivityDetailsBottomSheet(
                         Checkbox(
                             checked = isMultiDay,
                             onCheckedChange = {
-                                if (it && editEndDate.isBlank()) editEndDate = editStartDate
+                                if (it && editEndDate.isBlank()) {
+                                    editEndDate = editStartDate
+                                    editSelectedEndDay = editSelectedDay
+                                }
                                 isMultiDay = it
                             },
                             colors = CheckboxDefaults.colors(checkedColor = Color(0xFF3B82F6))
@@ -367,23 +417,54 @@ fun ActivityDetailsBottomSheet(
                                 EditSectionLabel("FINAL DEL PLA")
                             }
 
-                            // End date picker
-                            Button(
-                                onClick = { showDatePicker(editEndDate.ifBlank { editStartDate }) { editEndDate = it } },
-                                modifier = Modifier.fillMaxWidth().height(40.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = headerBg.copy(alpha = 0.5f),
-                                    contentColor = MaterialTheme.colorScheme.onSurface
-                                )
+                            // End day pill selector (days before start are disabled)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                    .padding(3.dp),
+                                horizontalArrangement = Arrangement.spacedBy(3.dp)
                             ) {
-                                Icon(Icons.Outlined.CalendarMonth, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Text(
-                                    text = formatEditDate(editEndDate.ifBlank { editStartDate }),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 13.sp
-                                )
+                                daysData.forEach { (id, label, date) ->
+                                    val isSelected = editSelectedEndDay == id
+                                    val isEnabled = (dayIndex[id] ?: 1) >= (dayIndex[editSelectedDay] ?: 1)
+                                    Column(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(13.dp))
+                                            .background(if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent)
+                                            .then(
+                                                if (isEnabled) Modifier.clickable {
+                                                    editSelectedEndDay = id
+                                                    editEndDate = DateUtils.formatDbDate(date)
+                                                } else Modifier
+                                            )
+                                            .padding(vertical = 7.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            text = label,
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = when {
+                                                isSelected -> MaterialTheme.colorScheme.onSurface
+                                                !isEnabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f)
+                                                else -> MaterialTheme.colorScheme.onSurfaceVariant
+                                            }
+                                        )
+                                        Text(
+                                            text = SimpleDateFormat("d", Locale.getDefault()).format(date),
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = when {
+                                                isSelected -> MaterialTheme.colorScheme.onSurface
+                                                !isEnabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f)
+                                                else -> MaterialTheme.colorScheme.onSurfaceVariant
+                                            }
+                                        )
+                                    }
+                                }
                             }
 
                             // End time
@@ -594,15 +675,6 @@ fun ActivityDetailsBottomSheet(
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
-
-private fun formatEditDate(isoDate: String): String {
-    return try {
-        val parts = isoDate.split("-")
-        if (parts.size == 3) "${parts[2]}/${parts[1]}/${parts[0]}" else isoDate
-    } catch (e: Exception) {
-        isoDate
-    }
-}
 
 @Composable
 private fun EditSectionLabel(text: String) {

@@ -45,20 +45,15 @@ fun ProfileBottomSheet(
     activeGroupId: String,
     onSignOut: () -> Unit,
     onDismiss: () -> Unit,
-    onGroupCreated: (Group) -> Unit,
-    onInviteClick: (Group) -> Unit,
     authViewModel: AuthViewModel = viewModel(),
     dashboardViewModel: DashboardViewModel = viewModel()
 ) {
     var fullName by remember(profile) { mutableStateOf(profile?.full_name ?: "") }
     var avatarUrl by remember(profile) { mutableStateOf(profile?.avatar_url ?: "") }
     var isSaving by remember { mutableStateOf(false) }
-    var showGroupManagement by remember { mutableStateOf(false) }
-    var showCreateGroup by remember { mutableStateOf(false) }
     
     val context = LocalContext.current
     val activeGroup = groups.find { it.id == activeGroupId }
-    val isAdmin = activeGroup?.role == "admin"
     
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -265,85 +260,6 @@ fun ProfileBottomSheet(
                 }
             }
 
-            // Group Management
-            if (activeGroup != null) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.padding(horizontal = 4.dp)
-                    ) {
-                        Icon(Icons.Default.Settings, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(14.dp))
-                        Text(
-                            text = "GESTIÓ DE GRUP: ${activeGroup.name.uppercase()}",
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color.Gray,
-                            letterSpacing = 1.sp
-                        )
-                    }
-
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        if (isAdmin) {
-                            OutlinedButton(
-                                onClick = { onInviteClick(activeGroup) },
-                                modifier = Modifier.weight(1f).height(56.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                border = ButtonDefaults.outlinedButtonBorder.copy(width = 1.dp, brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outline))
-                            ) {
-                                Icon(Icons.Default.PersonAdd, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("CONVIDAR", fontSize = 10.sp, fontWeight = FontWeight.Black)
-                            }
-                        }
-                        
-                        OutlinedButton(
-                            onClick = { showGroupManagement = true },
-                            modifier = Modifier.weight(1f).height(56.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            border = ButtonDefaults.outlinedButtonBorder.copy(width = 1.dp, brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outline))
-                        ) {
-                            Icon(Icons.Default.Settings, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("GESTIONAR", fontSize = 10.sp, fontWeight = FontWeight.Black)
-                        }
-                    }
-                }
-            }
-
-            // Create Group Section
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(horizontal = 4.dp)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(14.dp))
-                    Text(
-                        text = "VOLS CREAR UN GRUP?",
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Black,
-                        color = Color.Gray,
-                        letterSpacing = 1.sp
-                    )
-                }
-                OutlinedButton(
-                    onClick = { showCreateGroup = true },
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
-                    border = ButtonDefaults.outlinedButtonBorder.copy(width = 1.dp, brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outline))
-                ) {
-                    Text("CREAR NOU GRUP", fontSize = 10.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onSurface)
-                }
-            }
-
             // Logout
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -361,22 +277,5 @@ fun ProfileBottomSheet(
                 }
             }
         }
-    }
-
-    if (showGroupManagement && activeGroup != null) {
-        GroupManagementBottomSheet(
-            group = activeGroup,
-            currentUserId = profile?.id ?: "",
-            onDismiss = { showGroupManagement = false },
-            viewModel = dashboardViewModel
-        )
-    }
-
-    if (showCreateGroup) {
-        CreateGroupBottomSheet(
-            onDismiss = { showCreateGroup = false },
-            onGroupCreated = onGroupCreated,
-            viewModel = dashboardViewModel
-        )
     }
 }

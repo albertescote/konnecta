@@ -114,6 +114,7 @@ fun PlansHubScreen(
                         NewActivityBottomSheet(
                             groupId = groupId,
                             weekendDate = todayStr,
+                            freeDate = true,
                             onSuccess = {
                                 showNewActivitySheet = false
                                 viewModel.loadFutureActivities(groupId)

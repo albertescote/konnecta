@@ -39,6 +39,7 @@ import java.util.*
 fun NewActivityBottomSheet(
     weekendDate: String,
     groupId: String,
+    freeDate: Boolean = false,
     onDismiss: () -> Unit,
     onSuccess: () -> Unit,
     viewModel: DashboardViewModel = viewModel()
@@ -46,10 +47,15 @@ fun NewActivityBottomSheet(
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var selectedDay by remember { mutableStateOf("dissabte") }
-    var isFlexible by remember { mutableStateOf(false) }
-    
+    var isFlexible by remember { mutableStateOf(freeDate) }
+
     val anchorDate = remember { DateUtils.parseDbDate(weekendDate) }
-    var startDate by remember { mutableStateOf(DateUtils.formatDbDate(DateUtils.addDays(anchorDate, 1))) }
+    var startDate by remember {
+        mutableStateOf(
+            if (freeDate) weekendDate
+            else DateUtils.formatDbDate(DateUtils.addDays(anchorDate, 1))
+        )
+    }
     var startHour by remember { mutableStateOf("19") }
     var startMinute by remember { mutableStateOf("00") }
     
@@ -118,68 +124,43 @@ fun NewActivityBottomSheet(
                 }
             }
 
-            // Quick Day Selector
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                    .padding(3.dp),
-                horizontalArrangement = Arrangement.spacedBy(3.dp)
-            ) {
-                daysData.forEach { (id, label, date) ->
-                    val isSelected = selectedDay == id && !isFlexible
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(13.dp))
-                            .background(if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent)
-                            .clickable {
-                                selectedDay = id
-                                startDate = DateUtils.formatDbDate(date)
-                                isFlexible = false
-                            }
-                            .padding(vertical = 7.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = label,
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Black,
-                            color = if (isSelected) MaterialTheme.colorScheme.onSurface else Color.Gray
-                        )
-                        Text(
-                            text = SimpleDateFormat("d", Locale.getDefault()).format(date),
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isSelected) MaterialTheme.colorScheme.onSurface else Color.Gray
-                        )
-                    }
-                }
-                
-                // Other button
-                Box(
+            // Quick Day Selector — only in weekend-locked mode
+            if (!freeDate) {
+                Row(
                     modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(13.dp))
-                        .background(if (isFlexible) MaterialTheme.colorScheme.surface else Color.Transparent)
-                        .clickable { isFlexible = true }
-                        .padding(vertical = 7.dp),
-                    contentAlignment = Alignment.Center
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        .padding(3.dp),
+                    horizontalArrangement = Arrangement.spacedBy(3.dp)
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "ALTRES",
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Black,
-                            color = if (isFlexible) MaterialTheme.colorScheme.onSurface else Color.Gray
-                        )
-                        Text(
-                            text = "...",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isFlexible) MaterialTheme.colorScheme.onSurface else Color.Gray
-                        )
+                    daysData.forEach { (id, label, date) ->
+                        val isSelected = selectedDay == id
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(13.dp))
+                                .background(if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent)
+                                .clickable {
+                                    selectedDay = id
+                                    startDate = DateUtils.formatDbDate(date)
+                                }
+                                .padding(vertical = 7.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = label,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Black,
+                                color = if (isSelected) MaterialTheme.colorScheme.onSurface else Color.Gray
+                            )
+                            Text(
+                                text = SimpleDateFormat("d", Locale.getDefault()).format(date),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isSelected) MaterialTheme.colorScheme.onSurface else Color.Gray
+                            )
+                        }
                     }
                 }
             }
@@ -370,8 +351,8 @@ fun NewActivityBottomSheet(
                             start_time = "$startHour:$startMinute",
                             end_time = if (isMultiDay) "$endHour:$endMinute" else null,
                             creator_id = userId,
-                            weekend_date = weekendDate,
-                            day_of_week = selectedDay
+                            weekend_date = if (freeDate) startDate else weekendDate,
+                            day_of_week = if (freeDate) dayOfWeekFromDate(startDate) else selectedDay
                         )
                     ) { success ->
                         isPending = false
@@ -401,6 +382,22 @@ fun NewActivityBottomSheet(
             }
         }
     }
+}
+
+private fun dayOfWeekFromDate(dateStr: String): String {
+    return try {
+        val cal = Calendar.getInstance().apply { time = DateUtils.parseDbDate(dateStr) }
+        when (cal.get(Calendar.DAY_OF_WEEK)) {
+            Calendar.MONDAY -> "dilluns"
+            Calendar.TUESDAY -> "dimarts"
+            Calendar.WEDNESDAY -> "dimecres"
+            Calendar.THURSDAY -> "dijous"
+            Calendar.FRIDAY -> "divendres"
+            Calendar.SATURDAY -> "dissabte"
+            Calendar.SUNDAY -> "diumenge"
+            else -> "dissabte"
+        }
+    } catch (e: Exception) { "dissabte" }
 }
 
 @Composable

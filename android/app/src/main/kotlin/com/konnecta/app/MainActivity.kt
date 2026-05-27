@@ -163,15 +163,7 @@ fun MainContainer(
                             authViewModel.signOut()
                             showProfile = false 
                         },
-                        onDismiss = { showProfile = false },
-                        onGroupCreated = { newGroup ->
-                            showProfile = false
-                            showInviteFriends = newGroup
-                        },
-                        onInviteClick = { group ->
-                            showProfile = false
-                            showInviteFriends = group
-                        }
+                        onDismiss = { showProfile = false }
                     )
                 }
 
@@ -237,7 +229,16 @@ fun MainContainer(
                         GroupSelectorBottomSheet(
                             groups = dashboardState.userGroups,
                             activeGroupId = dashboardState.activeGroup?.id ?: "",
+                            currentUserId = userProfile?.id ?: "",
                             onGroupSelected = { viewModel.switchGroup(it, DateUtils.formatDbDate(DateUtils.getUpcomingFriday())) },
+                            onGroupCreated = { newGroup ->
+                                showGroupSelector = false
+                                showInviteFriends = newGroup
+                            },
+                            onInviteClick = { group ->
+                                showGroupSelector = false
+                                showInviteFriends = group
+                            },
                             onDismiss = { showGroupSelector = false }
                         )
                     }
@@ -251,15 +252,7 @@ fun MainContainer(
                                 authViewModel.signOut()
                                 showProfile = false 
                             },
-                            onDismiss = { showProfile = false },
-                            onGroupCreated = { newGroup ->
-                                showProfile = false
-                                showInviteFriends = newGroup
-                            },
-                            onInviteClick = { group ->
-                                showProfile = false
-                                showInviteFriends = group
-                            }
+                            onDismiss = { showProfile = false }
                         )
                     }
 
