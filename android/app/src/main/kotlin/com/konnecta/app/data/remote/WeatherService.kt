@@ -1,5 +1,6 @@
 package com.konnecta.app.data.remote
 
+import com.konnecta.app.BuildConfig
 import com.konnecta.app.data.model.WeatherDay
 import com.konnecta.app.data.model.WeatherForecast
 import kotlinx.coroutines.Dispatchers
@@ -26,8 +27,8 @@ private data class OpenMeteoDaily(
 )
 
 class WeatherService {
-    private val lat = 41.2856
-    private val lng = 1.2504
+    private val lat = BuildConfig.WEATHER_LAT
+    private val lng = BuildConfig.WEATHER_LNG
     private val json = Json { ignoreUnknownKeys = true }
     private val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 

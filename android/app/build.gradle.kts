@@ -29,11 +29,13 @@ android {
             useSupportLibrary = true
         }
 
-        // Expose secrets to the code
         buildConfigField("String", "SUPABASE_URL", "\"${secrets.getProperty("SUPABASE_URL") ?: ""}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${secrets.getProperty("SUPABASE_ANON_KEY") ?: ""}\"")
         buildConfigField("String", "ONESIGNAL_APP_ID", "\"${secrets.getProperty("ONESIGNAL_APP_ID") ?: ""}\"")
         buildConfigField("String", "BASE_URL", "\"${secrets.getProperty("BASE_URL") ?: ""}\"")
+        buildConfigField("String", "GOOGLE_CLIENT_ID", "\"${secrets.getProperty("GOOGLE_CLIENT_ID") ?: ""}\"")
+        buildConfigField("Double", "WEATHER_LAT", secrets.getProperty("WEATHER_LAT") ?: "41.2856")
+        buildConfigField("Double", "WEATHER_LNG", secrets.getProperty("WEATHER_LNG") ?: "1.2504")
     }
 
     signingConfigs {
@@ -54,7 +56,8 @@ android {
             signingConfig = signingConfigs.getByName("config")
         }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             signingConfig = signingConfigs.getByName("config")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -112,7 +115,7 @@ dependencies {
 
 
     // OneSignal
-    implementation("com.onesignal:OneSignal:[5.0.0, 5.99.99]")
+    implementation("com.onesignal:OneSignal:5.1.6")
 
     // Coil (Image Loading)
     implementation("io.coil-kt.coil3:coil-compose:3.0.4")

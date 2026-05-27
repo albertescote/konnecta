@@ -8,10 +8,7 @@ class KonnectaApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        // OneSignal initialization
         OneSignal.initWithContext(this, BuildConfig.ONESIGNAL_APP_ID)
-        
-        // Verbose logging for development (remove in production)
-        OneSignal.Debug.logLevel = LogLevel.VERBOSE
+        OneSignal.Debug.logLevel = if (BuildConfig.DEBUG) LogLevel.VERBOSE else LogLevel.NONE
     }
 }

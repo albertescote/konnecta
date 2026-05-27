@@ -24,7 +24,7 @@ object SupabaseClient {
             host = "login-callback"
         }
         install(ComposeAuth) {
-            googleNativeLogin(serverClientId = "44836692588-n66t0ufbht2fi9b3lfr9498etklnfcq3.apps.googleusercontent.com")
+            googleNativeLogin(serverClientId = BuildConfig.GOOGLE_CLIENT_ID)
         }
         install(Postgrest) {
             serializer = KotlinXSerializer(Json {
