@@ -14,8 +14,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.konnecta.app.R // Make sure to import your R class!
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.konnecta.app.R
 import com.konnecta.app.data.remote.SupabaseClient
 import com.konnecta.app.ui.components.AppFooter
 import com.konnecta.app.ui.components.ThemeToggle
@@ -26,7 +26,7 @@ import io.github.jan.supabase.compose.auth.composable.rememberSignInWithGoogle
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
-    viewModel: AuthViewModel = viewModel()
+    viewModel: AuthViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
 

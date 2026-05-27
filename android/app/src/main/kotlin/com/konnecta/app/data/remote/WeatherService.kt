@@ -4,6 +4,8 @@ import com.konnecta.app.BuildConfig
 import com.konnecta.app.data.model.WeatherDay
 import timber.log.Timber
 import com.konnecta.app.data.model.WeatherForecast
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -27,7 +29,8 @@ private data class OpenMeteoDaily(
     val temperature_2m_min: List<Double>
 )
 
-class WeatherService {
+@Singleton
+class WeatherService @Inject constructor() {
     private val lat = BuildConfig.WEATHER_LAT
     private val lng = BuildConfig.WEATHER_LNG
     private val json = Json { ignoreUnknownKeys = true }

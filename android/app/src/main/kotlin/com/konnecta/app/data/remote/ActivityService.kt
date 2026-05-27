@@ -4,8 +4,11 @@ import com.konnecta.app.data.model.*
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import timber.log.Timber
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class ActivityService {
+@Singleton
+class ActivityService @Inject constructor() {
     private val client = SupabaseClient.client
 
     suspend fun getActivities(weekendDate: String, groupId: String): List<ActivityWithParticipants> {
@@ -26,6 +29,7 @@ class ActivityService {
                     gte("start_date", today)
                     eq("group_id", groupId)
                 }
+                limit(50)
             }
             .decodeList<ActivityWithParticipants>()
     }

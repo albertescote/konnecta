@@ -13,8 +13,11 @@ import java.util.UUID
 import java.time.Instant
 import com.onesignal.OneSignal
 import timber.log.Timber
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class AuthService {
+@Singleton
+class AuthService @Inject constructor() {
     private val client = SupabaseClient.client
     private val auth = client.auth
 

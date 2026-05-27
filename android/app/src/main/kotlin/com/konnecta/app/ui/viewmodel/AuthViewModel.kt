@@ -3,11 +3,13 @@ package com.konnecta.app.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.konnecta.app.data.remote.AuthService
+import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.auth.user.UserInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class AuthState(
     val sessionStatus: SessionStatus? = null,
@@ -16,8 +18,10 @@ data class AuthState(
     val error: String? = null
 )
 
-class AuthViewModel : ViewModel() {
-    private val authService = AuthService()
+@HiltViewModel
+class AuthViewModel @Inject constructor(
+    private val authService: AuthService
+) : ViewModel() {
 
     private val _state = MutableStateFlow(AuthState())
     val state: StateFlow<AuthState> = _state

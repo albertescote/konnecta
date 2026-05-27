@@ -15,13 +15,11 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.konnecta.app.data.model.*
 import com.konnecta.app.ui.components.ActivityCard
 import com.konnecta.app.ui.components.AppFooter
 import com.konnecta.app.ui.components.NewActivityBottomSheet
 import com.konnecta.app.ui.viewmodel.DashboardViewModel
-import com.konnecta.app.ui.viewmodel.PlansHubViewModel
 import com.konnecta.app.utils.DateUtils
 import java.util.Date
 
@@ -29,7 +27,6 @@ import java.util.Date
 @Composable
 fun PlansHubScreen(
     groupId: String,
-    @Suppress("UNUSED_PARAMETER") viewModel: PlansHubViewModel = viewModel(),
     dashboardViewModel: DashboardViewModel
 ) {
     val dashboardState by dashboardViewModel.state.collectAsState()

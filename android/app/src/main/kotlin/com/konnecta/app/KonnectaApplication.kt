@@ -3,8 +3,10 @@ package com.konnecta.app
 import android.app.Application
 import com.onesignal.OneSignal
 import com.onesignal.debug.LogLevel
+import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
 
+@HiltAndroidApp
 class KonnectaApplication : Application() {
     override fun onCreate() {
         super.onCreate()

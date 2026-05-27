@@ -6,6 +6,7 @@ import com.konnecta.app.data.model.*
 import com.konnecta.app.data.remote.*
 import com.konnecta.app.utils.DateUtils
 import com.konnecta.app.utils.withRetry
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -13,14 +14,17 @@ import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import javax.inject.Inject
 
-class DashboardViewModel : ViewModel() {
-    private val attendanceService = AttendanceService()
-    private val activityService = ActivityService()
-    private val weatherService = WeatherService()
-    private val leaderboardService = LeaderboardService()
-    private val groupService = GroupService()
-    private val profileService = ProfileService()
+@HiltViewModel
+class DashboardViewModel @Inject constructor(
+    private val attendanceService: AttendanceService,
+    private val activityService: ActivityService,
+    private val weatherService: WeatherService,
+    private val leaderboardService: LeaderboardService,
+    private val groupService: GroupService,
+    private val profileService: ProfileService
+) : ViewModel() {
 
     private val _state = MutableStateFlow(DashboardState())
     val state: StateFlow<DashboardState> = _state
@@ -87,9 +91,11 @@ class DashboardViewModel : ViewModel() {
 
     fun createGroup(name: String, onResult: (Group?) -> Unit) {
         val userId = currentUserId ?: return
+        val trimmedName = name.trim()
+        if (trimmedName.isBlank() || trimmedName.length > 50) { onResult(null); return }
         viewModelScope.launch {
-            val slug = name.lowercase().replace(" ", "-").replace(Regex("[^a-z0-9-]"), "")
-            val group = groupService.createGroup(userId, name, slug)
+            val slug = trimmedName.lowercase().replace(" ", "-").replace(Regex("[^a-z0-9-]"), "")
+            val group = groupService.createGroup(userId, trimmedName, slug)
             if (group != null) {
                 _state.value = _state.value.copy(activeGroup = group.copy(role = "admin"))
                 loadInitialData(userId)
@@ -113,11 +119,12 @@ class DashboardViewModel : ViewModel() {
     }
 
     fun updateComment(comment: String, weekendDate: String) {
+        val trimmedComment = comment.trim().take(280)
         val userId = currentUserId ?: return
         val groupId = _state.value.activeGroup?.id ?: return
 
         viewModelScope.launch {
-            val success = attendanceService.updateComment(userId, groupId, weekendDate, comment)
+            val success = attendanceService.updateComment(userId, groupId, weekendDate, trimmedComment)
             if (success) {
                 loadDashboardData(weekendDate, groupId)
             }

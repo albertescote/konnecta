@@ -8,8 +8,11 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import timber.log.Timber
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class ProfileService {
+@Singleton
+class ProfileService @Inject constructor() {
     private val client = SupabaseClient.client
 
     suspend fun getProfile(userId: String): Profile? {
@@ -47,7 +50,7 @@ class ProfileService {
 
             // Get next 5 weekends
             val upcomingPlans = client.postgrest["weekend_plans"]
-                .select(columns = Columns.raw("weekend_date, status")) {
+                .select(columns = Columns.list("weekend_date", "status")) {
                     filter {
                         eq("user_id", userId)
                         eq("group_id", groupId)

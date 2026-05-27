@@ -7,8 +7,11 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 import timber.log.Timber
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class GroupService {
+@Singleton
+class GroupService @Inject constructor() {
     private val client = SupabaseClient.client
 
     suspend fun getUserGroups(userId: String): List<Group> {
@@ -174,7 +177,7 @@ class GroupService {
     suspend fun getGroupInviteToken(groupId: String): String? {
         return try {
             val group = client.postgrest["groups"]
-                .select(columns = Columns.raw("invite_token")) {
+                .select(columns = Columns.list("invite_token")) {
                     filter {
                         eq("id", groupId)
                     }
