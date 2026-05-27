@@ -270,10 +270,10 @@ class DashboardViewModel : ViewModel() {
         }
     }
 
-    fun updateActivity(activityId: String, updates: Map<String, Any?>, weekendDate: String) {
+    fun updateActivity(activityId: String, update: ActivityUpdate, weekendDate: String) {
         val groupId = _state.value.activeGroup?.id ?: return
         viewModelScope.launch {
-            val success = activityService.updateActivity(activityId, updates)
+            val success = activityService.updateActivity(activityId, update)
             if (success) {
                 loadDashboardData(weekendDate, groupId)
             }

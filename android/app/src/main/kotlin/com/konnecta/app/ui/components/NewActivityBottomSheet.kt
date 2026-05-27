@@ -94,11 +94,12 @@ fun NewActivityBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 48.dp)
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 24.dp)
+                .navigationBarsPadding()
                 .verticalScroll(scrollState),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // Header
             Row(
@@ -121,24 +122,24 @@ fun NewActivityBottomSheet(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(16.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                    .padding(4.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    .padding(3.dp),
+                horizontalArrangement = Arrangement.spacedBy(3.dp)
             ) {
                 daysData.forEach { (id, label, date) ->
                     val isSelected = selectedDay == id && !isFlexible
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .clip(RoundedCornerShape(16.dp))
+                            .clip(RoundedCornerShape(13.dp))
                             .background(if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent)
-                            .clickable { 
+                            .clickable {
                                 selectedDay = id
                                 startDate = DateUtils.formatDbDate(date)
                                 isFlexible = false
                             }
-                            .padding(vertical = 10.dp),
+                            .padding(vertical = 7.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
@@ -160,10 +161,10 @@ fun NewActivityBottomSheet(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(13.dp))
                         .background(if (isFlexible) MaterialTheme.colorScheme.surface else Color.Transparent)
                         .clickable { isFlexible = true }
-                        .padding(vertical = 10.dp),
+                        .padding(vertical = 7.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -184,7 +185,7 @@ fun NewActivityBottomSheet(
             }
 
             // Start Section
-            Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(Color(0xFF3B82F6)))
                     Text(
@@ -199,10 +200,10 @@ fun NewActivityBottomSheet(
                 if (isFlexible) {
                     Button(
                         onClick = { showDatePicker(startDate) { startDate = it } },
-                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        modifier = Modifier.fillMaxWidth().height(44.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f),
                             contentColor = MaterialTheme.colorScheme.onSurface
                         )
                     ) {
@@ -234,9 +235,9 @@ fun NewActivityBottomSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { isMultiDay = !isMultiDay }
-                        .padding(vertical = 4.dp),
+                        .padding(vertical = 2.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Checkbox(
                         checked = isMultiDay,
@@ -255,7 +256,7 @@ fun NewActivityBottomSheet(
 
             // End Section
             AnimatedVisibility(visible = isMultiDay) {
-                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(Color.Red))
@@ -270,10 +271,10 @@ fun NewActivityBottomSheet(
 
                     Button(
                         onClick = { showDatePicker(endDate) { endDate = it } },
-                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        modifier = Modifier.fillMaxWidth().height(44.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f),
                             contentColor = MaterialTheme.colorScheme.onSurface
                         )
                     ) {
@@ -303,10 +304,10 @@ fun NewActivityBottomSheet(
             }
 
             // Title & Description
-            Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
-                
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+
+                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     OutlinedTextField(
                         value = title,
                         onValueChange = { if (it.length <= 50) title = it },
@@ -314,10 +315,10 @@ fun NewActivityBottomSheet(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedBorderColor = Color.Transparent,
-                            focusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
+                            focusedBorderColor = Color(0xFF3B82F6),
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
                         )
                     )
                     Text(
@@ -329,18 +330,18 @@ fun NewActivityBottomSheet(
                     )
                 }
 
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     OutlinedTextField(
                         value = description,
                         onValueChange = { if (it.length <= 200) description = it },
                         placeholder = { Text("Detalls (opcional)") },
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 76.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedBorderColor = Color.Transparent,
-                            focusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
+                            focusedBorderColor = Color(0xFF3B82F6),
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
                         )
                     )
                     Text(
@@ -384,8 +385,8 @@ fun NewActivityBottomSheet(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(64.dp),
-                shape = RoundedCornerShape(20.dp),
+                    .height(52.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.onSurface,
                     contentColor = MaterialTheme.colorScheme.surface
@@ -418,12 +419,12 @@ fun TimeSelect(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.outlinedCardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
             ),
-            border = BorderStroke(1.dp, Color.Transparent)
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
         ) {
             Row(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {

@@ -84,6 +84,16 @@ data class ParticipationUpdate(
     val additional_participants: Int
 )
 
+@Serializable
+data class ActivityUpdate(
+    val title: String,
+    val description: String? = null,
+    val start_date: String? = null,
+    val end_date: String? = null,
+    val start_time: String? = null,
+    val end_time: String? = null
+)
+
 
 @Serializable
 data class PlanWithProfile(

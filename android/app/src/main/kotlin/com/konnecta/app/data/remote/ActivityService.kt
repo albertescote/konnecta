@@ -42,10 +42,10 @@ class ActivityService {
         }
     }
 
-    suspend fun updateActivity(activityId: String, updates: Map<String, Any?>): Boolean {
+    suspend fun updateActivity(activityId: String, update: ActivityUpdate): Boolean {
         return try {
-            println("ActivityService: Updating activity $activityId with $updates")
-            client.postgrest["activities"].update(updates) {
+            println("ActivityService: Updating activity $activityId")
+            client.postgrest["activities"].update(update) {
                 filter { eq("id", activityId) }
             }
             println("ActivityService: Activity updated successfully")
