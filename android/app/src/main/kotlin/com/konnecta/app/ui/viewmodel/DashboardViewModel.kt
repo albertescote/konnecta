@@ -129,8 +129,10 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch {
             val success =
                 attendanceService.updateAttendance(userId, groupId, weekendDate, status, comment)
-            if (success) {
-                loadDashboardData(weekendDate, groupId)
+            loadDashboardData(weekendDate, groupId)
+            if (!success) {
+                _state.value =
+                    _state.value.copy(error = "No s'ha pogut guardar el vot. Torna-ho a intentar.")
             }
         }
     }
@@ -143,8 +145,10 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch {
             val success =
                 attendanceService.updateComment(userId, groupId, weekendDate, trimmedComment)
-            if (success) {
-                loadDashboardData(weekendDate, groupId)
+            loadDashboardData(weekendDate, groupId)
+            if (!success) {
+                _state.value =
+                    _state.value.copy(error = "No s'ha pogut guardar el comentari. Torna-ho a intentar.")
             }
         }
     }

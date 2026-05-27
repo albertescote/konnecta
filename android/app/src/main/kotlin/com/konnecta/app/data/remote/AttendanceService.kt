@@ -5,6 +5,7 @@ import com.konnecta.app.data.model.PlanWithProfile
 import com.konnecta.app.data.model.Profile
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
+import kotlinx.serialization.Serializable
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -12,6 +13,23 @@ import javax.inject.Singleton
 @Singleton
 class AttendanceService @Inject constructor() {
     private val client = SupabaseClient.client
+
+    @Serializable
+    private data class AttendanceUpsert(
+        val user_id: String,
+        val group_id: String,
+        val weekend_date: String,
+        val status: String,
+        val comment: String? = null
+    )
+
+    @Serializable
+    private data class CommentUpsert(
+        val user_id: String,
+        val group_id: String,
+        val weekend_date: String,
+        val comment: String
+    )
 
     suspend fun getAttendance(weekendDate: String, groupId: String): List<PlanWithProfile> {
         return client.postgrest["weekend_plans"]
@@ -43,16 +61,9 @@ class AttendanceService @Inject constructor() {
         comment: String? = null
     ): Boolean {
         return try {
-            val plan = mutableMapOf<String, Any?>(
-                "user_id" to userId,
-                "group_id" to groupId,
-                "weekend_date" to weekendDate,
-                "status" to status
-            )
-            if (comment != null) {
-                plan["comment"] = comment
-            }
-            client.postgrest["weekend_plans"].upsert(plan) {
+            client.postgrest["weekend_plans"].upsert(
+                AttendanceUpsert(userId, groupId, weekendDate, status, comment)
+            ) {
                 onConflict = "user_id,group_id,weekend_date"
             }
             true
@@ -69,13 +80,9 @@ class AttendanceService @Inject constructor() {
         comment: String
     ): Boolean {
         return try {
-            val plan = mapOf(
-                "user_id" to userId,
-                "group_id" to groupId,
-                "weekend_date" to weekendDate,
-                "comment" to comment
-            )
-            client.postgrest["weekend_plans"].upsert(plan) {
+            client.postgrest["weekend_plans"].upsert(
+                CommentUpsert(userId, groupId, weekendDate, comment)
+            ) {
                 onConflict = "user_id,group_id,weekend_date"
             }
             true
