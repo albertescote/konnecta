@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- App is Catalan-only; suppress missing translation warnings -->
+    <issue id="MissingTranslation" severity="ignore" />
+    <!-- Hardcoded strings in Compose are acceptable until l10n is added -->
+    <issue id="HardcodedText" severity="ignore" />
+
+    <!-- Security: treat these as errors -->
+    <issue id="AllowBackup" severity="error" />
+    <issue id="ExportedContentProvider" severity="error" />
+    <issue id="GrantAllUris" severity="error" />
+    <issue id="StaticFieldLeak" severity="error" />
+    <issue id="NewApi" severity="error" />
+
+    <!-- Code quality warnings -->
+    <issue id="Deprecation" severity="warning" />
+    <issue id="UnusedResources" severity="warning" />
+    <issue id="GradleDependency" severity="warning" />
+    <issue id="GradlePluginVersion" severity="warning" />
+</lint>

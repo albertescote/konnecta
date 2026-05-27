@@ -9,15 +9,17 @@ plugins {
 
 import java.util.Properties
 
+val secretsFile = rootProject.file("secrets.properties")
+val secrets = Properties()
+if (secretsFile.exists()) {
+    secrets.load(secretsFile.inputStream())
+}
+
+fun secretOrEnv(key: String): String? = System.getenv(key) ?: secrets.getProperty(key)
+
 android {
     namespace = "com.konnecta.app"
     compileSdk = 35
-
-    val secretsFile = rootProject.file("secrets.properties")
-    val secrets = Properties()
-    if (secretsFile.exists()) {
-        secrets.load(secretsFile.inputStream())
-    }
 
     defaultConfig {
         applicationId = "com.konnecta.app"
@@ -31,42 +33,58 @@ android {
             useSupportLibrary = true
         }
 
-        buildConfigField("String", "SUPABASE_URL", "\"${secrets.getProperty("SUPABASE_URL") ?: ""}\"")
-        buildConfigField("String", "SUPABASE_ANON_KEY", "\"${secrets.getProperty("SUPABASE_ANON_KEY") ?: ""}\"")
-        buildConfigField("String", "ONESIGNAL_APP_ID", "\"${secrets.getProperty("ONESIGNAL_APP_ID") ?: ""}\"")
-        buildConfigField("String", "BASE_URL", "\"${secrets.getProperty("BASE_URL") ?: ""}\"")
-        buildConfigField("String", "GOOGLE_CLIENT_ID", "\"${secrets.getProperty("GOOGLE_CLIENT_ID") ?: ""}\"")
-        buildConfigField("Double", "WEATHER_LAT", secrets.getProperty("WEATHER_LAT") ?: "41.2856")
-        buildConfigField("Double", "WEATHER_LNG", secrets.getProperty("WEATHER_LNG") ?: "1.2504")
+        // Shared across all flavors
+        buildConfigField("String", "ONESIGNAL_APP_ID", "\"${secretOrEnv("ONESIGNAL_APP_ID") ?: ""}\"")
+        buildConfigField("String", "GOOGLE_CLIENT_ID", "\"${secretOrEnv("GOOGLE_CLIENT_ID") ?: ""}\"")
+        buildConfigField("Double", "WEATHER_LAT", secretOrEnv("WEATHER_LAT") ?: "41.2856")
+        buildConfigField("Double", "WEATHER_LNG", secretOrEnv("WEATHER_LNG") ?: "1.2504")
     }
 
     signingConfigs {
-        create("config") {
-            val keystoreFile = secrets.getProperty("KEYSTORE_FILE")
-            if (keystoreFile != null) {
-                storeFile = rootProject.file(keystoreFile)
-                storePassword = secrets.getProperty("KEYSTORE_PASSWORD")
-                keyAlias = secrets.getProperty("KEY_ALIAS")
-                // Use KEY_PASSWORD if provided, otherwise fallback to storePassword
-                keyPassword = secrets.getProperty("KEY_PASSWORD") ?: storePassword
+        create("release") {
+            val keystorePath = secretOrEnv("KEYSTORE_FILE")
+            if (keystorePath != null) {
+                storeFile = rootProject.file(keystorePath)
+                storePassword = secretOrEnv("KEYSTORE_PASSWORD")
+                keyAlias = secretOrEnv("KEY_ALIAS")
+                keyPassword = secretOrEnv("KEY_PASSWORD") ?: secretOrEnv("KEYSTORE_PASSWORD")
             }
+        }
+    }
+
+    flavorDimensions += "environment"
+    productFlavors {
+        create("dev") {
+            dimension = "environment"
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+            buildConfigField("String", "SUPABASE_URL", "\"${secretOrEnv("DEV_SUPABASE_URL") ?: secretOrEnv("SUPABASE_URL") ?: ""}\"")
+            buildConfigField("String", "SUPABASE_ANON_KEY", "\"${secretOrEnv("DEV_SUPABASE_ANON_KEY") ?: secretOrEnv("SUPABASE_ANON_KEY") ?: ""}\"")
+            buildConfigField("String", "BASE_URL", "\"${secretOrEnv("DEV_BASE_URL") ?: secretOrEnv("BASE_URL") ?: ""}\"")
+        }
+        create("prod") {
+            dimension = "environment"
+            buildConfigField("String", "SUPABASE_URL", "\"${secretOrEnv("SUPABASE_URL") ?: ""}\"")
+            buildConfigField("String", "SUPABASE_ANON_KEY", "\"${secretOrEnv("SUPABASE_ANON_KEY") ?: ""}\"")
+            buildConfigField("String", "BASE_URL", "\"${secretOrEnv("BASE_URL") ?: ""}\"")
         }
     }
 
     buildTypes {
         debug {
-            signingConfig = signingConfigs.getByName("config")
+            // uses Android default debug keystore
         }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = signingConfigs.getByName("config")
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -82,6 +100,13 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = true
+        xmlReport = true
+        htmlReport = true
+        baseline = file("lint-baseline.xml")
     }
 }
 
@@ -114,7 +139,6 @@ dependencies {
     // Ktor (Required for Supabase 3.x)
     implementation("io.ktor:ktor-client-android:3.0.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
-
 
     // OneSignal
     implementation("com.onesignal:OneSignal:5.1.6")
