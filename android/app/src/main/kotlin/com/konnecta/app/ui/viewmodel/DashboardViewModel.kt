@@ -250,10 +250,20 @@ class DashboardViewModel : ViewModel() {
     }
 
     fun updateParticipation(activityId: String, isJoining: Boolean, additionalParticipants: Int = 0, weekendDate: String) {
-        val userId = currentUserId ?: return
-        val groupId = _state.value.activeGroup?.id ?: return
+        val userId = currentUserId ?: run {
+            println("DashboardViewModel: Cannot update participation, currentUserId is null")
+            return
+        }
+        val groupId = _state.value.activeGroup?.id ?: run {
+            println("DashboardViewModel: Cannot update participation, activeGroup is null")
+            return
+        }
+        
         viewModelScope.launch {
+            println("DashboardViewModel: Updating participation for user $userId on activity $activityId. Joining: $isJoining, PlusOne: $additionalParticipants")
             val success = activityService.updateParticipation(activityId, userId, isJoining, additionalParticipants)
+            println("DashboardViewModel: Participation update success: $success")
+            
             if (success) {
                 loadDashboardData(weekendDate, groupId)
             }

@@ -74,8 +74,16 @@ data class WeekendPlan(
     val weekend_date: String,
     val status: String,
     val comment: String?,
-    val updated_at: String?
+    val updated_at: String
 )
+
+@Serializable
+data class ParticipationUpdate(
+    val activity_id: String,
+    val user_id: String,
+    val additional_participants: Int
+)
+
 
 @Serializable
 data class PlanWithProfile(

@@ -98,4 +98,10 @@ object DateUtils {
         cal.time = date
         return cal.get(Calendar.DAY_OF_MONTH)
     }
+
+    fun getMonthOfMonth(date: Date): Int {
+        val cal = Calendar.getInstance()
+        cal.time = date
+        return cal.get(Calendar.MONTH) + 1
+    }
 }

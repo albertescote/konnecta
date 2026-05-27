@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,16 +27,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.konnecta.app.data.model.ActivityWithParticipants
 import com.konnecta.app.ui.viewmodel.DashboardViewModel
+import com.konnecta.app.utils.CalendarUtils
 import com.konnecta.app.utils.DateUtils
 import com.konnecta.app.utils.ShareUtils
-import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,11 +49,17 @@ fun ActivityDetailsBottomSheet(
     val myParticipation = activity.activity_participants.find { it.user_id == currentUserId }
     val isJoined = myParticipation != null
     val hasPlusOne = (myParticipation?.additional_participants ?: 0) > 0
+    val totalAttendance = activity.activity_participants.sumOf { 1 + it.additional_participants }
     
     var isEditing by remember { mutableStateOf(false) }
     var editTitle by remember { mutableStateOf(activity.title) }
     var editDescription by remember { mutableStateOf(activity.description ?: "") }
     var editStartDate by remember { mutableStateOf(activity.start_date ?: activity.weekend_date) }
+    var editEndDate by remember { mutableStateOf(activity.end_date ?: "") }
+    var editStartHour by remember { mutableStateOf(activity.start_time?.split(":")?.getOrNull(0) ?: "19") }
+    var editStartMinute by remember { mutableStateOf(activity.start_time?.split(":")?.getOrNull(1) ?: "00") }
+    var editEndHour by remember { mutableStateOf(activity.end_time?.split(":")?.getOrNull(0) ?: "22") }
+    var editEndMinute by remember { mutableStateOf(activity.end_time?.split(":")?.getOrNull(1) ?: "00") }
     
     val context = LocalContext.current
     val scrollState = rememberScrollState()
@@ -68,87 +73,65 @@ fun ActivityDetailsBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 48.dp)
+                .padding(bottom = 32.dp)
                 .verticalScroll(scrollState),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Header with Actions
+            // Header Section
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                    .padding(24.dp)
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                    .padding(vertical = 40.dp, horizontal = 24.dp)
             ) {
+                // Actions (Edit, Delete, Close)
                 Row(
                     modifier = Modifier.align(Alignment.TopStart),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     if (isCreator) {
-                        IconButton(
-                            onClick = { 
-                                if (isEditing) {
-                                    // SAVE ACTION
-                                    viewModel.updateActivity(
-                                        activity.id,
-                                        mapOf("title" to editTitle, "description" to editDescription, "start_date" to editStartDate),
-                                        activity.weekend_date
-                                    )
-                                    isEditing = false
-                                } else {
-                                    isEditing = true
-                                }
-                            },
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(if (isEditing) Color(0xFF22C55E) else Color.Black.copy(alpha = 0.05f))
-                        ) {
-                            Icon(
-                                imageVector = if (isEditing) Icons.Default.Check else Icons.Default.Edit,
-                                contentDescription = if (isEditing) "Guardar" else "Editar",
-                                tint = if (isEditing) Color.White else MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-
                         if (!isEditing) {
+                            IconButton(
+                                onClick = { isEditing = true },
+                                modifier = Modifier.size(36.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.05f))
+                            ) {
+                                Icon(Icons.Default.Edit, contentDescription = "Editar", modifier = Modifier.size(18.dp))
+                            }
                             IconButton(
                                 onClick = { 
                                     viewModel.deleteActivity(activity.id, activity.weekend_date)
                                     onDismiss()
                                 },
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.Red.copy(alpha = 0.1f))
+                                modifier = Modifier.size(36.dp).clip(CircleShape).background(Color.Red.copy(alpha = 0.1f))
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = "Esborrar",
-                                    tint = Color.Red,
-                                    modifier = Modifier.size(18.dp)
-                                )
+                                Icon(Icons.Default.Delete, contentDescription = "Esborrar", tint = Color.Red, modifier = Modifier.size(18.dp))
                             }
                         } else {
-                            // Cancel button when editing
                             IconButton(
-                                onClick = { 
+                                onClick = {
+                                    viewModel.updateActivity(
+                                        activity.id,
+                                        mapOf(
+                                            "title" to editTitle,
+                                            "description" to editDescription,
+                                            "start_date" to editStartDate,
+                                            "end_date" to editEndDate.ifBlank { null },
+                                            "start_time" to "$editStartHour:$editStartMinute",
+                                            "end_time" to "$editEndHour:$editEndMinute"
+                                        ),
+                                        activity.weekend_date
+                                    )
                                     isEditing = false
-                                    editTitle = activity.title
-                                    editDescription = activity.description ?: ""
-                                    editStartDate = activity.start_date ?: activity.weekend_date
                                 },
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.Red.copy(alpha = 0.1f))
+                                modifier = Modifier.size(36.dp).clip(CircleShape).background(Color(0xFF22C55E).copy(alpha = 0.1f))
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Cancel·lar",
-                                    tint = Color.Red,
-                                    modifier = Modifier.size(18.dp)
-                                )
+                                Icon(Icons.Default.Check, contentDescription = "Guardar", tint = Color(0xFF22C55E), modifier = Modifier.size(20.dp))
+                            }
+                            IconButton(
+                                onClick = { isEditing = false },
+                                modifier = Modifier.size(36.dp).clip(CircleShape).background(Color.Red.copy(alpha = 0.1f))
+                            ) {
+                                Icon(Icons.Default.Close, contentDescription = "Cancel·lar", tint = Color.Red, modifier = Modifier.size(20.dp))
                             }
                         }
                     }
@@ -156,19 +139,13 @@ fun ActivityDetailsBottomSheet(
 
                 IconButton(
                     onClick = onDismiss,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = 0.05f))
+                    modifier = Modifier.align(Alignment.TopEnd).size(36.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.05f))
                 ) {
                     Icon(Icons.Default.Close, contentDescription = "Tancar", modifier = Modifier.size(18.dp))
                 }
 
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 40.dp),
+                    modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
@@ -177,27 +154,34 @@ fun ActivityDetailsBottomSheet(
                             value = editTitle,
                             onValueChange = { editTitle = it },
                             modifier = Modifier.fillMaxWidth(),
-                            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center, fontWeight = FontWeight.Black, fontSize = 20.sp),
+                            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center, fontWeight = FontWeight.Black, fontSize = 22.sp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 unfocusedBorderColor = Color.Transparent,
                                 focusedBorderColor = Color(0xFF3B82F6)
-                            )
+                            ),
+                            placeholder = { Text("Títol del pla", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) }
                         )
                     } else {
-                        val date = DateUtils.parseDbDate(activity.start_date ?: activity.weekend_date)
+                        val eventDate = DateUtils.parseDbDate(activity.start_date ?: activity.weekend_date)
+                        val endDate = if (activity.end_date != null) DateUtils.parseDbDate(activity.end_date) else null
+                        val isMultiDay = endDate != null && activity.start_date != activity.end_date
+
+                        val dateText = if (isMultiDay) {
+                            "${DateUtils.formatDayAndMonth(eventDate)} al ${DateUtils.formatDayAndMonth(endDate!!)}"
+                        } else {
+                            DateUtils.formatDayOfWeek(eventDate) + " " + DateUtils.formatDayAndMonth(eventDate)
+                        }
+
                         Text(
-                            text = DateUtils.formatDayOfWeek(date).uppercase() + " " + DateUtils.formatDayAndMonth(date).uppercase(),
+                            text = dateText.uppercase(),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Black,
                             letterSpacing = 2.sp,
                             color = Color.White,
-                            modifier = Modifier
-                                .clip(CircleShape)
-                                .background(Color(0xFF3B82F6))
-                                .padding(horizontal = 14.dp, vertical = 8.dp)
+                            modifier = Modifier.clip(CircleShape).background(Color(0xFF3B82F6)).padding(horizontal = 14.dp, vertical = 8.dp)
                         )
                         Text(
-                            text = activity.title.uppercase(),
+                            text = activity.title,
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Black,
                             textAlign = TextAlign.Center,
@@ -210,21 +194,40 @@ fun ActivityDetailsBottomSheet(
             }
 
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
+                modifier = Modifier.fillMaxWidth().padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(32.dp)
             ) {
-                // Description
+                // Info Section
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     if (isEditing) {
                         OutlinedTextField(
                             value = editDescription,
                             onValueChange = { editDescription = it },
                             modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp),
-                            placeholder = { Text("Descripció del pla...") },
-                            shape = RoundedCornerShape(16.dp)
+                            placeholder = { Text("Descripció (opcional)") },
+                            shape = RoundedCornerShape(20.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
+                            )
                         )
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("INICI", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color.Gray, letterSpacing = 1.sp)
+                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    TimeSelect(label = "Hora", value = editStartHour, options = (0..23).map { it.toString().padStart(2, '0') }, onValueChange = { editStartHour = it }, modifier = Modifier.weight(1f))
+                                    TimeSelect(label = "Min", value = editStartMinute, options = listOf("00", "15", "30", "45"), onValueChange = { editStartMinute = it }, modifier = Modifier.weight(1f))
+                                }
+                            }
+                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("FINAL", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color.Gray, letterSpacing = 1.sp)
+                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    TimeSelect(label = "Hora", value = editEndHour, options = (0..23).map { it.toString().padStart(2, '0') }, onValueChange = { editEndHour = it }, modifier = Modifier.weight(1f))
+                                    TimeSelect(label = "Min", value = editEndMinute, options = listOf("00", "15", "30", "45"), onValueChange = { editEndMinute = it }, modifier = Modifier.weight(1f))
+                                }
+                            }
+                        }
                     } else {
                         Text(
                             text = activity.description ?: "Sense descripció addicional.",
@@ -235,33 +238,41 @@ fun ActivityDetailsBottomSheet(
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
                         )
-                    }
 
-                    if (!isEditing) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
                         ) {
-                            InfoChip(icon = Icons.Outlined.Schedule, text = "${activity.start_time ?: "19:00"}h")
-                            InfoChip(icon = Icons.Outlined.Groups, text = "${activity.activity_participants.sumOf { 1 + it.additional_participants }} PERSONES")
+                            InfoChip(icon = Icons.Outlined.Schedule, text = "${activity.start_time ?: "19:00"}h" + (if (activity.end_time != null) " - ${activity.end_time}h" else ""))
+                            InfoChip(icon = Icons.Outlined.Groups, text = "$totalAttendance ${if (totalAttendance == 1) "PERSONA" else "PERSONES"}")
                         }
 
-                        // WhatsApp Share
-                        Button(
-                            onClick = { ShareUtils.shareActivity(context, activity) },
-                            modifier = Modifier
-                                .align(Alignment.CenterHorizontally)
-                                .height(48.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF22C55E).copy(alpha = 0.1f),
-                                contentColor = Color(0xFF22C55E)
-                            ),
-                            border = BorderStroke(1.dp, Color(0xFF22C55E).copy(alpha = 0.2f))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
                         ) {
-                            Icon(Icons.Outlined.Message, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("COMPARTIR", fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+                            // Add to Calendar
+                            OutlinedButton(
+                                onClick = { CalendarUtils.addToCalendar(context, activity) },
+                                shape = RoundedCornerShape(16.dp),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                            ) {
+                                Icon(Icons.Outlined.CalendarMonth, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("CALENDARI", fontSize = 9.sp, fontWeight = FontWeight.Black)
+                            }
+                            
+                            // WhatsApp Share
+                            Button(
+                                onClick = { ShareUtils.shareActivity(context, activity) },
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22C55E).copy(alpha = 0.1f), contentColor = Color(0xFF22C55E)),
+                                border = BorderStroke(1.dp, Color(0xFF22C55E).copy(alpha = 0.2f))
+                            ) {
+                                Icon(Icons.Outlined.Message, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("COMPARTIR", fontSize = 9.sp, fontWeight = FontWeight.Black)
+                            }
                         }
                     }
                 }
@@ -281,23 +292,13 @@ fun ActivityDetailsBottomSheet(
 
                         if (activity.activity_participants.isEmpty()) {
                             Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 12.dp)
-                                    .height(80.dp)
-                                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(20.dp)),
+                                modifier = Modifier.fillMaxWidth().height(100.dp).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f), RoundedCornerShape(24.dp)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    text = "Encara ningú",
-                                    fontSize = 12.sp,
-                                    color = Color.Gray.copy(alpha = 0.5f),
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 1.sp
-                                )
+                                Text("Encara ningú", fontSize = 12.sp, color = Color.Gray.copy(alpha = 0.5f), fontWeight = FontWeight.Bold)
                             }
                         } else {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                 activity.activity_participants.forEach { participant ->
                                     ParticipantRow(participant)
                                 }
@@ -309,38 +310,33 @@ fun ActivityDetailsBottomSheet(
                 // Bottom Actions
                 if (!isEditing) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         if (isJoined) {
                             Button(
-                                onClick = { 
-                                    viewModel.updateParticipation(activity.id, true, if (hasPlusOne) 0 else 1, activity.weekend_date)
-                                },
+                                onClick = { viewModel.updateParticipation(activity.id, true, if (hasPlusOne) 0 else 1, activity.weekend_date) },
                                 modifier = Modifier.weight(1f).height(60.dp),
                                 shape = RoundedCornerShape(20.dp),
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (hasPlusOne) Color(0xFF3B82F6).copy(alpha = 0.1f) else MaterialTheme.colorScheme.surfaceVariant,
-                                    contentColor = if (hasPlusOne) Color(0xFF3B82F6) else MaterialTheme.colorScheme.onSurfaceVariant
+                                    containerColor = if (hasPlusOne) Color(0xFF3B82F6).copy(alpha = 0.1f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                    contentColor = if (hasPlusOne) Color(0xFF3B82F6) else MaterialTheme.colorScheme.onSurface
                                 )
                             ) {
-                                Icon(if (hasPlusOne) Icons.Default.PersonRemove else Icons.Default.PersonAdd, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Icon(if (hasPlusOne) Icons.Default.PersonRemove else Icons.Default.Add, contentDescription = null, modifier = Modifier.size(20.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(if (hasPlusOne) "TREURE +1" else "AFEGIR +1", fontSize = 11.sp, fontWeight = FontWeight.Black)
                             }
                         }
 
                         Button(
-                            onClick = { 
-                                viewModel.updateParticipation(activity.id, !isJoined, 0, activity.weekend_date)
-                            },
+                            onClick = { viewModel.updateParticipation(activity.id, !isJoined, 0, activity.weekend_date) },
                             modifier = Modifier.weight(1.5f).height(60.dp),
                             shape = RoundedCornerShape(20.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (isJoined) Color.Red.copy(alpha = 0.1f) else MaterialTheme.colorScheme.onSurface,
                                 contentColor = if (isJoined) Color.Red else MaterialTheme.colorScheme.surface
-                            ),
-                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
+                            )
                         ) {
                             Text(if (isJoined) "SORTIR DEL PLA" else "APUNTA'T AL PLA", fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
                         }
