@@ -21,7 +21,7 @@ import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Group
-import androidx.compose.material.icons.outlined.Link
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -152,7 +152,7 @@ fun ActivityCard(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            Icons.Outlined.Link,
+                            Icons.Outlined.Share,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
                             tint = Color(0xFF22C55E)
