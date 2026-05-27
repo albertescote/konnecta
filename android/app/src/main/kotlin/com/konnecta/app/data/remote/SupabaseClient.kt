@@ -1,13 +1,13 @@
 package com.konnecta.app.data.remote
 
 import com.konnecta.app.BuildConfig
-import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.compose.auth.ComposeAuth
 import io.github.jan.supabase.compose.auth.googleNativeLogin
+import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
-import io.github.jan.supabase.storage.Storage
 import io.github.jan.supabase.serializer.KotlinXSerializer
+import io.github.jan.supabase.storage.Storage
 import io.ktor.client.plugins.HttpTimeout
 import kotlinx.serialization.json.Json
 

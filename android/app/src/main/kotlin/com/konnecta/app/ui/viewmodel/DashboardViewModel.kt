@@ -2,8 +2,20 @@ package com.konnecta.app.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.konnecta.app.data.model.*
-import com.konnecta.app.data.remote.*
+import com.konnecta.app.data.model.Activity
+import com.konnecta.app.data.model.ActivityUpdate
+import com.konnecta.app.data.model.ActivityWithParticipants
+import com.konnecta.app.data.model.AttendanceState
+import com.konnecta.app.data.model.DashboardState
+import com.konnecta.app.data.model.Group
+import com.konnecta.app.data.model.MembershipWithProfile
+import com.konnecta.app.data.model.ParticipantWithProfile
+import com.konnecta.app.data.remote.ActivityService
+import com.konnecta.app.data.remote.AttendanceService
+import com.konnecta.app.data.remote.GroupService
+import com.konnecta.app.data.remote.LeaderboardService
+import com.konnecta.app.data.remote.ProfileService
+import com.konnecta.app.data.remote.WeatherService
 import com.konnecta.app.utils.DateUtils
 import com.konnecta.app.utils.withRetry
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -43,7 +55,8 @@ class DashboardViewModel @Inject constructor(
                 val groups = groupService.getUserGroups(userId)
                 if (groups.isNotEmpty()) {
                     val activeGroup = _state.value.activeGroup ?: groups.first()
-                    val validatedActiveGroup = groups.find { it.id == activeGroup.id } ?: groups.first()
+                    val validatedActiveGroup =
+                        groups.find { it.id == activeGroup.id } ?: groups.first()
 
                     _state.value = _state.value.copy(
                         userGroups = groups,
@@ -83,7 +96,8 @@ class DashboardViewModel @Inject constructor(
                 val groups = groupService.getUserGroups(userId)
                 val oldGroups = _state.value.userGroups
                 _state.value = _state.value.copy(userGroups = groups)
-                val newGroup = groups.find { g -> oldGroups.none { it.id == g.id } } ?: groups.first()
+                val newGroup =
+                    groups.find { g -> oldGroups.none { it.id == g.id } } ?: groups.first()
                 switchGroup(newGroup.id, DateUtils.formatDbDate(DateUtils.getUpcomingFriday()))
             }
         }
@@ -92,7 +106,9 @@ class DashboardViewModel @Inject constructor(
     fun createGroup(name: String, onResult: (Group?) -> Unit) {
         val userId = currentUserId ?: return
         val trimmedName = name.trim()
-        if (trimmedName.isBlank() || trimmedName.length > 50) { onResult(null); return }
+        if (trimmedName.isBlank() || trimmedName.length > 50) {
+            onResult(null); return
+        }
         viewModelScope.launch {
             val slug = trimmedName.lowercase().replace(" ", "-").replace(Regex("[^a-z0-9-]"), "")
             val group = groupService.createGroup(userId, trimmedName, slug)
@@ -111,7 +127,8 @@ class DashboardViewModel @Inject constructor(
         val groupId = _state.value.activeGroup?.id ?: return
 
         viewModelScope.launch {
-            val success = attendanceService.updateAttendance(userId, groupId, weekendDate, status, comment)
+            val success =
+                attendanceService.updateAttendance(userId, groupId, weekendDate, status, comment)
             if (success) {
                 loadDashboardData(weekendDate, groupId)
             }
@@ -124,7 +141,8 @@ class DashboardViewModel @Inject constructor(
         val groupId = _state.value.activeGroup?.id ?: return
 
         viewModelScope.launch {
-            val success = attendanceService.updateComment(userId, groupId, weekendDate, trimmedComment)
+            val success =
+                attendanceService.updateComment(userId, groupId, weekendDate, trimmedComment)
             if (success) {
                 loadDashboardData(weekendDate, groupId)
             }
@@ -138,7 +156,11 @@ class DashboardViewModel @Inject constructor(
                 _state.value = _state.value.copy(isLoading = true, error = null)
 
                 val profile = if (userId != null) {
-                    try { profileService.getProfile(userId) } catch (e: Exception) { null }
+                    try {
+                        profileService.getProfile(userId)
+                    } catch (e: Exception) {
+                        null
+                    }
                 } else null
 
                 var hasErrors = false
@@ -183,8 +205,10 @@ class DashboardViewModel @Inject constructor(
                 val answeredIds = plans.map { it.user_id }.toSet()
 
                 val going = plans.filter { it.status == "going" }.map { it.profiles to it.comment }
-                val notGoing = plans.filter { it.status == "not_going" }.map { it.profiles to it.comment }
-                val pending = plans.filter { it.status == "pending" }.map { it.profiles to it.comment }
+                val notGoing =
+                    plans.filter { it.status == "not_going" }.map { it.profiles to it.comment }
+                val pending =
+                    plans.filter { it.status == "pending" }.map { it.profiles to it.comment }
                 val unanswered = allMembers.filter { it.id !in answeredIds }.map { it to null }
 
                 val sortedActivities = activities.sortedWith(compareBy<ActivityWithParticipants> {
@@ -292,29 +316,42 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
-    fun updateParticipation(activityId: String, isJoining: Boolean, additionalParticipants: Int = 0, weekendDate: String) {
+    fun updateParticipation(
+        activityId: String,
+        isJoining: Boolean,
+        additionalParticipants: Int = 0,
+        weekendDate: String
+    ) {
         val userId = currentUserId ?: return
         val groupId = _state.value.activeGroup?.id ?: return
         val userProfile = _state.value.currentUserProfile
 
-        fun applyToList(list: List<ActivityWithParticipants>): List<ActivityWithParticipants> = list.map { activity ->
-            if (activity.id != activityId) return@map activity
-            val participants = activity.activity_participants
-            val updated = when {
-                isJoining -> {
-                    val existing = participants.find { it.user_id == userId }
-                    when {
-                        existing != null -> participants.map {
-                            if (it.user_id == userId) it.copy(additional_participants = additionalParticipants) else it
+        fun applyToList(list: List<ActivityWithParticipants>): List<ActivityWithParticipants> =
+            list.map { activity ->
+                if (activity.id != activityId) return@map activity
+                val participants = activity.activity_participants
+                val updated = when {
+                    isJoining -> {
+                        val existing = participants.find { it.user_id == userId }
+                        when {
+                            existing != null -> participants.map {
+                                if (it.user_id == userId) it.copy(additional_participants = additionalParticipants) else it
+                            }
+
+                            userProfile != null -> participants + ParticipantWithProfile(
+                                userId,
+                                additionalParticipants,
+                                userProfile
+                            )
+
+                            else -> participants
                         }
-                        userProfile != null -> participants + ParticipantWithProfile(userId, additionalParticipants, userProfile)
-                        else -> participants
                     }
+
+                    else -> participants.filter { it.user_id != userId }
                 }
-                else -> participants.filter { it.user_id != userId }
+                activity.copy(activity_participants = updated)
             }
-            activity.copy(activity_participants = updated)
-        }
 
         // Optimistic update before the DB call
         _state.value = _state.value.copy(
@@ -323,7 +360,12 @@ class DashboardViewModel @Inject constructor(
         )
 
         viewModelScope.launch {
-            val success = activityService.updateParticipation(activityId, userId, isJoining, additionalParticipants)
+            val success = activityService.updateParticipation(
+                activityId,
+                userId,
+                isJoining,
+                additionalParticipants
+            )
             if (!success) {
                 loadDashboardData(weekendDate, groupId)
                 loadFutureActivities(groupId)
@@ -356,7 +398,8 @@ class DashboardViewModel @Inject constructor(
     suspend fun refreshInviteToken(groupId: String): Group? {
         val result = groupService.refreshInviteToken(groupId)
         if (result != null && _state.value.activeGroup?.id == groupId) {
-            _state.value = _state.value.copy(activeGroup = result.copy(role = _state.value.activeGroup?.role))
+            _state.value =
+                _state.value.copy(activeGroup = result.copy(role = _state.value.activeGroup?.role))
         }
         return result
     }

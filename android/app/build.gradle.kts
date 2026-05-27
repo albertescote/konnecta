@@ -34,8 +34,16 @@ android {
         }
 
         // Shared across all flavors
-        buildConfigField("String", "ONESIGNAL_APP_ID", "\"${secretOrEnv("ONESIGNAL_APP_ID") ?: ""}\"")
-        buildConfigField("String", "GOOGLE_CLIENT_ID", "\"${secretOrEnv("GOOGLE_CLIENT_ID") ?: ""}\"")
+        buildConfigField(
+            "String",
+            "ONESIGNAL_APP_ID",
+            "\"${secretOrEnv("ONESIGNAL_APP_ID") ?: ""}\""
+        )
+        buildConfigField(
+            "String",
+            "GOOGLE_CLIENT_ID",
+            "\"${secretOrEnv("GOOGLE_CLIENT_ID") ?: ""}\""
+        )
         buildConfigField("Double", "WEATHER_LAT", secretOrEnv("WEATHER_LAT") ?: "41.2856")
         buildConfigField("Double", "WEATHER_LNG", secretOrEnv("WEATHER_LNG") ?: "1.2504")
     }
@@ -58,14 +66,30 @@ android {
             dimension = "environment"
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
-            buildConfigField("String", "SUPABASE_URL", "\"${secretOrEnv("DEV_SUPABASE_URL") ?: secretOrEnv("SUPABASE_URL") ?: ""}\"")
-            buildConfigField("String", "SUPABASE_ANON_KEY", "\"${secretOrEnv("DEV_SUPABASE_ANON_KEY") ?: secretOrEnv("SUPABASE_ANON_KEY") ?: ""}\"")
-            buildConfigField("String", "BASE_URL", "\"${secretOrEnv("DEV_BASE_URL") ?: secretOrEnv("BASE_URL") ?: ""}\"")
+            buildConfigField(
+                "String",
+                "SUPABASE_URL",
+                "\"${secretOrEnv("DEV_SUPABASE_URL") ?: secretOrEnv("SUPABASE_URL") ?: ""}\""
+            )
+            buildConfigField(
+                "String",
+                "SUPABASE_ANON_KEY",
+                "\"${secretOrEnv("DEV_SUPABASE_ANON_KEY") ?: secretOrEnv("SUPABASE_ANON_KEY") ?: ""}\""
+            )
+            buildConfigField(
+                "String",
+                "BASE_URL",
+                "\"${secretOrEnv("DEV_BASE_URL") ?: secretOrEnv("BASE_URL") ?: ""}\""
+            )
         }
         create("prod") {
             dimension = "environment"
             buildConfigField("String", "SUPABASE_URL", "\"${secretOrEnv("SUPABASE_URL") ?: ""}\"")
-            buildConfigField("String", "SUPABASE_ANON_KEY", "\"${secretOrEnv("SUPABASE_ANON_KEY") ?: ""}\"")
+            buildConfigField(
+                "String",
+                "SUPABASE_ANON_KEY",
+                "\"${secretOrEnv("SUPABASE_ANON_KEY") ?: ""}\""
+            )
             buildConfigField("String", "BASE_URL", "\"${secretOrEnv("BASE_URL") ?: ""}\"")
         }
     }

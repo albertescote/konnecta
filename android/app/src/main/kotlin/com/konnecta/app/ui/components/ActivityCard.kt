@@ -58,7 +58,9 @@ fun ActivityCard(
     val currentUserId = viewModel.getCurrentUserId() ?: ""
 
     val isJoined = activity.activity_participants.any { it.user_id == currentUserId }
-    val hasPlusOne = (activity.activity_participants.find { it.user_id == currentUserId }?.additional_participants ?: 0) > 0
+    val hasPlusOne =
+        (activity.activity_participants.find { it.user_id == currentUserId }?.additional_participants
+            ?: 0) > 0
     val totalAttendance = activity.activity_participants.sumOf { 1 + it.additional_participants }
 
     val eventDate = DateUtils.parseDbDate(activity.start_date ?: activity.weekend_date)
@@ -186,7 +188,12 @@ fun ActivityCard(
                     .clip(RoundedCornerShape(16.dp))
                     .background(if (isJoined) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface)
                     .clickable {
-                        viewModel.updateParticipation(activity.id, !isJoined, 0, activity.weekend_date)
+                        viewModel.updateParticipation(
+                            activity.id,
+                            !isJoined,
+                            0,
+                            activity.weekend_date
+                        )
                     },
                 contentAlignment = Alignment.Center
             ) {
@@ -215,7 +222,12 @@ fun ActivityCard(
                             RoundedCornerShape(16.dp)
                         )
                         .clickable {
-                            viewModel.updateParticipation(activity.id, true, if (hasPlusOne) 0 else 1, activity.weekend_date)
+                            viewModel.updateParticipation(
+                                activity.id,
+                                true,
+                                if (hasPlusOne) 0 else 1,
+                                activity.weekend_date
+                            )
                         },
                     contentAlignment = Alignment.Center
                 ) {

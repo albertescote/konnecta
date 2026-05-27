@@ -4,7 +4,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -12,8 +19,21 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Message
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Send
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,11 +74,15 @@ fun VotingSection(
             .fillMaxWidth()
             .clip(RoundedCornerShape(28.dp))
             .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(28.dp))
+            .border(
+                1.dp,
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                RoundedCornerShape(28.dp)
+            )
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
-            ) { 
+            ) {
                 if (isEditingComment) {
                     isEditingComment = false
                     focusManager.clearFocus()
@@ -68,7 +92,10 @@ fun VotingSection(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
             Text(
                 text = "Hi seràs?",
                 fontWeight = FontWeight.Bold,
@@ -144,7 +171,12 @@ fun VotingSection(
                         OutlinedTextField(
                             value = commentText,
                             onValueChange = { if (it.length <= 140) commentText = it },
-                            placeholder = { Text("Ex: Tinc un sopar dissabte...", fontSize = 14.sp) },
+                            placeholder = {
+                                Text(
+                                    "Ex: Tinc un sopar dissabte...",
+                                    fontSize = 14.sp
+                                )
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(min = 80.dp)
@@ -153,16 +185,20 @@ fun VotingSection(
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = Color(0xFF3B82F6).copy(alpha = 0.3f),
                                 unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                                    alpha = 0.3f
+                                ),
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                                    alpha = 0.3f
+                                ),
                                 cursorColor = Color(0xFF3B82F6)
                             ),
                             textStyle = LocalTextStyle.current.copy(fontSize = 14.sp)
                         )
-                        
+
                         // Close button for the text box - explicitly top right
                         IconButton(
-                            onClick = { 
+                            onClick = {
                                 isEditingComment = false
                                 focusManager.clearFocus()
                                 commentText = currentComment ?: ""
@@ -179,7 +215,7 @@ fun VotingSection(
                                 modifier = Modifier.size(16.dp)
                             )
                         }
-                        
+
                         // Character counter - moved to BottomStart to avoid ALL overlaps
                         Text(
                             text = "${commentText.length}/140",
@@ -206,7 +242,11 @@ fun VotingSection(
                                     shape = RoundedCornerShape(10.dp),
                                     elevation = FloatingActionButtonDefaults.elevation(0.dp)
                                 ) {
-                                    Icon(Icons.Default.Send, contentDescription = "Guardar", modifier = Modifier.size(16.dp))
+                                    Icon(
+                                        Icons.Default.Send,
+                                        contentDescription = "Guardar",
+                                        modifier = Modifier.size(16.dp)
+                                    )
                                 }
                             }
                         }
@@ -222,7 +262,7 @@ fun VotingSection(
                         )
                     }
                 }
-                
+
                 LaunchedEffect(isEditingComment) {
                     if (isEditingComment) focusRequester.requestFocus()
                 }
@@ -247,7 +287,11 @@ fun VoteButton(
             modifier = Modifier
                 .size(width = 64.dp, height = 64.dp)
                 .clip(RoundedCornerShape(20.dp))
-                .background(if (isSelected) activeColor else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                .background(
+                    if (isSelected) activeColor else MaterialTheme.colorScheme.surfaceVariant.copy(
+                        alpha = 0.5f
+                    )
+                )
                 .clickable { onClick() },
             contentAlignment = Alignment.Center
         ) {

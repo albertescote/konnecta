@@ -1,13 +1,35 @@
 package com.konnecta.app.ui.screens
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.material3.pulltorefresh.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -18,15 +40,22 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.konnecta.app.data.model.*
-import com.konnecta.app.ui.components.*
+import com.konnecta.app.ui.components.ActivityCard
+import com.konnecta.app.ui.components.AppFooter
+import com.konnecta.app.ui.components.AttendanceSection
+import com.konnecta.app.ui.components.HallOfFame
+import com.konnecta.app.ui.components.NewActivityBottomSheet
+import com.konnecta.app.ui.components.VotingSection
+import com.konnecta.app.ui.components.WeatherCard
+import com.konnecta.app.ui.components.WeekendCalendarBottomSheet
+import com.konnecta.app.ui.components.WeekendSelector
 import com.konnecta.app.ui.viewmodel.DashboardViewModel
 import com.konnecta.app.utils.DateUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    groupId: String, 
+    groupId: String,
     viewModel: DashboardViewModel
 ) {
     val initialDate = remember { DateUtils.formatDbDate(DateUtils.getUpcomingFriday()) }
@@ -75,7 +104,12 @@ fun DashboardScreen(
                                 fontSize = 13.sp,
                                 modifier = Modifier.weight(1f)
                             )
-                            TextButton(onClick = { viewModel.loadDashboardData(selectedDate, groupId) }) {
+                            TextButton(onClick = {
+                                viewModel.loadDashboardData(
+                                    selectedDate,
+                                    groupId
+                                )
+                            }) {
                                 Text(
                                     text = "REINTENTAR",
                                     fontSize = 12.sp,
@@ -109,7 +143,7 @@ fun DashboardScreen(
                         weather = state.weather,
                         forecast = state.fullForecast
                     )
-                    
+
                     VotingSection(
                         currentStatus = state.currentUserStatus,
                         currentComment = state.currentUserComment,
@@ -134,18 +168,39 @@ fun DashboardScreen(
                         color = Color.Gray.copy(alpha = 0.6f),
                         modifier = Modifier.padding(horizontal = 8.dp)
                     )
-                    
-                    AttendanceSection(title = "SÍ", groupId = groupId, users = state.attendance.going, titleColor = Color(0xFF22C55E))
-                    AttendanceSection(title = "NO", groupId = groupId, users = state.attendance.notGoing, titleColor = Color(0xFFEF4444))
-                    AttendanceSection(title = "POTSER", groupId = groupId, users = state.attendance.pending, titleColor = Color(0xFFA1A1AA))
-                    AttendanceSection(title = "PENDENT", groupId = groupId, users = state.attendance.unanswered, titleColor = Color.Gray, isUnanswered = true)
+
+                    AttendanceSection(
+                        title = "SÍ",
+                        groupId = groupId,
+                        users = state.attendance.going,
+                        titleColor = Color(0xFF22C55E)
+                    )
+                    AttendanceSection(
+                        title = "NO",
+                        groupId = groupId,
+                        users = state.attendance.notGoing,
+                        titleColor = Color(0xFFEF4444)
+                    )
+                    AttendanceSection(
+                        title = "POTSER",
+                        groupId = groupId,
+                        users = state.attendance.pending,
+                        titleColor = Color(0xFFA1A1AA)
+                    )
+                    AttendanceSection(
+                        title = "PENDENT",
+                        groupId = groupId,
+                        users = state.attendance.unanswered,
+                        titleColor = Color.Gray,
+                        isUnanswered = true
+                    )
                 }
             }
 
             item {
                 HorizontalDivider(
-                    thickness = 1.dp, 
-                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f), 
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f),
                     modifier = Modifier.padding(horizontal = 32.dp)
                 )
             }
@@ -174,7 +229,10 @@ fun DashboardScreen(
                     }
 
                     var showNewActivitySheet by remember { mutableStateOf(false) }
-                    val stroke = Stroke(width = 2f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f))
+                    val stroke = Stroke(
+                        width = 2f,
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
+                    )
                     val dashColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
 
                     Box(
@@ -197,7 +255,10 @@ fun DashboardScreen(
                             modifier = Modifier.fillMaxSize(),
                             shape = RoundedCornerShape(20.dp),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
-                            border = if (state.activities.isEmpty()) null else ButtonDefaults.outlinedButtonBorder.copy(width = 1.dp, brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outline))
+                            border = if (state.activities.isEmpty()) null else ButtonDefaults.outlinedButtonBorder.copy(
+                                width = 1.dp,
+                                brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outline)
+                            )
                         ) {
                             Text(
                                 text = "+ PROPOSA UN PLA",
@@ -224,8 +285,8 @@ fun DashboardScreen(
 
             item {
                 HorizontalDivider(
-                    thickness = 1.dp, 
-                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f), 
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f),
                     modifier = Modifier.padding(horizontal = 32.dp)
                 )
             }
@@ -238,12 +299,15 @@ fun DashboardScreen(
             }
 
             item {
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
                     AppFooter()
                 }
             }
         }
-        
+
         PullToRefreshContainer(
             modifier = Modifier.align(Alignment.TopCenter),
             state = pullToRefreshState,

@@ -5,14 +5,30 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FormatQuote
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -49,7 +65,11 @@ fun UserAttendanceCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+            .border(
+                1.dp,
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                RoundedCornerShape(20.dp)
+            )
             .combinedClickable(
                 onClick = { showSummaryModal = true },
                 onLongClick = {
@@ -77,7 +97,9 @@ fun UserAttendanceCard(
                     model = profile.avatar_url,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize().clip(CircleShape)
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(CircleShape)
                 )
             } else {
                 Text(
@@ -149,7 +171,11 @@ fun CommentPopup(
                     .width(300.dp)
                     .clip(RoundedCornerShape(28.dp))
                     .background(MaterialTheme.colorScheme.surface)
-                    .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(28.dp))
+                    .border(
+                        1.dp,
+                        MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                        RoundedCornerShape(28.dp)
+                    )
                     .clickable(enabled = false) {}
                     .padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -218,14 +244,16 @@ fun AttendanceSection(
             fontWeight = FontWeight.Bold,
             fontSize = 13.sp,
             color = if (isUnanswered) titleColor.copy(alpha = 0.6f) else titleColor,
-            modifier = Modifier.padding(horizontal = 4.dp).alpha(if (isUnanswered) 0.6f else 1.0f),
+            modifier = Modifier
+                .padding(horizontal = 4.dp)
+                .alpha(if (isUnanswered) 0.6f else 1.0f),
             letterSpacing = 0.5.sp
         )
         users.forEach { (profile, comment) ->
             UserAttendanceCard(
-                profile = profile, 
+                profile = profile,
                 groupId = groupId,
-                comment = comment, 
+                comment = comment,
                 opacity = if (isUnanswered) 0.5f else 1.0f
             )
         }

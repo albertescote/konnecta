@@ -1,12 +1,14 @@
 package com.konnecta.app.data.remote
 
-import com.konnecta.app.data.model.*
+import com.konnecta.app.data.model.Group
+import com.konnecta.app.data.model.MembershipWithGroup
+import com.konnecta.app.data.model.MembershipWithProfile
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
+import timber.log.Timber
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.UUID
-import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -79,11 +81,13 @@ class GroupService @Inject constructor() {
                 .decodeSingle<Group>()
 
             client.postgrest["group_memberships"]
-                .insert(mapOf(
-                    "group_id" to group.id,
-                    "user_id" to userId,
-                    "role" to "member"
-                ))
+                .insert(
+                    mapOf(
+                        "group_id" to group.id,
+                        "user_id" to userId,
+                        "role" to "member"
+                    )
+                )
             true
         } catch (e: Exception) {
             Timber.e(e, "GroupService: Error joining group by token")
@@ -100,7 +104,8 @@ class GroupService @Inject constructor() {
                         "slug" to slug,
                         "created_by" to userId,
                         "invite_token" to UUID.randomUUID().toString(),
-                        "invite_token_expires_at" to Instant.now().plus(48, ChronoUnit.HOURS).toString()
+                        "invite_token_expires_at" to Instant.now().plus(48, ChronoUnit.HOURS)
+                            .toString()
                     )
                 ) {
                     select()

@@ -1,7 +1,6 @@
 package com.konnecta.app.ui.viewmodel
 
 import com.konnecta.app.data.model.Group
-import com.konnecta.app.data.model.Profile
 import com.konnecta.app.data.remote.ActivityService
 import com.konnecta.app.data.remote.AttendanceService
 import com.konnecta.app.data.remote.GroupService
@@ -11,14 +10,17 @@ import com.konnecta.app.data.remote.WeatherService
 import com.konnecta.app.testutil.MainDispatcherRule
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.unmockkAll
 import io.mockk.mockk
+import io.mockk.unmockkAll
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -70,15 +72,16 @@ class DashboardViewModelTest {
     // ── createGroup validation ───────────────────────────────────────────────
 
     @Test
-    fun `createGroup with blank name calls onResult with null without touching the service`() = runTest {
-        viewModel.loadInitialData("user-1") // sets currentUserId synchronously
+    fun `createGroup with blank name calls onResult with null without touching the service`() =
+        runTest {
+            viewModel.loadInitialData("user-1") // sets currentUserId synchronously
 
-        val results = mutableListOf<Group?>()
-        viewModel.createGroup("   ", results::add)
+            val results = mutableListOf<Group?>()
+            viewModel.createGroup("   ", results::add)
 
-        assertEquals(listOf(null), results)
-        coVerify(exactly = 0) { groupService.createGroup(any(), any(), any()) }
-    }
+            assertEquals(listOf(null), results)
+            coVerify(exactly = 0) { groupService.createGroup(any(), any(), any()) }
+        }
 
     @Test
     fun `createGroup with name longer than 50 chars calls onResult with null`() = runTest {
@@ -141,21 +144,27 @@ class DashboardViewModelTest {
     // ── loadDashboardData ────────────────────────────────────────────────────
 
     @Test
-    fun `loadDashboardData sets partial error when attendance service fails after retries`() = runTest {
-        coEvery { attendanceService.getAttendance(any(), any()) } throws IOException("Network error")
-        coEvery { attendanceService.getGroupMembers(any()) } returns emptyList()
-        coEvery { activityService.getActivities(any(), any()) } returns emptyList()
-        coEvery { weatherService.getWeekendWeather(any()) } returns null
-        coEvery { leaderboardService.getLeaderboard(any()) } returns emptyList()
+    fun `loadDashboardData sets partial error when attendance service fails after retries`() =
+        runTest {
+            coEvery {
+                attendanceService.getAttendance(
+                    any(),
+                    any()
+                )
+            } throws IOException("Network error")
+            coEvery { attendanceService.getGroupMembers(any()) } returns emptyList()
+            coEvery { activityService.getActivities(any(), any()) } returns emptyList()
+            coEvery { weatherService.getWeekendWeather(any()) } returns null
+            coEvery { leaderboardService.getLeaderboard(any()) } returns emptyList()
 
-        viewModel.loadDashboardData("2025-01-17", "g-1")
-        advanceUntilIdle()
+            viewModel.loadDashboardData("2025-01-17", "g-1")
+            advanceUntilIdle()
 
-        with(viewModel.state.value) {
-            assertFalse(isLoading)
-            assertEquals("No s'han pogut carregar totes les dades", error)
+            with(viewModel.state.value) {
+                assertFalse(isLoading)
+                assertEquals("No s'han pogut carregar totes les dades", error)
+            }
         }
-    }
 
     @Test
     fun `loadDashboardData clears error and loading on success`() = runTest {

@@ -4,18 +4,44 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.konnecta.app.data.model.*
+import com.konnecta.app.data.model.DashboardState
+import com.konnecta.app.data.model.Group
+import com.konnecta.app.data.model.Profile
 import com.konnecta.app.data.remote.SupabaseClient
-import com.konnecta.app.ui.components.*
+import com.konnecta.app.ui.components.CreateGroupBottomSheet
+import com.konnecta.app.ui.components.DashboardHeader
+import com.konnecta.app.ui.components.GroupSelectorBottomSheet
+import com.konnecta.app.ui.components.InviteFriendsBottomSheet
+import com.konnecta.app.ui.components.ProfileBottomSheet
+import com.konnecta.app.ui.components.ViewToggle
 import com.konnecta.app.ui.screens.DashboardScreen
 import com.konnecta.app.ui.screens.LoginScreen
 import com.konnecta.app.ui.screens.NoGroupScreen
@@ -47,7 +73,10 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
+@OptIn(
+    ExperimentalMaterial3Api::class,
+    androidx.compose.foundation.ExperimentalFoundationApi::class
+)
 @Composable
 fun MainContainer(
     viewModel: DashboardViewModel = hiltViewModel(),
@@ -63,7 +92,8 @@ fun MainContainer(
         Profile(
             id = user.id,
             full_name = metadata?.get("full_name")?.toString() ?: metadata?.get("name")?.toString(),
-            avatar_url = metadata?.get("avatar_url")?.toString() ?: metadata?.get("picture")?.toString(),
+            avatar_url = metadata?.get("avatar_url")?.toString() ?: metadata?.get("picture")
+                ?.toString(),
             email = user.email ?: "",
             updated_at = null
         )
@@ -96,6 +126,7 @@ fun MainContainer(
                         CircularProgressIndicator()
                     }
                 }
+
                 dashboardState.userGroups.isEmpty() && !dashboardState.isLoading -> {
                     NoGroupScaffold(
                         userProfile = userProfile,
@@ -104,6 +135,7 @@ fun MainContainer(
                         viewModel = viewModel
                     )
                 }
+
                 else -> {
                     MainScaffold(
                         userProfile = userProfile,
@@ -114,6 +146,7 @@ fun MainContainer(
                 }
             }
         }
+
         is SessionStatus.NotAuthenticated -> LoginScreen(onLoginSuccess = {})
         else -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -216,8 +249,15 @@ private fun MainScaffold(
                 verticalAlignment = Alignment.Top
             ) { page ->
                 when (page) {
-                    0 -> DashboardScreen(groupId = dashboardState.activeGroup?.id ?: "", viewModel = viewModel)
-                    1 -> PlansHubScreen(groupId = dashboardState.activeGroup?.id ?: "", dashboardViewModel = viewModel)
+                    0 -> DashboardScreen(
+                        groupId = dashboardState.activeGroup?.id ?: "",
+                        viewModel = viewModel
+                    )
+
+                    1 -> PlansHubScreen(
+                        groupId = dashboardState.activeGroup?.id ?: "",
+                        dashboardViewModel = viewModel
+                    )
                 }
             }
         }
@@ -228,7 +268,12 @@ private fun MainScaffold(
             groups = dashboardState.userGroups,
             activeGroupId = dashboardState.activeGroup?.id ?: "",
             currentUserId = userProfile?.id ?: "",
-            onGroupSelected = { viewModel.switchGroup(it, DateUtils.formatDbDate(DateUtils.getUpcomingFriday())) },
+            onGroupSelected = {
+                viewModel.switchGroup(
+                    it,
+                    DateUtils.formatDbDate(DateUtils.getUpcomingFriday())
+                )
+            },
             onGroupCreated = { newGroup ->
                 showGroupSelector = false
                 showInviteFriends = newGroup
@@ -277,6 +322,9 @@ private fun AppTopBar(
         )
         Spacer(modifier = Modifier.height(16.dp))
         bottomSlot()
-        HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+        HorizontalDivider(
+            thickness = 1.dp,
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+        )
     }
 }

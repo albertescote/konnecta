@@ -1,6 +1,8 @@
 package com.konnecta.app.utils
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.Calendar
 import java.util.Date
@@ -125,12 +127,18 @@ class DateUtilsTest {
 
     @Test
     fun `addDays adds correct number of days`() {
-        assertEquals("2025-01-15", DateUtils.formatDbDate(DateUtils.addDays(dateOf(2025, 1, 10), 5)))
+        assertEquals(
+            "2025-01-15",
+            DateUtils.formatDbDate(DateUtils.addDays(dateOf(2025, 1, 10), 5))
+        )
     }
 
     @Test
     fun `addDays handles month boundary`() {
-        assertEquals("2025-02-04", DateUtils.formatDbDate(DateUtils.addDays(dateOf(2025, 1, 30), 5)))
+        assertEquals(
+            "2025-02-04",
+            DateUtils.formatDbDate(DateUtils.addDays(dateOf(2025, 1, 30), 5))
+        )
     }
 
     // ── getNextWeekends ──────────────────────────────────────────────────────

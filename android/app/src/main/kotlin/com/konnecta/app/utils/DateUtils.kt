@@ -16,30 +16,31 @@ object DateUtils {
     fun getFridayForDate(date: Date): Date {
         val calendar = Calendar.getInstance()
         calendar.time = date
-        val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
-        
-        when (dayOfWeek) {
+        when (val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)) {
             Calendar.SATURDAY -> {
                 calendar.add(Calendar.DAY_OF_YEAR, -1)
             }
+
             Calendar.SUNDAY -> {
                 calendar.add(Calendar.DAY_OF_YEAR, -2)
             }
+
             Calendar.FRIDAY -> {
                 // Already Friday
             }
+
             else -> {
                 // For Mon-Thu, move to the next Friday
                 val daysUntilFriday = (Calendar.FRIDAY - dayOfWeek + 7) % 7
                 calendar.add(Calendar.DAY_OF_YEAR, daysUntilFriday)
             }
         }
-        
+
         calendar.set(Calendar.HOUR_OF_DAY, 0)
         calendar.set(Calendar.MINUTE, 0)
         calendar.set(Calendar.SECOND, 0)
         calendar.set(Calendar.MILLISECOND, 0)
-        
+
         return calendar.time
     }
 
@@ -79,12 +80,12 @@ object DateUtils {
         val weekends = mutableListOf<String>()
         val calendar = Calendar.getInstance()
         calendar.time = getUpcomingFriday()
-        
+
         for (i in 0 until count) {
             weekends.add(formatDbDate(calendar.time))
             calendar.add(Calendar.WEEK_OF_YEAR, 1)
         }
-        
+
         return weekends
     }
 
@@ -92,7 +93,7 @@ object DateUtils {
         val friday = parseDbDate(fridayStr)
         val sat = addDays(friday, 1)
         val sun = addDays(friday, 2)
-        
+
         val dayMonthFormat = SimpleDateFormat("d 'de' MMM", Locale("ca"))
         return "${dayMonthFormat.format(sat)} - ${dayMonthFormat.format(sun)}"
     }

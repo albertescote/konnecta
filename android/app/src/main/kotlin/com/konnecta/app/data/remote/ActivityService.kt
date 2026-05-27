@@ -1,6 +1,9 @@
 package com.konnecta.app.data.remote
 
-import com.konnecta.app.data.model.*
+import com.konnecta.app.data.model.Activity
+import com.konnecta.app.data.model.ActivityUpdate
+import com.konnecta.app.data.model.ActivityWithParticipants
+import com.konnecta.app.data.model.ParticipationUpdate
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import timber.log.Timber
@@ -11,7 +14,10 @@ import javax.inject.Singleton
 class ActivityService @Inject constructor() {
     private val client = SupabaseClient.client
 
-    suspend fun getActivities(weekendDate: String, groupId: String): List<ActivityWithParticipants> {
+    suspend fun getActivities(
+        weekendDate: String,
+        groupId: String
+    ): List<ActivityWithParticipants> {
         return client.postgrest["activities"]
             .select(columns = Columns.raw("*, activity_participants(user_id, additional_participants, profiles(*))")) {
                 filter {
@@ -22,7 +28,10 @@ class ActivityService @Inject constructor() {
             .decodeList<ActivityWithParticipants>()
     }
 
-    suspend fun getFutureActivities(today: String, groupId: String): List<ActivityWithParticipants> {
+    suspend fun getFutureActivities(
+        today: String,
+        groupId: String
+    ): List<ActivityWithParticipants> {
         return client.postgrest["activities"]
             .select(columns = Columns.raw("*, activity_participants(user_id, additional_participants, profiles(*))")) {
                 filter {
@@ -68,7 +77,12 @@ class ActivityService @Inject constructor() {
         }
     }
 
-    suspend fun updateParticipation(activityId: String, userId: String, isJoining: Boolean, additionalParticipants: Int = 0): Boolean {
+    suspend fun updateParticipation(
+        activityId: String,
+        userId: String,
+        isJoining: Boolean,
+        additionalParticipants: Int = 0
+    ): Boolean {
         return try {
             if (isJoining) {
                 client.postgrest["activity_participants"].upsert(

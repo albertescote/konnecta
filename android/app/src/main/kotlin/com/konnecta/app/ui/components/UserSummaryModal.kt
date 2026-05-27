@@ -2,14 +2,34 @@ package com.konnecta.app.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,7 +46,6 @@ import com.konnecta.app.data.model.Profile
 import com.konnecta.app.data.model.UserStats
 import com.konnecta.app.data.remote.ProfileService
 import com.konnecta.app.utils.DateUtils
-import kotlinx.coroutines.launch
 
 @Composable
 fun UserSummaryModal(
@@ -62,7 +81,11 @@ fun UserSummaryModal(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(32.dp))
                     .background(MaterialTheme.colorScheme.surface)
-                    .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(32.dp))
+                    .border(
+                        1.dp,
+                        MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                        RoundedCornerShape(32.dp)
+                    )
             ) {
                 // Close button header
                 Box(
@@ -193,7 +216,8 @@ fun UserSummaryModal(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             nextWeekends.forEach { weekendDateStr ->
-                                val plan = stats?.upcomingPlans?.find { it.weekend_date == weekendDateStr }
+                                val plan =
+                                    stats?.upcomingPlans?.find { it.weekend_date == weekendDateStr }
                                 val status = plan?.status ?: "none"
                                 val date = DateUtils.parseDbDate(weekendDateStr)
                                 val dayMonth = "${DateUtils.getDayOfMonth(date)}/${date.month + 1}"
@@ -245,7 +269,11 @@ fun StatCard(
         modifier = modifier
             .clip(RoundedCornerShape(24.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(24.dp))
+            .border(
+                1.dp,
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                RoundedCornerShape(24.dp)
+            )
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center // Centered content for same height

@@ -1,6 +1,8 @@
 package com.konnecta.app.data.remote
 
-import com.konnecta.app.data.model.*
+import com.konnecta.app.data.model.MembershipWithProfile
+import com.konnecta.app.data.model.PlanWithProfile
+import com.konnecta.app.data.model.Profile
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import timber.log.Timber
@@ -33,7 +35,13 @@ class AttendanceService @Inject constructor() {
         return memberships.map { it.profiles }
     }
 
-    suspend fun updateAttendance(userId: String, groupId: String, weekendDate: String, status: String, comment: String? = null): Boolean {
+    suspend fun updateAttendance(
+        userId: String,
+        groupId: String,
+        weekendDate: String,
+        status: String,
+        comment: String? = null
+    ): Boolean {
         return try {
             val plan = mutableMapOf<String, Any?>(
                 "user_id" to userId,
@@ -54,7 +62,12 @@ class AttendanceService @Inject constructor() {
         }
     }
 
-    suspend fun updateComment(userId: String, groupId: String, weekendDate: String, comment: String): Boolean {
+    suspend fun updateComment(
+        userId: String,
+        groupId: String,
+        weekendDate: String,
+        comment: String
+    ): Boolean {
         return try {
             val plan = mapOf(
                 "user_id" to userId,

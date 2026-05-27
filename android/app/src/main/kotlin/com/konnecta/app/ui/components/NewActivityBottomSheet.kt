@@ -5,9 +5,19 @@ import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,15 +26,36 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -32,7 +63,9 @@ import com.konnecta.app.data.model.Activity
 import com.konnecta.app.ui.viewmodel.DashboardViewModel
 import com.konnecta.app.utils.DateUtils
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Locale
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,14 +91,23 @@ fun NewActivityBottomSheet(
     }
     var startHour by remember { mutableStateOf("19") }
     var startMinute by remember { mutableStateOf("00") }
-    
+
     var isMultiDay by remember { mutableStateOf(false) }
-    var endDate by remember { mutableStateOf(DateUtils.formatDbDate(DateUtils.addDays(anchorDate, 2))) }
+    var endDate by remember {
+        mutableStateOf(
+            DateUtils.formatDbDate(
+                DateUtils.addDays(
+                    anchorDate,
+                    2
+                )
+            )
+        )
+    }
     var selectedEndDay by remember { mutableStateOf("diumenge") }
     var endHour by remember { mutableStateOf("22") }
     var endMinute by remember { mutableStateOf("00") }
     val dayIndex = mapOf("divendres" to 0, "dissabte" to 1, "diumenge" to 2)
-    
+
     var isPending by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val scrollState = rememberScrollState()
@@ -172,9 +214,20 @@ fun NewActivityBottomSheet(
             }
 
             // Start Section
-            Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(Color(0xFF3B82F6)))
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF3B82F6))
+                    )
                     Text(
                         text = "INICI DEL PLA",
                         fontSize = 10.sp,
@@ -187,20 +240,29 @@ fun NewActivityBottomSheet(
                 if (isFlexible) {
                     Button(
                         onClick = { showDatePicker(startDate) { startDate = it } },
-                        modifier = Modifier.fillMaxWidth().height(44.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f),
                             contentColor = MaterialTheme.colorScheme.onSurface
                         )
                     ) {
-                        Icon(Icons.Default.CalendarMonth, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(
+                            Icons.Default.CalendarMonth,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(text = startDate, fontWeight = FontWeight.Bold)
                     }
                 }
 
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     TimeSelect(
                         label = "Hora",
                         value = startHour,
@@ -208,7 +270,11 @@ fun NewActivityBottomSheet(
                         onValueChange = { startHour = it },
                         modifier = Modifier.weight(1f)
                     )
-                    Text(":", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.CenterVertically))
+                    Text(
+                        ":",
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.align(Alignment.CenterVertically)
+                    )
                     TimeSelect(
                         label = "Min",
                         value = startMinute,
@@ -243,10 +309,21 @@ fun NewActivityBottomSheet(
 
             // End Section
             AnimatedVisibility(visible = isMultiDay) {
-                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(Color.Red))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(Color.Red)
+                        )
                         Text(
                             text = "FINAL DEL PLA",
                             fontSize = 10.sp,
@@ -259,14 +336,20 @@ fun NewActivityBottomSheet(
                     if (freeDate) {
                         Button(
                             onClick = { showDatePicker(endDate) { endDate = it } },
-                            modifier = Modifier.fillMaxWidth().height(44.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp),
                             shape = RoundedCornerShape(16.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f),
                                 contentColor = MaterialTheme.colorScheme.onSurface
                             )
                         ) {
-                            Icon(Icons.Default.CalendarMonth, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Icon(
+                                Icons.Default.CalendarMonth,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(text = endDate, fontWeight = FontWeight.Bold)
                         }
@@ -307,7 +390,9 @@ fun NewActivityBottomSheet(
                                         }
                                     )
                                     Text(
-                                        text = SimpleDateFormat("d", Locale.getDefault()).format(date),
+                                        text = SimpleDateFormat("d", Locale.getDefault()).format(
+                                            date
+                                        ),
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = when {
@@ -321,7 +406,10 @@ fun NewActivityBottomSheet(
                         }
                     }
 
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         TimeSelect(
                             label = "Hora",
                             value = endHour,
@@ -329,7 +417,11 @@ fun NewActivityBottomSheet(
                             onValueChange = { endHour = it },
                             modifier = Modifier.weight(1f)
                         )
-                        Text(":", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.CenterVertically))
+                        Text(
+                            ":",
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.align(Alignment.CenterVertically)
+                        )
                         TimeSelect(
                             label = "Min",
                             value = endMinute,
@@ -342,7 +434,10 @@ fun NewActivityBottomSheet(
             }
 
             // Title & Description
-            Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
 
                 Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
@@ -355,8 +450,12 @@ fun NewActivityBottomSheet(
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
                             focusedBorderColor = Color(0xFF3B82F6),
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
-                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                                alpha = 0.7f
+                            ),
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                                alpha = 0.7f
+                            )
                         )
                     )
                     Text(
@@ -364,7 +463,9 @@ fun NewActivityBottomSheet(
                         fontSize = 8.sp,
                         fontWeight = FontWeight.Black,
                         color = if (title.length >= 45) Color.Red else Color.Gray,
-                        modifier = Modifier.align(Alignment.End).padding(end = 4.dp)
+                        modifier = Modifier
+                            .align(Alignment.End)
+                            .padding(end = 4.dp)
                     )
                 }
 
@@ -373,13 +474,19 @@ fun NewActivityBottomSheet(
                         value = description,
                         onValueChange = { if (it.length <= 200) description = it },
                         placeholder = { Text("Detalls (opcional)") },
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 76.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 76.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
                             focusedBorderColor = Color(0xFF3B82F6),
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
-                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                                alpha = 0.7f
+                            ),
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                                alpha = 0.7f
+                            )
                         )
                     )
                     Text(
@@ -387,7 +494,9 @@ fun NewActivityBottomSheet(
                         fontSize = 8.sp,
                         fontWeight = FontWeight.Black,
                         color = if (description.length >= 180) Color.Red else Color.Gray,
-                        modifier = Modifier.align(Alignment.End).padding(end = 4.dp)
+                        modifier = Modifier
+                            .align(Alignment.End)
+                            .padding(end = 4.dp)
                     )
                 }
             }
@@ -414,10 +523,12 @@ fun NewActivityBottomSheet(
                     ) { success ->
                         isPending = false
                         if (success) {
-                            Toast.makeText(context, "Pla creat correctament", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Pla creat correctament", Toast.LENGTH_SHORT)
+                                .show()
                             onSuccess()
                         } else {
-                            Toast.makeText(context, "Error al crear el pla", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Error al crear el pla", Toast.LENGTH_SHORT)
+                                .show()
                         }
                     }
                 },
@@ -454,7 +565,9 @@ private fun dayOfWeekFromDate(dateStr: String): String {
             Calendar.SUNDAY -> "diumenge"
             else -> "dissabte"
         }
-    } catch (e: Exception) { "dissabte" }
+    } catch (e: Exception) {
+        "dissabte"
+    }
 }
 
 @Composable
@@ -482,9 +595,17 @@ fun TimeSelect(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                Icon(Icons.Default.Schedule, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Gray)
+                Icon(
+                    Icons.Default.Schedule,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = Color.Gray
+                )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "$value${if (label == "Hora") "h" else "m"}", fontWeight = FontWeight.Bold)
+                Text(
+                    text = "$value${if (label == "Hora") "h" else "m"}",
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
 

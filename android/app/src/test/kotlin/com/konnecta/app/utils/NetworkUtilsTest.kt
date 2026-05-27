@@ -1,7 +1,8 @@
 package com.konnecta.app.utils
 
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.fail
 import org.junit.Test
 import java.io.IOException
 
@@ -50,7 +51,8 @@ class NetworkUtilsTest {
                 callCount++
                 throw IOException("fail")
             }
-        } catch (_: IOException) { }
+        } catch (_: IOException) {
+        }
         assertEquals(4, callCount)
     }
 
@@ -62,7 +64,8 @@ class NetworkUtilsTest {
                 callCount++
                 throw IOException("immediate fail")
             }
-        } catch (_: IOException) { }
+        } catch (_: IOException) {
+        }
         assertEquals(1, callCount)
     }
 }

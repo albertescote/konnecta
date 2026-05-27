@@ -7,17 +7,44 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,7 +61,6 @@ import com.konnecta.app.data.model.Profile
 import com.konnecta.app.ui.viewmodel.AuthViewModel
 import com.konnecta.app.ui.viewmodel.DashboardViewModel
 import com.konnecta.app.utils.DateUtils
-import com.konnecta.app.utils.ShareUtils
 import java.io.ByteArrayOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,10 +77,10 @@ fun ProfileBottomSheet(
     var fullName by remember(profile) { mutableStateOf(profile?.full_name ?: "") }
     var avatarUrl by remember(profile) { mutableStateOf(profile?.avatar_url ?: "") }
     var isSaving by remember { mutableStateOf(false) }
-    
+
     val context = LocalContext.current
-    val activeGroup = groups.find { it.id == activeGroupId }
-    
+    groups.find { it.id == activeGroupId }
+
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -64,7 +90,7 @@ fun ProfileBottomSheet(
             val outputStream = ByteArrayOutputStream()
             bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
             val bytes = outputStream.toByteArray()
-            
+
             authViewModel.uploadAvatar(bytes, "avatar.jpg") { newUrl ->
                 if (newUrl != null) {
                     avatarUrl = newUrl
@@ -75,7 +101,8 @@ fun ProfileBottomSheet(
                                 DateUtils.formatDbDate(DateUtils.getUpcomingFriday()),
                                 activeGroupId
                             )
-                            Toast.makeText(context, "Imatge actualitzada", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Imatge actualitzada", Toast.LENGTH_SHORT)
+                                .show()
                         }
                     }
                 }
@@ -139,14 +166,15 @@ fun ProfileBottomSheet(
                             )
                         } else {
                             Text(
-                                text = (profile?.full_name ?: profile?.email ?: "?").take(1).uppercase(),
+                                text = (profile?.full_name ?: profile?.email ?: "?").take(1)
+                                    .uppercase(),
                                 fontSize = 40.sp,
                                 fontWeight = FontWeight.Black,
                                 color = Color.Gray.copy(alpha = 0.6f)
                             )
                         }
                     }
-                    
+
                     Surface(
                         modifier = Modifier
                             .size(32.dp)
@@ -196,8 +224,12 @@ fun ProfileBottomSheet(
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = Color.Transparent,
                             focusedBorderColor = Color.Transparent,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                                alpha = 0.3f
+                            ),
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                                alpha = 0.3f
+                            ),
                             unfocusedTextColor = Color.Gray
                         )
                     )
@@ -222,8 +254,12 @@ fun ProfileBottomSheet(
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = Color.Transparent,
                             focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                                alpha = 0.5f
+                            ),
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                                alpha = 0.5f
+                            )
                         )
                     )
                 }
@@ -237,7 +273,8 @@ fun ProfileBottomSheet(
                                     DateUtils.formatDbDate(DateUtils.getUpcomingFriday()),
                                     activeGroupId
                                 )
-                                Toast.makeText(context, "Perfil actualitzat", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Perfil actualitzat", Toast.LENGTH_SHORT)
+                                    .show()
                             }
                             isSaving = false
                         }
@@ -267,9 +304,14 @@ fun ProfileBottomSheet(
             ) {
                 Button(
                     onClick = onSignOut,
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
                     shape = RoundedCornerShape(20.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 ) {
                     Icon(Icons.Default.Logout, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))

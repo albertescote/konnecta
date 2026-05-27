@@ -1,16 +1,47 @@
 package com.konnecta.app.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.PersonRemove
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,7 +69,7 @@ fun GroupManagementBottomSheet(
     var isLoading by remember { mutableStateOf(true) }
     var showDeleteGroupConfirm by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    
+
     val isAdmin = group.role == "admin"
 
     LaunchedEffect(group.id) {
@@ -50,8 +81,7 @@ fun GroupManagementBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = MaterialTheme.colorScheme.surface,
-        dragHandle = { BottomSheetDefaults.DragHandle(color = Color.Gray.copy(alpha = 0.3f)) }
-    ) {
+        dragHandle = { BottomSheetDefaults.DragHandle(color = Color.Gray.copy(alpha = 0.3f)) }) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -93,7 +123,12 @@ fun GroupManagementBottomSheet(
                 )
 
                 if (isLoading) {
-                    Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
                         CircularProgressIndicator(modifier = Modifier.size(24.dp))
                     }
                 } else {
@@ -125,8 +160,7 @@ fun GroupManagementBottomSheet(
                                         }
                                     }
                                 }
-                            }
-                        )
+                            })
                     }
                 }
             }
@@ -139,11 +173,12 @@ fun GroupManagementBottomSheet(
                 if (isAdmin) {
                     Button(
                         onClick = { showDeleteGroupConfirm = true },
-                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
                         shape = RoundedCornerShape(20.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Red.copy(alpha = 0.1f),
-                            contentColor = Color.Red
+                            containerColor = Color.Red.copy(alpha = 0.1f), contentColor = Color.Red
                         )
                     ) {
                         Icon(Icons.Default.Delete, contentDescription = null)
@@ -152,12 +187,14 @@ fun GroupManagementBottomSheet(
                     }
                 } else {
                     Button(
-                        onClick = { 
+                        onClick = {
                             viewModel.leaveGroup { success ->
                                 if (success) onDismiss()
                             }
                         },
-                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
                         shape = RoundedCornerShape(20.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -187,8 +224,7 @@ fun GroupManagementBottomSheet(
                                 onDismiss()
                             }
                         }
-                    }
-                ) {
+                    }) {
                     Text("ELIMINAR", color = Color.Red, fontWeight = FontWeight.Bold)
                 }
             },
@@ -196,8 +232,7 @@ fun GroupManagementBottomSheet(
                 TextButton(onClick = { showDeleteGroupConfirm = false }) {
                     Text("CANCEL·LAR")
                 }
-            }
-        )
+            })
     }
 }
 
@@ -235,25 +270,35 @@ fun MemberRow(
                     )
                 } else {
                     Text(
-                        text = (member.profiles.full_name ?: member.profiles.email).take(1).uppercase(),
+                        text = (member.profiles.full_name ?: member.profiles.email).take(1)
+                            .uppercase(),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Gray
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.width(12.dp))
-            
+
             Column {
                 Text(
-                    text = (member.profiles.full_name ?: member.profiles.email.split("@")[0]) + if (isCurrentUser) " (Tu)" else "",
+                    text = (member.profiles.full_name
+                        ?: member.profiles.email.split("@")[0]) + if (isCurrentUser) " (Tu)" else "",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                     if (member.role == "admin") {
-                        Icon(Icons.Default.Shield, contentDescription = null, tint = Color(0xFFFBBF24), modifier = Modifier.size(10.dp))
+                        Icon(
+                            Icons.Default.Shield,
+                            contentDescription = null,
+                            tint = Color(0xFFFBBF24),
+                            modifier = Modifier.size(10.dp)
+                        )
                     }
                     Text(
                         text = member.role.uppercase(),
@@ -270,11 +315,21 @@ fun MemberRow(
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 if (member.role != "admin") {
                     IconButton(onClick = onPromote, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Default.Shield, contentDescription = "Fer admin", tint = Color(0xFFFBBF24), modifier = Modifier.size(18.dp))
+                        Icon(
+                            Icons.Default.Shield,
+                            contentDescription = "Fer admin",
+                            tint = Color(0xFFFBBF24),
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
                 }
                 IconButton(onClick = onRemove, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Default.PersonRemove, contentDescription = "Eliminar", tint = Color.Red.copy(alpha = 0.7f), modifier = Modifier.size(18.dp))
+                    Icon(
+                        Icons.Default.PersonRemove,
+                        contentDescription = "Eliminar",
+                        tint = Color.Red.copy(alpha = 0.7f),
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             }
         }

@@ -1,18 +1,17 @@
 package com.konnecta.app.data.remote
 
+import com.onesignal.OneSignal
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.Google
 import io.github.jan.supabase.auth.providers.builtin.OTP
 import io.github.jan.supabase.auth.status.SessionStatus
-import io.github.jan.supabase.auth.user.*
+import io.github.jan.supabase.auth.user.UserInfo
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.storage.storage
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import java.util.UUID
-import java.time.Instant
-import com.onesignal.OneSignal
 import timber.log.Timber
+import java.time.Instant
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 

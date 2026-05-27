@@ -1,6 +1,7 @@
 package com.konnecta.app.data.remote
 
-import com.konnecta.app.data.model.*
+import com.konnecta.app.data.model.LeaderboardEntry
+import com.konnecta.app.data.model.PlanWithProfileOnly
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import timber.log.Timber

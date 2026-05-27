@@ -3,7 +3,15 @@ package com.konnecta.app.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -51,12 +59,14 @@ fun WeekendSelector(
                     .height(88.dp)
                     .clip(RoundedCornerShape(24.dp))
                     .background(
-                        if (isSelected) MaterialTheme.colorScheme.onBackground 
+                        if (isSelected) MaterialTheme.colorScheme.onBackground
                         else MaterialTheme.colorScheme.surface
                     )
                     .border(
-                        1.dp, 
-                        if (isSelected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), 
+                        1.dp,
+                        if (isSelected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.outline.copy(
+                            alpha = 0.5f
+                        ),
                         RoundedCornerShape(24.dp)
                     )
                     .clickable { onDateSelected(dateStr) }

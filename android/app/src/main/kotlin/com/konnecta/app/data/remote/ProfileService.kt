@@ -1,13 +1,15 @@
 package com.konnecta.app.data.remote
 
-import com.konnecta.app.data.model.*
+import com.konnecta.app.data.model.Profile
+import com.konnecta.app.data.model.UserPlanSummary
+import com.konnecta.app.data.model.UserStats
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
+import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -45,7 +47,7 @@ class ProfileService @Inject constructor() {
                     }
                 }
                 .decodeList<UserPlanSummary>()
-            
+
             val totalVisits = pastPlans.size
 
             // Get next 5 weekends

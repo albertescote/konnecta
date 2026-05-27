@@ -3,7 +3,7 @@ package com.konnecta.app.utils
 import android.content.Context
 import android.content.Intent
 import android.provider.CalendarContract
-import com.konnecta.app.data.model.*
+import com.konnecta.app.data.model.ActivityWithParticipants
 import java.text.SimpleDateFormat
 import java.util.Locale
 
