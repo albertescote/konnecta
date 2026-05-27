@@ -3,21 +3,33 @@ package com.konnecta.app.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.Groups
+import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,10 +37,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import com.konnecta.app.data.model.*
+import com.konnecta.app.data.model.ActivityWithParticipants
 import com.konnecta.app.ui.viewmodel.DashboardViewModel
 import com.konnecta.app.utils.CalendarUtils
 import com.konnecta.app.utils.DateUtils
@@ -46,7 +59,7 @@ fun ActivityCard(
     val isJoined = userParticipation != null
     val hasPlusOne = (userParticipation?.additional_participants ?: 0) > 0
     val totalAttendance = activity.activity_participants.sumOf { 1 + it.additional_participants }
-    
+
     val eventDate = DateUtils.parseDbDate(activity.start_date ?: activity.weekend_date)
     val endDate = if (activity.end_date != null) DateUtils.parseDbDate(activity.end_date) else null
     val isMultiDay = endDate != null && activity.start_date != activity.end_date
@@ -60,7 +73,8 @@ fun ActivityCard(
     } else {
         val dayNameShort = DateUtils.formatDayOfWeek(eventDate).take(2).uppercase()
         val dayOfMonth = DateUtils.getDayOfMonth(eventDate)
-        val monthNameShort = DateUtils.formatDayAndMonth(eventDate).split(" ").lastOrNull()?.uppercase() ?: ""
+        val monthNameShort =
+            DateUtils.formatDayAndMonth(eventDate).split(" ").lastOrNull()?.uppercase() ?: ""
         "$dayNameShort. $dayOfMonth $monthNameShort"
     }
 
@@ -69,7 +83,11 @@ fun ActivityCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(28.dp))
             .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(28.dp))
+            .border(
+                1.dp,
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                RoundedCornerShape(28.dp)
+            )
             .clickable { showDetails = true }
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -95,7 +113,7 @@ fun ActivityCard(
                         letterSpacing = 0.5.sp
                     )
                 }
-                
+
                 Text(
                     text = activity.title,
                     fontWeight = FontWeight.Bold,
@@ -116,7 +134,12 @@ fun ActivityCard(
                             .clickable { CalendarUtils.addToCalendar(context, activity) },
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Outlined.CalendarMonth, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color(0xFF3B82F6))
+                        Icon(
+                            Icons.Outlined.CalendarMonth,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = Color(0xFF3B82F6)
+                        )
                     }
 
                     Box(
@@ -128,7 +151,12 @@ fun ActivityCard(
                             .clickable { ShareUtils.shareActivity(context, activity) },
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Outlined.Link, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color(0xFF22C55E))
+                        Icon(
+                            Icons.Outlined.Link,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = Color(0xFF22C55E)
+                        )
                     }
                 }
             }
@@ -156,7 +184,14 @@ fun ActivityCard(
                     .height(40.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(if (isJoined) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface)
-                    .clickable { viewModel.updateParticipation(activity.id, !isJoined, 0, activity.weekend_date) },
+                    .clickable {
+                        viewModel.updateParticipation(
+                            activity.id,
+                            !isJoined,
+                            0,
+                            activity.weekend_date
+                        )
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -173,34 +208,32 @@ fun ActivityCard(
                     modifier = Modifier
                         .size(width = 56.dp, height = 40.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(if (hasPlusOne) Color(0xFF3B82F6).copy(alpha = 0.1f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f))
-                        .border(1.dp, if (hasPlusOne) Color(0xFF3B82F6).copy(alpha = 0.2f) else Color.Transparent, RoundedCornerShape(16.dp))
-                        .clickable { viewModel.updateParticipation(activity.id, true, if (hasPlusOne) 0 else 1, activity.weekend_date) },
+                        .background(
+                            if (hasPlusOne) Color(0xFF3B82F6).copy(alpha = 0.1f) else MaterialTheme.colorScheme.surfaceVariant.copy(
+                                alpha = 0.8f
+                            )
+                        )
+                        .border(
+                            1.dp,
+                            if (hasPlusOne) Color(0xFF3B82F6).copy(alpha = 0.2f) else Color.Transparent,
+                            RoundedCornerShape(16.dp)
+                        )
+                        .clickable {
+                            viewModel.updateParticipation(
+                                activity.id,
+                                true,
+                                if (hasPlusOne) 0 else 1,
+                                activity.weekend_date
+                            )
+                        },
                     contentAlignment = Alignment.Center
                 ) {
-                    Box(modifier = Modifier.size(24.dp)) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Plus One",
-                            tint = if (hasPlusOne) Color(0xFF3B82F6) else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp).align(Alignment.Center)
-                        )
-                        Box(
-                            modifier = Modifier
-                                .size(10.dp)
-                                .align(Alignment.TopEnd)
-                                .clip(CircleShape)
-                                .background(if (hasPlusOne) Color(0xFF3B82F6) else MaterialTheme.colorScheme.onSurfaceVariant),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.surface,
-                                modifier = Modifier.size(8.dp)
-                            )
-                        }
-                    }
+                    Icon(
+                        imageVector = if (hasPlusOne) Icons.Default.PersonRemove else Icons.Default.PersonAdd,
+                        contentDescription = "Plus One",
+                        tint = if (hasPlusOne) Color(0xFF3B82F6) else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
         }
@@ -217,57 +250,72 @@ fun ActivityCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 // Avatars
                 Row(horizontalArrangement = Arrangement.spacedBy((-10).dp)) {
                     activity.activity_participants.take(4).forEach { participant ->
                         Box(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.surface)
-                                .padding(2.dp)
-                                .clip(CircleShape)
+                            modifier = Modifier.size(28.dp)
                         ) {
-                            if (participant.profiles.avatar_url != null) {
-                                AsyncImage(
-                                    model = participant.profiles.avatar_url,
-                                    contentDescription = null,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                            } else {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = (participant.profiles.full_name ?: participant.profiles.email).take(1).uppercase(),
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.surface)
+                                    .padding(2.dp)
+                                    .clip(CircleShape)
+                            ) {
+                                if (participant.profiles.avatar_url != null) {
+                                    AsyncImage(
+                                        model = participant.profiles.avatar_url,
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
                                     )
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = (participant.profiles.full_name
+                                                ?: participant.profiles.email).take(1).uppercase(),
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                 }
                             }
 
-                            // +1 Badge on avatar
+                            // +1 Badge on avatar - Moved outside the clipped box
                             if (participant.additional_participants > 0) {
                                 Box(
                                     modifier = Modifier
                                         .align(Alignment.TopEnd)
-                                        .size(10.dp)
+                                        .offset(x = 1.dp, y = (-1).dp)
+                                        .size(12.dp)
                                         .clip(CircleShape)
                                         .background(Color(0xFF3B82F6))
-                                        .border(1.dp, MaterialTheme.colorScheme.surface, CircleShape),
-                                    contentAlignment = Alignment.Center
+                                        .border(
+                                            1.dp,
+                                            MaterialTheme.colorScheme.surface,
+                                            CircleShape
+                                        )
                                 ) {
                                     Text(
                                         text = "+${participant.additional_participants}",
-                                        fontSize = 5.sp,
+                                        fontSize = 7.sp,
                                         fontWeight = FontWeight.Black,
-                                        color = Color.White
+                                        color = Color.White,
+                                        modifier = Modifier.align(Alignment.Center),
+                                        lineHeight = 7.sp,
+                                        textAlign = TextAlign.Center
                                     )
                                 }
                             }
@@ -283,20 +331,26 @@ fun ActivityCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         letterSpacing = 0.5.sp,
                         modifier = Modifier
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
+                            .background(
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                                RoundedCornerShape(6.dp)
+                            )
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 } else {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
                         Icon(
-                            imageVector = Icons.Outlined.Groups,
+                            imageVector = Icons.Outlined.Group,
                             contentDescription = null,
-                            modifier = Modifier.size(14.dp),
+                            modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                         )
                         Text(
                             text = "NINGÚ ENCARA",
-                            fontSize = 9.sp,
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Black,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                             letterSpacing = 0.5.sp
@@ -306,7 +360,10 @@ fun ActivityCard(
             }
 
             if (activity.start_time != null) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                     Icon(
                         imageVector = Icons.Default.Schedule,
                         contentDescription = null,
