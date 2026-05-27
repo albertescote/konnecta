@@ -20,6 +20,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,6 +37,7 @@ import com.konnecta.app.data.remote.SupabaseClient
 import com.konnecta.app.ui.components.AppFooter
 import com.konnecta.app.ui.components.ThemeToggle
 import com.konnecta.app.ui.viewmodel.AuthViewModel
+import io.github.jan.supabase.compose.auth.composable.NativeSignInResult
 import io.github.jan.supabase.compose.auth.composable.rememberSignInWithGoogle
 import io.github.jan.supabase.compose.auth.composeAuth
 
@@ -43,9 +47,16 @@ fun LoginScreen(
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    var googleError by remember { mutableStateOf<String?>(null) }
 
     val googleAction = SupabaseClient.client.composeAuth.rememberSignInWithGoogle(
-        onResult = { /* The session is automatically handled by the SDK */ }
+        onResult = { result ->
+            googleError = when (result) {
+                is NativeSignInResult.Error -> result.exception?.message ?: "Error d'autenticació"
+                is NativeSignInResult.NetworkError -> "Error de xarxa. Comprova la connexió."
+                is NativeSignInResult.ClosedByUser, is NativeSignInResult.Success -> null
+            }
+        }
     )
 
     Column(
@@ -146,9 +157,10 @@ fun LoginScreen(
                 }
             }
 
-            if (state.error != null) {
+            val displayError = googleError ?: state.error
+            if (displayError != null) {
                 Text(
-                    text = state.error!!,
+                    text = displayError,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(top = 16.dp),
                     textAlign = TextAlign.Center,
