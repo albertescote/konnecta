@@ -5,9 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.konnecta.app.data.model.*
 import com.konnecta.app.data.remote.*
 import com.konnecta.app.utils.DateUtils
+import com.konnecta.app.utils.withRetry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -29,20 +31,18 @@ class DashboardViewModel : ViewModel() {
     fun loadInitialData(userId: String) {
         currentUserId = userId
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true)
-            
+            _state.value = _state.value.copy(isLoading = true, error = null)
+
             try {
-                // Load user profile from DB to ensure it's up to date
                 val profile = profileService.getProfile(userId)
-                
+
                 val groups = groupService.getUserGroups(userId)
                 if (groups.isNotEmpty()) {
                     val activeGroup = _state.value.activeGroup ?: groups.first()
-                    // Ensure the active group is in the current list
                     val validatedActiveGroup = groups.find { it.id == activeGroup.id } ?: groups.first()
-                    
+
                     _state.value = _state.value.copy(
-                        userGroups = groups, 
+                        userGroups = groups,
                         activeGroup = validatedActiveGroup,
                         currentUserProfile = profile
                     )
@@ -50,15 +50,18 @@ class DashboardViewModel : ViewModel() {
                     loadDashboardData(initialDate, validatedActiveGroup.id)
                 } else {
                     _state.value = _state.value.copy(
-                        userGroups = emptyList(), 
+                        userGroups = emptyList(),
                         activeGroup = null,
                         currentUserProfile = profile,
                         isLoading = false
                     )
                 }
             } catch (e: Exception) {
-                println("DashboardViewModel: Error loading initial data: ${e.message}")
-                _state.value = _state.value.copy(isLoading = false)
+                Timber.e(e, "DashboardViewModel: Error loading initial data")
+                _state.value = _state.value.copy(
+                    isLoading = false,
+                    error = "Error de connexió. Torna-ho a intentar."
+                )
             }
         }
     }
@@ -73,11 +76,9 @@ class DashboardViewModel : ViewModel() {
         viewModelScope.launch {
             val success = groupService.joinGroupByToken(token, userId)
             if (success) {
-                // Refresh groups
                 val groups = groupService.getUserGroups(userId)
                 val oldGroups = _state.value.userGroups
                 _state.value = _state.value.copy(userGroups = groups)
-                // Switch to the newly joined group
                 val newGroup = groups.find { g -> oldGroups.none { it.id == g.id } } ?: groups.first()
                 switchGroup(newGroup.id, DateUtils.formatDbDate(DateUtils.getUpcomingFriday()))
             }
@@ -90,7 +91,6 @@ class DashboardViewModel : ViewModel() {
             val slug = name.lowercase().replace(" ", "-").replace(Regex("[^a-z0-9-]"), "")
             val group = groupService.createGroup(userId, name, slug)
             if (group != null) {
-                // Refresh and set the new group as active before calling initial data
                 _state.value = _state.value.copy(activeGroup = group.copy(role = "admin"))
                 loadInitialData(userId)
                 onResult(group.copy(role = "admin"))
@@ -103,7 +103,7 @@ class DashboardViewModel : ViewModel() {
     fun updateStatus(status: String, weekendDate: String, comment: String? = null) {
         val userId = currentUserId ?: return
         val groupId = _state.value.activeGroup?.id ?: return
-        
+
         viewModelScope.launch {
             val success = attendanceService.updateAttendance(userId, groupId, weekendDate, status, comment)
             if (success) {
@@ -115,7 +115,7 @@ class DashboardViewModel : ViewModel() {
     fun updateComment(comment: String, weekendDate: String) {
         val userId = currentUserId ?: return
         val groupId = _state.value.activeGroup?.id ?: return
-        
+
         viewModelScope.launch {
             val success = attendanceService.updateComment(userId, groupId, weekendDate, comment)
             if (success) {
@@ -128,45 +128,60 @@ class DashboardViewModel : ViewModel() {
         val userId = currentUserId
         viewModelScope.launch {
             try {
-                _state.value = _state.value.copy(isLoading = true)
-                
-                // Refresh profile too just in case
+                _state.value = _state.value.copy(isLoading = true, error = null)
+
                 val profile = if (userId != null) {
                     try { profileService.getProfile(userId) } catch (e: Exception) { null }
                 } else null
-                
-                // Fetch each piece of data with its own try-catch to prevent one failure from breaking everything
-                val plans = try { attendanceService.getAttendance(weekendDate, groupId) } catch (e: Exception) { 
-                    println("Error loading plans: ${e.message}")
-                    emptyList() 
+
+                var hasErrors = false
+
+                // These three methods throw on failure — wrap them with retry.
+                val plans = try {
+                    withRetry { attendanceService.getAttendance(weekendDate, groupId) }
+                } catch (e: Exception) {
+                    Timber.e(e, "Error loading attendance")
+                    hasErrors = true
+                    emptyList()
                 }
-                val allMembers = try { attendanceService.getGroupMembers(groupId) } catch (e: Exception) { 
-                    println("Error loading members: ${e.message}")
-                    emptyList() 
+                val allMembers = try {
+                    withRetry { attendanceService.getGroupMembers(groupId) }
+                } catch (e: Exception) {
+                    Timber.e(e, "Error loading group members")
+                    hasErrors = true
+                    emptyList()
                 }
-                val activities = try { activityService.getActivities(weekendDate, groupId) } catch (e: Exception) { 
-                    println("Error loading activities: ${e.message}")
-                    emptyList() 
+                val activities = try {
+                    withRetry { activityService.getActivities(weekendDate, groupId) }
+                } catch (e: Exception) {
+                    Timber.e(e, "Error loading activities")
+                    hasErrors = true
+                    emptyList()
                 }
-                val weatherForecast = try { weatherService.getWeekendWeather(weekendDate) } catch (e: Exception) { 
-                    println("Error loading weather: ${e.message}")
-                    null 
+                // Weather and leaderboard handle their own errors internally.
+                val weatherForecast = try {
+                    weatherService.getWeekendWeather(weekendDate)
+                } catch (e: Exception) {
+                    Timber.e(e, "Error loading weather")
+                    null
                 }
-                val leaderboard = try { leaderboardService.getLeaderboard(groupId) } catch (e: Exception) { 
-                    println("Error loading leaderboard: ${e.message}")
-                    emptyList() 
+                val leaderboard = try {
+                    leaderboardService.getLeaderboard(groupId)
+                } catch (e: Exception) {
+                    Timber.e(e, "Error loading leaderboard")
+                    emptyList()
                 }
-                
+
                 val myPlan = if (userId != null) plans.find { it.user_id == userId } else null
                 val answeredIds = plans.map { it.user_id }.toSet()
-                
+
                 val going = plans.filter { it.status == "going" }.map { it.profiles to it.comment }
                 val notGoing = plans.filter { it.status == "not_going" }.map { it.profiles to it.comment }
                 val pending = plans.filter { it.status == "pending" }.map { it.profiles to it.comment }
                 val unanswered = allMembers.filter { it.id !in answeredIds }.map { it to null }
-                
-                val sortedActivities = activities.sortedWith(compareBy<ActivityWithParticipants> { 
-                    dayOrder[it.day_of_week.lowercase()] ?: 99 
+
+                val sortedActivities = activities.sortedWith(compareBy<ActivityWithParticipants> {
+                    dayOrder[it.day_of_week.lowercase()] ?: 99
                 }.thenBy { it.start_time ?: "" })
 
                 _state.value = _state.value.copy(
@@ -178,20 +193,24 @@ class DashboardViewModel : ViewModel() {
                     currentUserProfile = profile ?: _state.value.currentUserProfile,
                     currentUserStatus = myPlan?.status,
                     currentUserComment = myPlan?.comment,
-                    isLoading = false
+                    isLoading = false,
+                    error = if (hasErrors) "No s'han pogut carregar totes les dades" else null
                 )
             } catch (e: Exception) {
-                println("DashboardViewModel: Global error loading dashboard data: ${e.message}")
-                _state.value = _state.value.copy(isLoading = false)
+                Timber.e(e, "DashboardViewModel: Unexpected error loading dashboard data")
+                _state.value = _state.value.copy(
+                    isLoading = false,
+                    error = "Error inesperat. Torna-ho a intentar."
+                )
             }
         }
     }
 
-    // Group Management Methods
     suspend fun getGroupMembers(groupId: String): List<MembershipWithProfile> {
         return try {
             groupService.getGroupMembers(groupId)
         } catch (e: Exception) {
+            Timber.e(e, "DashboardViewModel: Error fetching group members")
             emptyList()
         }
     }
@@ -208,11 +227,8 @@ class DashboardViewModel : ViewModel() {
         val groupId = _state.value.activeGroup?.id ?: return
         viewModelScope.launch {
             val success = groupService.removeMember(groupId, userId)
-            if (success) {
-                // If it was the current user, we should probably reload everything
-                if (userId == currentUserId) {
-                    loadInitialData(userId)
-                }
+            if (success && userId == currentUserId) {
+                loadInitialData(userId)
             }
             onResult(success)
         }
@@ -223,9 +239,9 @@ class DashboardViewModel : ViewModel() {
         viewModelScope.launch {
             val success = groupService.deleteGroup(groupId)
             if (success) {
-                currentUserId?.let { 
+                currentUserId?.let {
                     _state.value = _state.value.copy(activeGroup = null)
-                    loadInitialData(it) 
+                    loadInitialData(it)
                 }
             }
             onResult(success)
@@ -257,12 +273,13 @@ class DashboardViewModel : ViewModel() {
             _state.value = _state.value.copy(isFutureActivitiesLoading = true)
             try {
                 val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-                val fetched = activityService.getFutureActivities(today, groupId)
+                val fetched = withRetry { activityService.getFutureActivities(today, groupId) }
                 _state.value = _state.value.copy(
                     futureActivities = fetched.sortedBy { it.start_date ?: it.weekend_date },
                     isFutureActivitiesLoading = false
                 )
             } catch (e: Exception) {
+                Timber.e(e, "DashboardViewModel: Error loading future activities")
                 _state.value = _state.value.copy(isFutureActivitiesLoading = false)
             }
         }
@@ -292,7 +309,7 @@ class DashboardViewModel : ViewModel() {
             activity.copy(activity_participants = updated)
         }
 
-        // Synchronous optimistic update on the main thread before any DB call
+        // Optimistic update before the DB call
         _state.value = _state.value.copy(
             activities = applyToList(_state.value.activities),
             futureActivities = applyToList(_state.value.futureActivities)

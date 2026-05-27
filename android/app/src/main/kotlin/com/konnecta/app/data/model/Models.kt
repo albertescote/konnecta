@@ -144,7 +144,8 @@ data class DashboardState(
     val currentUserStatus: String? = null,
     val currentUserComment: String? = null,
     val isLoading: Boolean = false,
-    val isFutureActivitiesLoading: Boolean = false
+    val isFutureActivitiesLoading: Boolean = false,
+    val error: String? = null
 )
 
 @Serializable

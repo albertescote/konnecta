@@ -7,6 +7,7 @@ import io.github.jan.supabase.postgrest.query.Order
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import timber.log.Timber
 
 class ProfileService {
     private val client = SupabaseClient.client
@@ -21,7 +22,7 @@ class ProfileService {
                 }
                 .decodeSingle<Profile>()
         } catch (e: Exception) {
-            println("ProfileService: Error fetching profile: ${e.message}")
+            Timber.e(e, "ProfileService: Error fetching profile")
             null
         }
     }
@@ -62,7 +63,7 @@ class ProfileService {
                 upcomingPlans = upcomingPlans
             )
         } catch (e: Exception) {
-            println("ProfileService: Error fetching user stats: ${e.message}")
+            Timber.e(e, "ProfileService: Error fetching user stats")
             null
         }
     }

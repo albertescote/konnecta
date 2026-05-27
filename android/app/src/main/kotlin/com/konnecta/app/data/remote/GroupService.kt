@@ -6,6 +6,7 @@ import io.github.jan.supabase.postgrest.query.Columns
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.UUID
+import timber.log.Timber
 
 class GroupService {
     private val client = SupabaseClient.client
@@ -22,6 +23,7 @@ class GroupService {
 
             memberships.map { it.groups.copy(role = it.role) }
         } catch (e: Exception) {
+            Timber.e(e, "GroupService: Error fetching user groups")
             emptyList()
         }
     }
@@ -30,7 +32,7 @@ class GroupService {
         return try {
             val newToken = UUID.randomUUID().toString()
             val expiresAt = Instant.now().plus(48, ChronoUnit.HOURS).toString()
-            
+
             client.postgrest["groups"]
                 .update(
                     mapOf(
@@ -43,7 +45,7 @@ class GroupService {
                 }
                 .decodeSingleOrNull<Group>()
         } catch (e: Exception) {
-            println("GroupService: Error refreshing token: ${e.message}")
+            Timber.e(e, "GroupService: Error refreshing invite token")
             null
         }
     }
@@ -58,7 +60,7 @@ class GroupService {
                 }
                 .decodeList<MembershipWithProfile>()
         } catch (e: Exception) {
-            println("GroupService: Error fetching members: ${e.message}")
+            Timber.e(e, "GroupService: Error fetching group members")
             emptyList()
         }
     }
@@ -81,6 +83,7 @@ class GroupService {
                 ))
             true
         } catch (e: Exception) {
+            Timber.e(e, "GroupService: Error joining group by token")
             false
         }
     }
@@ -101,7 +104,6 @@ class GroupService {
                 }
                 .decodeSingle<Group>()
 
-            // Add creator as admin
             client.postgrest["group_memberships"]
                 .insert(
                     mapOf(
@@ -110,10 +112,10 @@ class GroupService {
                         "role" to "admin"
                     )
                 )
-            
+
             group
         } catch (e: Exception) {
-            println("GroupService: Error creating group: ${e.message}")
+            Timber.e(e, "GroupService: Error creating group")
             null
         }
     }
@@ -129,7 +131,7 @@ class GroupService {
                 }
             true
         } catch (e: Exception) {
-            println("GroupService: Error updating role: ${e.message}")
+            Timber.e(e, "GroupService: Error updating member role")
             false
         }
     }
@@ -145,7 +147,7 @@ class GroupService {
                 }
             true
         } catch (e: Exception) {
-            println("GroupService: Error removing member: ${e.message}")
+            Timber.e(e, "GroupService: Error removing member")
             false
         }
     }
@@ -160,7 +162,7 @@ class GroupService {
                 }
             true
         } catch (e: Exception) {
-            println("GroupService: Error deleting group: ${e.message}")
+            Timber.e(e, "GroupService: Error deleting group")
             false
         }
     }
@@ -180,6 +182,7 @@ class GroupService {
                 .decodeSingle<Map<String, String>>()
             group["invite_token"]
         } catch (e: Exception) {
+            Timber.e(e, "GroupService: Error fetching invite token")
             null
         }
     }

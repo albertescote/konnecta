@@ -55,6 +55,41 @@ fun DashboardScreen(
             verticalArrangement = Arrangement.spacedBy(32.dp),
             contentPadding = PaddingValues(top = 24.dp, bottom = 24.dp)
         ) {
+            if (state.error != null) {
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        ),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = state.error!!,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                fontSize = 13.sp,
+                                modifier = Modifier.weight(1f)
+                            )
+                            TextButton(onClick = { viewModel.loadDashboardData(selectedDate, groupId) }) {
+                                Text(
+                                    text = "REINTENTAR",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 1.sp,
+                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             item {
                 Box(modifier = Modifier.padding(horizontal = 24.dp)) {
                     WeekendSelector(

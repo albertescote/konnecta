@@ -4,11 +4,11 @@ import com.konnecta.app.BuildConfig
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.compose.auth.ComposeAuth
-import io.github.jan.supabase.compose.auth.composeAuth
 import io.github.jan.supabase.compose.auth.googleNativeLogin
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.storage.Storage
 import io.github.jan.supabase.serializer.KotlinXSerializer
+import io.ktor.client.plugins.HttpTimeout
 import kotlinx.serialization.json.Json
 
 object SupabaseClient {
@@ -19,6 +19,13 @@ object SupabaseClient {
         supabaseUrl = SUPABASE_URL,
         supabaseKey = SUPABASE_ANON_KEY
     ) {
+        httpConfig {
+            install(HttpTimeout) {
+                requestTimeoutMillis = 15_000L
+                connectTimeoutMillis = 10_000L
+                socketTimeoutMillis = 15_000L
+            }
+        }
         install(Auth) {
             scheme = "konnecta"
             host = "login-callback"

@@ -11,15 +11,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.util.UUID
 import java.time.Instant
-
 import com.onesignal.OneSignal
+import timber.log.Timber
 
 class AuthService {
     private val client = SupabaseClient.client
     private val auth = client.auth
 
     init {
-        // Link user to OneSignal whenever session changes
         auth.sessionStatus.map { status ->
             if (status is SessionStatus.Authenticated) {
                 OneSignal.login(status.session.user?.id ?: "")
@@ -63,7 +62,7 @@ class AuthService {
             }
             true
         } catch (e: Exception) {
-            println("AuthService: Error updating profile: ${e.message}")
+            Timber.e(e, "AuthService: Error updating profile")
             false
         }
     }
@@ -78,7 +77,7 @@ class AuthService {
             }
             bucket.publicUrl(filePath)
         } catch (e: Exception) {
-            println("AuthService: Error uploading avatar: ${e.message}")
+            Timber.e(e, "AuthService: Error uploading avatar")
             null
         }
     }

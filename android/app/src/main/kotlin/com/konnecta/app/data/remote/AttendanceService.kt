@@ -3,6 +3,7 @@ package com.konnecta.app.data.remote
 import com.konnecta.app.data.model.*
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
+import timber.log.Timber
 
 class AttendanceService {
     private val client = SupabaseClient.client
@@ -45,7 +46,7 @@ class AttendanceService {
             }
             true
         } catch (e: Exception) {
-            println("Dashboard: Error updating attendance: ${e.message}")
+            Timber.e(e, "AttendanceService: Error updating attendance")
             false
         }
     }
@@ -63,7 +64,7 @@ class AttendanceService {
             }
             true
         } catch (e: Exception) {
-            println("Dashboard: Error updating comment: ${e.message}")
+            Timber.e(e, "AttendanceService: Error updating comment")
             false
         }
     }

@@ -2,6 +2,7 @@ package com.konnecta.app.data.remote
 
 import com.konnecta.app.BuildConfig
 import com.konnecta.app.data.model.WeatherDay
+import timber.log.Timber
 import com.konnecta.app.data.model.WeatherForecast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -62,7 +63,7 @@ class WeatherService {
             
             WeatherForecast(summary, weekendForecast)
         } catch (e: Exception) {
-            println("Weather: Error fetching data: ${e.message}")
+            Timber.e(e, "WeatherService: Error fetching forecast")
             null
         }
     }

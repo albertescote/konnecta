@@ -7,6 +7,7 @@ import com.konnecta.app.data.remote.ActivityService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -28,7 +29,7 @@ class PlansHubViewModel : ViewModel() {
                 val fetched = activityService.getFutureActivities(today, groupId)
                 _activities.value = fetched.sortedBy { it.start_date ?: it.weekend_date }
             } catch (e: Exception) {
-                // Handle error
+                Timber.e(e, "PlansHubViewModel: Error loading future activities")
             } finally {
                 _isLoading.value = false
             }
