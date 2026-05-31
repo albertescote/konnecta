@@ -21,11 +21,13 @@ export default async function JoinPage({
   const ios = isIOS(userAgent);
 
   const supabase = await createClient();
-  const { data: group } = await supabase
+  const { data: group, error: groupError } = await supabase
     .from("groups")
     .select("name, description")
     .eq("slug", token)
     .single();
+
+  console.log("[join] token:", token, "| group:", group, "| error:", groupError);
 
   const canonicalUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/join/${token}`;
 
