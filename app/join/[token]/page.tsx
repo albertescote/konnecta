@@ -1,4 +1,5 @@
 import {headers} from "next/headers";
+import Link from "next/link";
 import {createClient} from "@/lib/supabase/server";
 import {Smartphone} from "lucide-react";
 
@@ -38,12 +39,12 @@ export default async function JoinPage({
         <p className="text-zinc-500">
           Aquest enllaç d&apos;invitació no és vàlid o ha caducat.
         </p>
-        <a
+        <Link
           href="/"
           className="mt-8 px-8 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-2xl font-black"
         >
           TORNA A L&apos;INICI
-        </a>
+        </Link>
       </main>
     );
   }
