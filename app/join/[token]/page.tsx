@@ -21,13 +21,8 @@ export default async function JoinPage({
   const ios = isIOS(userAgent);
 
   const supabase = await createClient();
-  const { data: group, error: groupError } = await supabase
-    .from("groups")
-    .select("name, description")
-    .eq("slug", token)
-    .single();
-
-  console.log("[join] token:", token, "| group:", group, "| error:", groupError);
+  const { data, error } = await supabase.rpc("resolve_invite_token", { p_token: token });
+  const group = (!error && data && data.length > 0) ? data[0] : null;
 
   const canonicalUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/join/${token}`;
 
@@ -65,13 +60,8 @@ export default async function JoinPage({
             T&apos;han convidat a
           </p>
           <h1 className="text-3xl font-black text-zinc-950 dark:text-white tracking-tight leading-tight">
-            {group.name}
+            {group.group_name}
           </h1>
-          {group.description && (
-            <p className="text-sm text-zinc-500 leading-relaxed italic">
-              &quot;{group.description}&quot;
-            </p>
-          )}
         </div>
 
         {ios ? (
