@@ -58,10 +58,13 @@ export default async function Home({
       .select("role, groups (*)")
       .eq("user_id", user.id);
 
-    userGroups = (memberships?.map((m: any) => ({
-      ...(m.groups || {}),
-      role: m.role as "admin" | "member",
-    })) || []) as Group[];
+    userGroups = (memberships?.map((m) => {
+      const membership = m as unknown as { role: string; groups: Group | null };
+      return {
+        ...(membership.groups || {}),
+        role: membership.role as "admin" | "member",
+      };
+    }) || []) as Group[];
 
     // Validate if the cookie groupId is still valid for this user
     if (groupId && !userGroups.some(g => g.id === groupId)) {

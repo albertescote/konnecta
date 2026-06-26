@@ -44,13 +44,15 @@ export async function proxy(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/not-authorized");
 
   if (user && !isAuthPage && !isNotAuthorizedPage) {
-    const { data: whitelistEntry } = await supabase
-      .from("whitelist")
-      .select("email")
-      .eq("email", user.email)
-      .single();
+    const email = user.email?.toLowerCase();
+    const whitelistStr = process.env.WHITELIST_EMAILS || "";
+    const whitelist = whitelistStr
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+    const isWhitelisted = email && whitelist.includes(email);
 
-    if (!whitelistEntry) {
+    if (!isWhitelisted) {
       const url = request.nextUrl.clone();
       url.pathname = "/not-authorized";
       return NextResponse.redirect(url);

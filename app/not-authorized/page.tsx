@@ -13,13 +13,15 @@ export default async function NotAuthorizedPage() {
   }
 
   // Double check whitelist here to avoid manual navigation to this page by whitelisted users
-  const { data: whitelistEntry } = await supabase
-    .from("whitelist")
-    .select("email")
-    .eq("email", user.email)
-    .single();
+  const email = user.email?.toLowerCase();
+  const whitelistStr = process.env.WHITELIST_EMAILS || "";
+  const whitelist = whitelistStr
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  const isWhitelisted = email && whitelist.includes(email);
 
-  if (whitelistEntry) {
+  if (isWhitelisted) {
     redirect("/");
   }
 
